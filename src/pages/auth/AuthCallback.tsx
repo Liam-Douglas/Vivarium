@@ -6,10 +6,21 @@ export function AuthCallback() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    const code = new URLSearchParams(window.location.search).get('code')
+    const params = new URLSearchParams(window.location.search)
+    const code = params.get('code')
+    const error = params.get('error')
+    const errorDescription = params.get('error_description')
+
+    if (error) {
+      console.error('OAuth error:', error, errorDescription)
+      navigate(`/auth/signin?error=${encodeURIComponent(errorDescription ?? error)}`, { replace: true })
+      return
+    }
+
     if (code) {
       supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
         if (error) {
+          console.error('exchangeCodeForSession error:', error)
           navigate('/auth/signin', { replace: true })
         } else {
           navigate('/', { replace: true })
