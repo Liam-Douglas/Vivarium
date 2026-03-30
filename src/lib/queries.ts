@@ -307,16 +307,24 @@ export async function getHousehold(householdId: string) {
 }
 
 export async function getHouseholdForUser(userId: string) {
-  const { data, error } = await supabase
+  const { data: member, error: memberError } = await supabase
     .from('household_members')
-    .select('household_id, role, status, households(*)')
+    .select('household_id, role, status')
     .eq('user_id', userId)
     .eq('status', 'active')
     .order('joined_at', { ascending: false })
     .limit(1)
     .maybeSingle()
-  if (error) return null
-  return data
+  if (memberError || !member) return null
+
+  const { data: household, error: householdError } = await supabase
+    .from('households')
+    .select('*')
+    .eq('id', member.household_id)
+    .single()
+  if (householdError || !household) return null
+
+  return { ...member, households: household }
 }
 
 export async function getHouseholdMembers(householdId: string) {
