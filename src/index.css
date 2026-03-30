@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+:root {
+  --bg-primary: #1a1a18;
+  --bg-surface: #242420;
+  --bg-elevated: #2e2e2a;
+  --accent-primary: #8fbe5a;
+  --accent-warm: #d4924a;
+  --accent-cool: #5a8fbe;
+  --text-primary: #f0ece0;
+  --text-secondary: #a8a090;
+  --text-muted: #6a6458;
+  --status-green: #5a9e6a;
+  --status-amber: #d4924a;
+  --status-red: #c45a5a;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 2px;
+}
+
+/* Skeleton pulse animation */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.skeleton {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background: var(--bg-elevated);
+  border-radius: 6px;
+}

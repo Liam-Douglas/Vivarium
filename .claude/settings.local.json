@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(1:*)",
+      "Bash(npx create-vite@latest . --template react-ts)",
+      "Bash(cp -r temp-vivarium/. .)",
+      "Bash(rm -rf temp-vivarium)",
+      "Bash(npm install:*)",
+      "Bash(\"/c/Projects/Reptile tracker/.env.local\":*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(curl -s \"https://lseaakbfpnhxbeqfbbve.supabase.co/rest/v1/\" -H \"apikey: sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\" -H \"Authorization: Bearer sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\")",
+      "Bash(curl -s \"https://lseaakbfpnhxbeqfbbve.supabase.co/rest/v1/animals?limit=1\" -H \"apikey: sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\" -H \"Authorization: Bearer sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\")",
+      "Bash(curl -s \"https://lseaakbfpnhxbeqfbbve.supabase.co/rest/v1/households?limit=1\" -H \"apikey: sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\" -H \"Authorization: Bearer sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\")",
+      "Bash(curl -s \"https://lseaakbfpnhxbeqfbbve.supabase.co/rest/v1/household_members?limit=1&select=status\" -H \"apikey: sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\" -H \"Authorization: Bearer sb_publishable_TSHGrgO7nJvULEzvvmBzeA_JpiEj7Ks\")"
+    ]
+  }
+}
