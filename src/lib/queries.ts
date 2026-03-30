@@ -312,7 +312,9 @@ export async function getHouseholdForUser(userId: string) {
     .select('household_id, role, status, households(*)')
     .eq('user_id', userId)
     .eq('status', 'active')
-    .single()
+    .order('joined_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
   if (error) return null
   return data
 }
