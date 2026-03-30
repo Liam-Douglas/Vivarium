@@ -36,9 +36,11 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const [pendingRequests, setPendingRequests] = useState<HouseholdMember[]>([])
   const [loading, setLoading] = useState(true)
 
+  const userId = user?.id
+
   const refresh = useCallback(async () => {
     setLoading(true)
-    if (!user) {
+    if (!userId) {
       setHouseholdId(null)
       setHouseholdName(null)
       setInviteCode(null)
@@ -50,7 +52,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     }
 
     try {
-      const memberData = await getHouseholdForUser(user.id)
+      const memberData = await getHouseholdForUser(userId)
       if (!memberData) {
         setHouseholdId(null)
         setLoading(false)
@@ -76,7 +78,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false)
     }
-  }, [user])
+  }, [userId])
 
   useEffect(() => {
     refresh()

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { createHousehold, joinHouseholdByCode } from '@/lib/queries'
@@ -10,7 +10,12 @@ export function OnboardingHousehold() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { refresh } = useHousehold()
+  const { householdId } = useHousehold()
   const [mode, setMode] = useState<'choice' | 'create' | 'join' | 'pending'>('choice')
+
+  useEffect(() => {
+    if (householdId) navigate('/', { replace: true })
+  }, [householdId, navigate])
   const [collectionName, setCollectionName] = useState('Our Collection')
   const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
@@ -23,7 +28,6 @@ export function OnboardingHousehold() {
     try {
       await createHousehold(user.id, collectionName)
       await refresh()
-      navigate('/')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to create collection')
     } finally {
