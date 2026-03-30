@@ -10,6 +10,35 @@ import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { EmptyState } from '@/components/ui/EmptyState'
 
+const FEEDER_PRESETS = [
+  // Insects
+  { label: 'Dubia Roaches – Small',   name: 'Dubia Roaches (Small)',   type: 'insect', unit: 'roaches' },
+  { label: 'Dubia Roaches – Medium',  name: 'Dubia Roaches (Medium)',  type: 'insect', unit: 'roaches' },
+  { label: 'Dubia Roaches – Large',   name: 'Dubia Roaches (Large)',   type: 'insect', unit: 'roaches' },
+  { label: 'Crickets – Small',        name: 'Crickets (Small)',        type: 'insect', unit: 'crickets' },
+  { label: 'Crickets – Medium',       name: 'Crickets (Medium)',       type: 'insect', unit: 'crickets' },
+  { label: 'Crickets – Large',        name: 'Crickets (Large)',        type: 'insect', unit: 'crickets' },
+  { label: 'Mealworms',               name: 'Mealworms',               type: 'insect', unit: 'worms' },
+  { label: 'Superworms',              name: 'Superworms',              type: 'insect', unit: 'worms' },
+  { label: 'Waxworms',                name: 'Waxworms',                type: 'insect', unit: 'worms' },
+  { label: 'Hornworms',               name: 'Hornworms',               type: 'insect', unit: 'worms' },
+  { label: 'Black Soldier Fly Larvae',name: 'BSFL',                   type: 'insect', unit: 'larvae' },
+  // Rodents
+  { label: 'Pinky Mice',              name: 'Pinky Mice',              type: 'rodent', unit: 'mice' },
+  { label: 'Fuzzy Mice',              name: 'Fuzzy Mice',              type: 'rodent', unit: 'mice' },
+  { label: 'Hopper Mice',             name: 'Hopper Mice',             type: 'rodent', unit: 'mice' },
+  { label: 'Mice – Small',            name: 'Mice (Small)',            type: 'rodent', unit: 'mice' },
+  { label: 'Mice – Medium',           name: 'Mice (Medium)',           type: 'rodent', unit: 'mice' },
+  { label: 'Mice – Large',            name: 'Mice (Large)',            type: 'rodent', unit: 'mice' },
+  { label: 'Rats – Small',            name: 'Rats (Small)',            type: 'rodent', unit: 'rats' },
+  { label: 'Rats – Medium',           name: 'Rats (Medium)',           type: 'rodent', unit: 'rats' },
+  { label: 'Rats – Large',            name: 'Rats (Large)',            type: 'rodent', unit: 'rats' },
+  { label: 'Rats – Jumbo',            name: 'Rats (Jumbo)',            type: 'rodent', unit: 'rats' },
+  // Other
+  { label: 'Quail',                   name: 'Quail',                   type: 'other',  unit: 'quail' },
+  { label: 'Day-old Chicks',          name: 'Day-old Chicks',          type: 'other',  unit: 'chicks' },
+]
+
 function StockGauge({ current, threshold }: { current: number; threshold: number }) {
   const max = threshold * 2
   const pct = Math.min(current / max, 1)
@@ -148,6 +177,35 @@ export function FeederInventory() {
       {/* Add feeder modal */}
       <Modal open={addFeederOpen} onClose={() => setAddFeederOpen(false)} title="Add feeder type">
         <div className="flex flex-col gap-4">
+          <Select
+            label="Quick select preset"
+            value=""
+            onChange={(e) => {
+              const preset = FEEDER_PRESETS.find((p) => p.label === e.target.value)
+              if (preset) {
+                setFeederName(preset.name)
+                setFeederType(preset.type)
+                setUnitLabel(preset.unit)
+              }
+            }}
+          >
+            <option value="">— choose a preset —</option>
+            <optgroup label="Insects">
+              {FEEDER_PRESETS.filter((p) => p.type === 'insect').map((p) => (
+                <option key={p.label} value={p.label}>{p.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Rodents">
+              {FEEDER_PRESETS.filter((p) => p.type === 'rodent').map((p) => (
+                <option key={p.label} value={p.label}>{p.label}</option>
+              ))}
+            </optgroup>
+            <optgroup label="Other">
+              {FEEDER_PRESETS.filter((p) => p.type === 'other').map((p) => (
+                <option key={p.label} value={p.label}>{p.label}</option>
+              ))}
+            </optgroup>
+          </Select>
           <Input label="Name" value={feederName} onChange={(e) => setFeederName(e.target.value)} placeholder="e.g. Dubia roaches" />
           <Select label="Type" value={feederType} onChange={(e) => setFeederType(e.target.value)}>
             <option value="insect">Insect</option>
