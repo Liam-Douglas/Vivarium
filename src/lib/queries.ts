@@ -35,7 +35,11 @@ export async function createAnimal(animal: {
   notes?: string
   feeding_frequency_days?: number
 }) {
-  const { data, error } = await supabase.from('animals').insert(animal).select().single()
+  const { data, error } = await supabase
+    .from('animals')
+    .insert({ ...animal, is_active: true })
+    .select()
+    .single()
   if (error) throw error
   return data
 }

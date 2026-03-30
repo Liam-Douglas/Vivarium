@@ -86,7 +86,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
           morph: values.morph || undefined,
           sex: values.sex || undefined,
           date_of_birth: values.date_of_birth || undefined,
-          feeding_frequency_days: values.feeding_frequency_days ? Number(values.feeding_frequency_days) : undefined,
+          feeding_frequency_days: values.feeding_frequency_days ? Number(values.feeding_frequency_days) : 7,
           notes: values.notes || undefined,
         })
         if (photoFile) {
