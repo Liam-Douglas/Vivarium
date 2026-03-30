@@ -35,7 +35,7 @@ export function SignUp() {
       email,
       password,
       options: {
-        captchaToken,
+        ...(captchaToken ? { captchaToken } : {}),
         data: { full_name: fullName },
       },
     })
