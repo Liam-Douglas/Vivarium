@@ -37,6 +37,7 @@ export function HouseholdProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const refresh = useCallback(async () => {
+    setLoading(true)
     if (!user) {
       setHouseholdId(null)
       setHouseholdName(null)
