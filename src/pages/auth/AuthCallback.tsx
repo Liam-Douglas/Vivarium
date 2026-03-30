@@ -7,30 +7,28 @@ export function AuthCallback() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
     const error = params.get('error')
     const errorDescription = params.get('error_description')
 
     if (error) {
-      console.error('OAuth error:', error, errorDescription)
       navigate(`/auth/signin?error=${encodeURIComponent(errorDescription ?? error)}`, { replace: true })
       return
     }
 
-    if (code) {
-      supabase.auth.exchangeCodeForSession(code).then(({ error }) => {
-        if (error) {
-          console.error('exchangeCodeForSession error:', error)
-          navigate('/auth/signin', { replace: true })
-        } else {
-          navigate('/', { replace: true })
-        }
-      })
-    } else {
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        navigate(session ? '/' : '/auth/signin', { replace: true })
-      })
-    }
+    // With PKCE flow the SDK exchanges the code automatically on init.
+    // Wait for the SIGNED_IN event, then redirect.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_IN' && session) {
+        subscription.unsubscribe()
+        navigate('/', { replace: true })
+      } else if (event === 'INITIAL_SESSION' && !session) {
+        // No session and no pending code — go to sign in
+        subscription.unsubscribe()
+        navigate('/auth/signin', { replace: true })
+      }
+    })
+
+    return () => subscription.unsubscribe()
   }, [navigate])
 
   return (
