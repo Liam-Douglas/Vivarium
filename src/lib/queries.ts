@@ -307,24 +307,16 @@ export async function getHousehold(householdId: string) {
 }
 
 export async function getHouseholdForUser(userId: string) {
-  const { data: member, error: memberError } = await supabase
-    .from('household_members')
-    .select('household_id, role, status')
-    .eq('user_id', userId)
-    .eq('status', 'active')
-    .order('joined_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
-  if (memberError || !member) return null
-
-  const { data: household, error: householdError } = await supabase
-    .from('households')
-    .select('*')
-    .eq('id', member.household_id)
-    .single()
-  if (householdError || !household) return null
-
-  return { ...member, households: household }
+  const { data, error } = await supabase
+    .rpc('get_household_for_user', { p_user_id: userId })
+  if (error || !data || data.length === 0) return null
+  const row = data[0]
+  return {
+    household_id: row.household_id,
+    role: row.role,
+    status: row.status,
+    households: { id: row.household_id, name: row.household_name, invite_code: row.invite_code },
+  }
 }
 
 export async function getHouseholdMembers(householdId: string) {
