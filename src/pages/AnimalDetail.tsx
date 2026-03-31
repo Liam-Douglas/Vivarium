@@ -588,9 +588,8 @@ export function AnimalDetail() {
             )}
           </div>
         )}
-      </div>
 
-      {/* Acquisition tab */}
+        {/* Acquisition tab */}
         {tab === 'acquisition' && (
           <div className="pb-24 md:pb-8">
             <div className="flex justify-end mb-4">

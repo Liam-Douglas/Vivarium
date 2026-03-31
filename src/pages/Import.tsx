@@ -54,6 +54,37 @@ export function Import() {
   const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number } | null>(null)
   const [importing, setImporting] = useState(false)
 
+  function downloadTemplate() {
+    const wb = XLSX.utils.book_new()
+
+    const animals = XLSX.utils.aoa_to_sheet([
+      ['Name *', 'Species *', 'Morph', 'Sex', 'Date of birth', 'Feeding frequency', 'Notes'],
+      ['Monty', 'Ball Python', 'Pastel', 'Male', '2022-01-15', '7', 'Example row — delete before importing'],
+    ])
+    XLSX.utils.book_append_sheet(wb, animals, 'Animals')
+
+    const feeding = XLSX.utils.aoa_to_sheet([
+      ['Animal name *', 'Date *', 'Prey type *', 'Prey size', 'Quantity', 'Refused', 'Notes'],
+      ['Monty', '2024-03-01', 'Mouse', 'Small', '1', 'false', ''],
+    ])
+    XLSX.utils.book_append_sheet(wb, feeding, 'Feeding logs')
+
+    const shedding = XLSX.utils.aoa_to_sheet([
+      ['Animal name *', 'Date *', 'Complete', 'Notes'],
+      ['Monty', '2024-02-15', 'true', ''],
+    ])
+    XLSX.utils.book_append_sheet(wb, shedding, 'Shedding logs')
+
+    const data = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'vivarium_import_template.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   function handleFile(file: File) {
     setFileName(file.name)
     const reader = new FileReader()
@@ -247,9 +278,9 @@ export function Import() {
             <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
           </div>
           <div className="text-center">
-            <a href="/vivarium_import_template.xlsx" download className="text-sm" style={{ color: '#8fbe5a' }}>
+            <button onClick={downloadTemplate} className="text-sm" style={{ color: '#8fbe5a', background: 'none', border: 'none', cursor: 'pointer' }}>
               Download import template
-            </a>
+            </button>
           </div>
         </div>
       )}
