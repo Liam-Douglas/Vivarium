@@ -325,11 +325,17 @@ export async function getHouseholdForUser(userId: string) {
 
 export async function getHouseholdMembers(householdId: string) {
   const { data, error } = await supabase
-    .from('household_members')
-    .select('*, profiles(full_name, avatar_url)')
-    .eq('household_id', householdId)
+    .rpc('get_household_members', { p_household_id: householdId })
   if (error) throw error
-  return data
+  return (data ?? []).map((row: { id: string; household_id: string; user_id: string; role: string; status: string; joined_at: string | null; full_name: string | null; avatar_url: string | null }) => ({
+    id: row.id,
+    household_id: row.household_id,
+    user_id: row.user_id,
+    role: row.role,
+    status: row.status,
+    joined_at: row.joined_at,
+    profiles: { full_name: row.full_name, avatar_url: row.avatar_url },
+  }))
 }
 
 export async function getPendingRequests(householdId: string) {
