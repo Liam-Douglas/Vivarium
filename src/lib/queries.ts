@@ -45,14 +45,12 @@ export async function createAnimal(animal: {
 }
 
 export async function updateAnimal(id: string, updates: Record<string, unknown>) {
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('animals')
     .update(updates)
     .eq('id', id)
-    .select()
-    .single()
   if (error) throw error
-  return data
+  return { id }
 }
 
 export async function deactivateAnimal(id: string) {

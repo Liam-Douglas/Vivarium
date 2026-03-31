@@ -70,7 +70,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
           morph: values.morph || null,
           sex: values.sex || null,
           date_of_birth: values.date_of_birth || null,
-          feeding_frequency_days: values.feeding_frequency_days ? Number(values.feeding_frequency_days) : null,
+          feeding_frequency_days: values.feeding_frequency_days ? Number(values.feeding_frequency_days) : 7,
           notes: values.notes || null,
         })
         if (photoFile) {
