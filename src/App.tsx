@@ -4,6 +4,7 @@ import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ToastProvider } from '@/components/ui/Toast'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 // Auth pages
 import { SignIn } from '@/pages/auth/SignIn'
@@ -58,15 +59,15 @@ function AppShell() {
       <main className="flex-1 flex flex-col min-w-0">
         <Routes>
           <Route element={<RequireHousehold />}>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/animals" element={<Animals />} />
-            <Route path="/animals/:id" element={<AnimalDetail />} />
-            <Route path="/feeding" element={<FeedingLog />} />
-            <Route path="/feeders" element={<FeederInventory />} />
-            <Route path="/expenses" element={<Expenses />} />
-            <Route path="/import" element={<Import />} />
+            <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+            <Route path="/animals" element={<ErrorBoundary><Animals /></ErrorBoundary>} />
+            <Route path="/animals/:id" element={<ErrorBoundary><AnimalDetail /></ErrorBoundary>} />
+            <Route path="/feeding" element={<ErrorBoundary><FeedingLog /></ErrorBoundary>} />
+            <Route path="/feeders" element={<ErrorBoundary><FeederInventory /></ErrorBoundary>} />
+            <Route path="/expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
+            <Route path="/import" element={<ErrorBoundary><Import /></ErrorBoundary>} />
           </Route>
-          <Route path="/settings" element={<Settings />} />
+          <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/onboarding" element={<OnboardingHousehold />} />

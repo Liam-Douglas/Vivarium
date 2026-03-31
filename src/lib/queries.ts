@@ -91,6 +91,16 @@ export async function createFeedingLog(log: {
   return data
 }
 
+export async function updateFeedingLog(id: string, updates: { fed_at?: string; prey_type?: string; prey_size?: string | null; quantity?: number; refused?: boolean; notes?: string | null }) {
+  const { error } = await supabase.from('feeding_logs').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteFeedingLog(id: string) {
+  const { error } = await supabase.from('feeding_logs').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ─── Shedding logs ───────────────────────────────────────────────────────────
 
 export async function getSheddingLogs(householdId: string, animalId?: string) {
@@ -116,6 +126,16 @@ export async function createSheddingLog(log: {
   const { data, error } = await supabase.from('shedding_logs').insert(log).select().single()
   if (error) throw error
   return data
+}
+
+export async function updateSheddingLog(id: string, updates: { shed_at?: string; complete?: boolean; notes?: string | null }) {
+  const { error } = await supabase.from('shedding_logs').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteSheddingLog(id: string) {
+  const { error } = await supabase.from('shedding_logs').delete().eq('id', id)
+  if (error) throw error
 }
 
 // ─── Weight logs ─────────────────────────────────────────────────────────────
@@ -144,6 +164,16 @@ export async function createWeightLog(log: {
   return data
 }
 
+export async function updateWeightLog(id: string, updates: { weight_grams?: number; logged_at?: string; notes?: string | null }) {
+  const { error } = await supabase.from('weight_logs').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteWeightLog(id: string) {
+  const { error } = await supabase.from('weight_logs').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ─── Health events ───────────────────────────────────────────────────────────
 
 export async function getHealthEvents(householdId: string, animalId: string) {
@@ -155,6 +185,16 @@ export async function getHealthEvents(householdId: string, animalId: string) {
     .order('event_date', { ascending: false })
   if (error) throw error
   return data
+}
+
+export async function updateHealthEvent(id: string, updates: { event_type?: string; event_date?: string; title?: string; notes?: string | null; cost_cents?: number | null }) {
+  const { error } = await supabase.from('health_events').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteHealthEvent(id: string) {
+  const { error } = await supabase.from('health_events').delete().eq('id', id)
+  if (error) throw error
 }
 
 export async function createHealthEvent(event: {
