@@ -359,23 +359,21 @@ export async function denyHouseholdRequest(memberId: string) {
 }
 
 export async function joinHouseholdByCode(inviteCode: string, userId: string) {
-  // Find the household
-  const { data: household, error: hErr } = await supabase
-    .from('households')
-    .select('id')
-    .eq('invite_code', inviteCode.toUpperCase())
-    .single()
-  if (hErr || !household) throw new Error('Invalid invite code')
+  // Use SECURITY DEFINER RPC to bypass RLS — new users can't query households directly
+  const { data, error: rpcError } = await supabase
+    .rpc('get_household_by_invite_code', { p_invite_code: inviteCode.toUpperCase() })
+  if (rpcError || !data || data.length === 0) throw new Error('Invalid invite code')
+  const householdId = data[0].household_id
 
   // Insert pending member
   const { error } = await supabase.from('household_members').insert({
-    household_id: household.id,
+    household_id: householdId,
     user_id: userId,
     role: 'member',
     status: 'pending',
   })
   if (error) throw error
-  return household.id
+  return householdId
 }
 
 export async function createHousehold(userId: string, name: string) {
