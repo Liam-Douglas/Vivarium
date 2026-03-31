@@ -64,7 +64,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
       let photo_url = animal?.photo_url ?? null
 
       if (animal) {
-        const updated = await updateAnimal(animal.id, {
+        await updateAnimal(animal.id, {
           name: values.name,
           species: values.species,
           morph: values.morph || null,
@@ -74,8 +74,12 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
           notes: values.notes || null,
         })
         if (photoFile) {
-          photo_url = await uploadAnimalPhoto(householdId, updated.id, photoFile)
-          await updateAnimal(updated.id, { photo_url })
+          try {
+            photo_url = await uploadAnimalPhoto(householdId, animal.id, photoFile)
+            await updateAnimal(animal.id, { photo_url })
+          } catch {
+            showToast('Details saved but photo upload failed', 'error')
+          }
         }
       } else {
         const created = await createAnimal({
@@ -90,8 +94,12 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
           notes: values.notes || undefined,
         })
         if (photoFile) {
-          photo_url = await uploadAnimalPhoto(householdId, created.id, photoFile)
-          await updateAnimal(created.id, { photo_url })
+          try {
+            photo_url = await uploadAnimalPhoto(householdId, created.id, photoFile)
+            await updateAnimal(created.id, { photo_url })
+          } catch {
+            showToast('Animal added but photo upload failed', 'error')
+          }
         }
       }
 
