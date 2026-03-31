@@ -355,17 +355,13 @@ export async function getPendingRequests(householdId: string) {
 
 export async function approveHouseholdRequest(memberId: string) {
   const { error } = await supabase
-    .from('household_members')
-    .update({ status: 'active' })
-    .eq('id', memberId)
+    .rpc('approve_household_request', { p_member_id: memberId })
   if (error) throw error
 }
 
 export async function denyHouseholdRequest(memberId: string) {
   const { error } = await supabase
-    .from('household_members')
-    .update({ status: 'rejected' })
-    .eq('id', memberId)
+    .rpc('deny_household_request', { p_member_id: memberId })
   if (error) throw error
 }
 
