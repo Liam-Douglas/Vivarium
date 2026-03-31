@@ -6,6 +6,7 @@ import { getAnimal, deactivateAnimal, createWeightLog, createSheddingLog, create
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
 import { useWeightLogs } from '@/hooks/useWeightLogs'
+import { useHealthEvents } from '@/hooks/useHealthEvents'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
@@ -59,7 +60,7 @@ export function AnimalDetail() {
   const [healthCost, setHealthCost] = useState('')
   const [savingHealth, setSavingHealth] = useState(false)
 
-  const { refresh: refreshHealth } = useFeedingLogs(id) // reuse pattern — we'll handle separately
+  const { data: healthEvents, refresh: refreshHealth } = useHealthEvents(id)
 
   useEffect(() => {
     if (!id) return
@@ -338,7 +339,29 @@ export function AnimalDetail() {
             <div className="flex justify-end mb-4">
               <Button size="sm" onClick={() => setHealthOpen(true)}>Add event</Button>
             </div>
-            <div className="text-center py-12" style={{ color: '#6a6458' }}>No health events logged yet</div>
+            {healthEvents.length === 0 ? (
+              <div className="text-center py-12" style={{ color: '#6a6458' }}>No health events logged yet</div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {healthEvents.map((ev) => (
+                  <div key={ev.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.title}</p>
+                        <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{ev.event_type.replace('_', ' ')}</p>
+                        {ev.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{ev.notes}</p>}
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(ev.event_date), 'MMM d, yyyy')}</p>
+                        {ev.cost_cents != null && (
+                          <p className="text-xs mt-0.5" style={{ color: '#d4924a' }}>${(ev.cost_cents / 100).toFixed(2)}</p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
