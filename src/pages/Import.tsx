@@ -75,7 +75,14 @@ export function Import() {
     ])
     XLSX.utils.book_append_sheet(wb, shedding, 'Shedding logs')
 
-    XLSX.writeFile(wb, 'vivarium_import_template.xlsx')
+    const data = XLSX.write(wb, { bookType: 'xlsx', type: 'array' })
+    const blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'vivarium_import_template.xlsx'
+    a.click()
+    URL.revokeObjectURL(url)
   }
 
   function handleFile(file: File) {
