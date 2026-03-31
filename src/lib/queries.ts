@@ -353,6 +353,18 @@ export async function getPendingRequests(householdId: string) {
   }))
 }
 
+export async function removeMember(memberId: string) {
+  const { error } = await supabase
+    .rpc('remove_household_member', { p_member_id: memberId })
+  if (error) throw error
+}
+
+export async function setMemberRole(memberId: string, role: 'owner' | 'member') {
+  const { error } = await supabase
+    .rpc('set_member_role', { p_member_id: memberId, p_role: role })
+  if (error) throw error
+}
+
 export async function approveHouseholdRequest(memberId: string) {
   const { error } = await supabase
     .rpc('approve_household_request', { p_member_id: memberId })

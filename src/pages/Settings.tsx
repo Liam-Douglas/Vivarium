@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile } from '@/lib/queries'
+import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -58,6 +58,28 @@ export function Settings() {
       refreshHousehold()
     } catch {
       showToast('Failed to deny', 'error')
+    }
+  }
+
+  async function handleRemoveMember(memberId: string, name: string) {
+    if (!confirm(`Remove ${name} from the collection?`)) return
+    try {
+      await removeMember(memberId)
+      refreshHousehold()
+      showToast('Member removed', 'success')
+    } catch {
+      showToast('Failed to remove member', 'error')
+    }
+  }
+
+  async function handleToggleRole(memberId: string, currentRole: string) {
+    const newRole = currentRole === 'owner' ? 'member' : 'owner'
+    try {
+      await setMemberRole(memberId, newRole)
+      refreshHousehold()
+      showToast(`Role updated to ${newRole}`, 'success')
+    } catch {
+      showToast('Failed to update role', 'error')
     }
   }
 
@@ -151,10 +173,33 @@ export function Settings() {
               <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>MEMBERS</p>
               {members.filter((m) => m.status === 'active').map((m) => {
                 const p = m.profiles as { full_name: string | null } | null
+                const isSelf = m.user_id === user?.id
+                const name = p?.full_name ?? 'Unknown'
                 return (
-                  <div key={m.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <p className="text-sm" style={{ color: '#f0ece0' }}>{p?.full_name ?? 'Unknown'}</p>
-                    <Badge status="muted">{m.role}</Badge>
+                  <div key={m.id} className="flex items-center justify-between gap-2 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm" style={{ color: '#f0ece0' }}>{name}{isSelf ? ' (you)' : ''}</p>
+                    </div>
+                    {currentUserRole === 'owner' && !isSelf ? (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleToggleRole(m.id, m.role)}
+                          className="text-xs px-2 py-1 rounded-lg transition-colors"
+                          style={{ backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}
+                        >
+                          {m.role === 'owner' ? 'Demote' : 'Make owner'}
+                        </button>
+                        <button
+                          onClick={() => handleRemoveMember(m.id, name)}
+                          className="text-xs px-2 py-1 rounded-lg transition-colors"
+                          style={{ backgroundColor: 'rgba(196,90,90,0.12)', color: '#c45a5a', border: '1px solid rgba(196,90,90,0.2)' }}
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <Badge status="muted">{m.role}</Badge>
+                    )}
                   </div>
                 )
               })}
