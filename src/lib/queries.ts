@@ -212,6 +212,66 @@ export async function createHealthEvent(event: {
   return data
 }
 
+// ─── Acquisition records ─────────────────────────────────────────────────────
+
+export async function getAcquisitionRecords(householdId: string, animalId: string) {
+  const { data, error } = await supabase.from('acquisition_records').select('*').eq('household_id', householdId).eq('animal_id', animalId).order('acquired_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+export async function createAcquisitionRecord(r: { household_id: string; animal_id: string; user_id: string; acquired_at: string; source?: string; source_name?: string; price_cents?: number; notes?: string }) {
+  const { error } = await supabase.from('acquisition_records').insert(r)
+  if (error) throw error
+}
+export async function updateAcquisitionRecord(id: string, r: { acquired_at?: string; source?: string | null; source_name?: string | null; price_cents?: number | null; notes?: string | null }) {
+  const { error } = await supabase.from('acquisition_records').update(r).eq('id', id)
+  if (error) throw error
+}
+export async function deleteAcquisitionRecord(id: string) {
+  const { error } = await supabase.from('acquisition_records').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── Exit records ─────────────────────────────────────────────────────────────
+
+export async function getExitRecords(householdId: string, animalId: string) {
+  const { data, error } = await supabase.from('exit_records').select('*').eq('household_id', householdId).eq('animal_id', animalId).order('exited_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+export async function createExitRecord(r: { household_id: string; animal_id: string; user_id: string; exited_at: string; reason: string; price_cents?: number; notes?: string }) {
+  const { error } = await supabase.from('exit_records').insert(r)
+  if (error) throw error
+}
+export async function updateExitRecord(id: string, r: { exited_at?: string; reason?: string; price_cents?: number | null; notes?: string | null }) {
+  const { error } = await supabase.from('exit_records').update(r).eq('id', id)
+  if (error) throw error
+}
+export async function deleteExitRecord(id: string) {
+  const { error } = await supabase.from('exit_records').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── Breeding records ─────────────────────────────────────────────────────────
+
+export async function getBreedingRecords(householdId: string, animalId: string) {
+  const { data, error } = await supabase.from('breeding_records').select('*').eq('household_id', householdId).eq('animal_id', animalId).order('pairing_date', { ascending: false })
+  if (error) throw error
+  return data
+}
+export async function createBreedingRecord(r: { household_id: string; animal_id: string; user_id: string; pairing_date: string; paired_with_id?: string; paired_with_name?: string; outcome?: string; clutch_size?: number; eggs_fertile?: number; hatch_date?: string; notes?: string }) {
+  const { error } = await supabase.from('breeding_records').insert(r)
+  if (error) throw error
+}
+export async function updateBreedingRecord(id: string, r: { pairing_date?: string; paired_with_name?: string | null; outcome?: string | null; clutch_size?: number | null; eggs_fertile?: number | null; hatch_date?: string | null; notes?: string | null }) {
+  const { error } = await supabase.from('breeding_records').update(r).eq('id', id)
+  if (error) throw error
+}
+export async function deleteBreedingRecord(id: string) {
+  const { error } = await supabase.from('breeding_records').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ─── Feeder inventory ────────────────────────────────────────────────────────
 
 export async function getFeederItems(householdId: string) {

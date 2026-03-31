@@ -27,8 +27,19 @@ import type { FeedingLog } from '@/hooks/useFeedingLogs'
 import type { SheddingLog } from '@/hooks/useSheddingLogs'
 import type { WeightLog } from '@/hooks/useWeightLogs'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
+import { useAcquisitionRecords } from '@/hooks/useAcquisitionRecords'
+import type { AcquisitionRecord } from '@/hooks/useAcquisitionRecords'
+import { useExitRecords } from '@/hooks/useExitRecords'
+import type { ExitRecord } from '@/hooks/useExitRecords'
+import { useBreedingRecords } from '@/hooks/useBreedingRecords'
+import type { BreedingRecord } from '@/hooks/useBreedingRecords'
+import {
+  createAcquisitionRecord, updateAcquisitionRecord, deleteAcquisitionRecord,
+  createExitRecord, updateExitRecord, deleteExitRecord,
+  createBreedingRecord, updateBreedingRecord, deleteBreedingRecord,
+} from '@/lib/queries'
 
-type Tab = 'overview' | 'feeding' | 'weight' | 'shedding' | 'health'
+type Tab = 'overview' | 'feeding' | 'weight' | 'shedding' | 'health' | 'acquisition' | 'exit' | 'breeding'
 
 function RecordActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   return (
@@ -60,6 +71,9 @@ export function AnimalDetail() {
   const { data: sheddingLogs, refresh: refreshShedding } = useSheddingLogs(id)
   const { data: weightLogs, refresh: refreshWeight } = useWeightLogs(id ?? '')
   const { data: healthEvents, refresh: refreshHealth } = useHealthEvents(id)
+  const { data: acquisitionRecords, refresh: refreshAcquisition } = useAcquisitionRecords(id)
+  const { data: exitRecords, refresh: refreshExit } = useExitRecords(id)
+  const { data: breedingRecords, refresh: refreshBreeding } = useBreedingRecords(id)
 
   // ── Weight state ──────────────────────────────────────────────────────────
   const [weightOpen, setWeightOpen] = useState(false)
@@ -96,6 +110,37 @@ export function AnimalDetail() {
   const [feedEditNotes, setFeedEditNotes] = useState('')
   const [feedEditDate, setFeedEditDate] = useState('')
   const [savingFeedEdit, setSavingFeedEdit] = useState(false)
+
+  // ── Acquisition state ─────────────────────────────────────────────────────
+  const [acquisitionOpen, setAcquisitionOpen] = useState(false)
+  const [editingAcquisition, setEditingAcquisition] = useState<AcquisitionRecord | null>(null)
+  const [acqDate, setAcqDate] = useState(new Date().toISOString().split('T')[0])
+  const [acqSource, setAcqSource] = useState('')
+  const [acqSourceName, setAcqSourceName] = useState('')
+  const [acqPrice, setAcqPrice] = useState('')
+  const [acqNotes, setAcqNotes] = useState('')
+  const [savingAcq, setSavingAcq] = useState(false)
+
+  // ── Exit state ────────────────────────────────────────────────────────────
+  const [exitOpen, setExitOpen] = useState(false)
+  const [editingExit, setEditingExit] = useState<ExitRecord | null>(null)
+  const [exitDate, setExitDate] = useState(new Date().toISOString().split('T')[0])
+  const [exitReason, setExitReason] = useState('sold')
+  const [exitPrice, setExitPrice] = useState('')
+  const [exitNotes, setExitNotes] = useState('')
+  const [savingExit, setSavingExit] = useState(false)
+
+  // ── Breeding state ────────────────────────────────────────────────────────
+  const [breedingOpen, setBreedingOpen] = useState(false)
+  const [editingBreeding, setEditingBreeding] = useState<BreedingRecord | null>(null)
+  const [breedPairingDate, setBreedPairingDate] = useState(new Date().toISOString().split('T')[0])
+  const [breedPartnerName, setBreedPartnerName] = useState('')
+  const [breedOutcome, setBreedOutcome] = useState('unknown')
+  const [breedClutchSize, setBreedClutchSize] = useState('')
+  const [breedEggsFertile, setBreedEggsFertile] = useState('')
+  const [breedHatchDate, setBreedHatchDate] = useState('')
+  const [breedNotes, setBreedNotes] = useState('')
+  const [savingBreed, setSavingBreed] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -245,6 +290,80 @@ export function AnimalDetail() {
     catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
   }
 
+  // ── Acquisition handlers ──────────────────────────────────────────────────
+  function openAddAcquisition() { setEditingAcquisition(null); setAcqDate(new Date().toISOString().split('T')[0]); setAcqSource(''); setAcqSourceName(''); setAcqPrice(''); setAcqNotes(''); setAcquisitionOpen(true) }
+  function openEditAcquisition(r: AcquisitionRecord) { setEditingAcquisition(r); setAcqDate(r.acquired_at); setAcqSource(r.source ?? ''); setAcqSourceName(r.source_name ?? ''); setAcqPrice(r.price_cents != null ? String(r.price_cents / 100) : ''); setAcqNotes(r.notes ?? ''); setAcquisitionOpen(true) }
+  async function handleSaveAcquisition() {
+    if (!user || !householdId || !id) return
+    setSavingAcq(true)
+    try {
+      const price = acqPrice ? Math.round(Number(acqPrice) * 100) : undefined
+      if (editingAcquisition) {
+        await updateAcquisitionRecord(editingAcquisition.id, { acquired_at: acqDate, source: acqSource || null, source_name: acqSourceName || null, price_cents: price ?? null, notes: acqNotes || null })
+        showToast('Record updated', 'success')
+      } else {
+        await createAcquisitionRecord({ household_id: householdId, animal_id: id, user_id: user.id, acquired_at: acqDate, source: acqSource || undefined, source_name: acqSourceName || undefined, price_cents: price, notes: acqNotes || undefined })
+        showToast('Acquisition recorded', 'success')
+      }
+      refreshAcquisition(); setAcquisitionOpen(false)
+    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    finally { setSavingAcq(false) }
+  }
+  async function handleDeleteAcquisition(r: AcquisitionRecord) {
+    if (!confirm('Delete this acquisition record?')) return
+    try { await deleteAcquisitionRecord(r.id); refreshAcquisition(); showToast('Deleted', 'success') }
+    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+  }
+
+  // ── Exit handlers ─────────────────────────────────────────────────────────
+  function openAddExit() { setEditingExit(null); setExitDate(new Date().toISOString().split('T')[0]); setExitReason('sold'); setExitPrice(''); setExitNotes(''); setExitOpen(true) }
+  function openEditExit(r: ExitRecord) { setEditingExit(r); setExitDate(r.exited_at); setExitReason(r.reason); setExitPrice(r.price_cents != null ? String(r.price_cents / 100) : ''); setExitNotes(r.notes ?? ''); setExitOpen(true) }
+  async function handleSaveExit() {
+    if (!user || !householdId || !id) return
+    setSavingExit(true)
+    try {
+      const price = exitPrice ? Math.round(Number(exitPrice) * 100) : undefined
+      if (editingExit) {
+        await updateExitRecord(editingExit.id, { exited_at: exitDate, reason: exitReason, price_cents: price ?? null, notes: exitNotes || null })
+        showToast('Record updated', 'success')
+      } else {
+        await createExitRecord({ household_id: householdId, animal_id: id, user_id: user.id, exited_at: exitDate, reason: exitReason, price_cents: price, notes: exitNotes || undefined })
+        showToast('Exit recorded', 'success')
+      }
+      refreshExit(); setExitOpen(false)
+    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    finally { setSavingExit(false) }
+  }
+  async function handleDeleteExit(r: ExitRecord) {
+    if (!confirm('Delete this exit record?')) return
+    try { await deleteExitRecord(r.id); refreshExit(); showToast('Deleted', 'success') }
+    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+  }
+
+  // ── Breeding handlers ─────────────────────────────────────────────────────
+  function openAddBreeding() { setEditingBreeding(null); setBreedPairingDate(new Date().toISOString().split('T')[0]); setBreedPartnerName(''); setBreedOutcome('unknown'); setBreedClutchSize(''); setBreedEggsFertile(''); setBreedHatchDate(''); setBreedNotes(''); setBreedingOpen(true) }
+  function openEditBreeding(r: BreedingRecord) { setEditingBreeding(r); setBreedPairingDate(r.pairing_date); setBreedPartnerName(r.paired_with_name ?? ''); setBreedOutcome(r.outcome ?? 'unknown'); setBreedClutchSize(r.clutch_size != null ? String(r.clutch_size) : ''); setBreedEggsFertile(r.eggs_fertile != null ? String(r.eggs_fertile) : ''); setBreedHatchDate(r.hatch_date ?? ''); setBreedNotes(r.notes ?? ''); setBreedingOpen(true) }
+  async function handleSaveBreeding() {
+    if (!user || !householdId || !id) return
+    setSavingBreed(true)
+    try {
+      if (editingBreeding) {
+        await updateBreedingRecord(editingBreeding.id, { pairing_date: breedPairingDate, paired_with_name: breedPartnerName || null, outcome: breedOutcome || null, clutch_size: breedClutchSize ? Number(breedClutchSize) : null, eggs_fertile: breedEggsFertile ? Number(breedEggsFertile) : null, hatch_date: breedHatchDate || null, notes: breedNotes || null })
+        showToast('Record updated', 'success')
+      } else {
+        await createBreedingRecord({ household_id: householdId, animal_id: id, user_id: user.id, pairing_date: breedPairingDate, paired_with_name: breedPartnerName || undefined, outcome: breedOutcome || undefined, clutch_size: breedClutchSize ? Number(breedClutchSize) : undefined, eggs_fertile: breedEggsFertile ? Number(breedEggsFertile) : undefined, hatch_date: breedHatchDate || undefined, notes: breedNotes || undefined })
+        showToast('Breeding recorded', 'success')
+      }
+      refreshBreeding(); setBreedingOpen(false)
+    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    finally { setSavingBreed(false) }
+  }
+  async function handleDeleteBreeding(r: BreedingRecord) {
+    if (!confirm('Delete this breeding record?')) return
+    try { await deleteBreedingRecord(r.id); refreshBreeding(); showToast('Deleted', 'success') }
+    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+  }
+
   async function handleDeactivate() {
     if (!id || !confirm(`Remove ${animal?.name} from your collection?`)) return
     await deactivateAnimal(id)
@@ -280,6 +399,9 @@ export function AnimalDetail() {
     { id: 'weight', label: 'Weight' },
     { id: 'shedding', label: 'Shedding' },
     { id: 'health', label: 'Health' },
+    { id: 'acquisition', label: 'Acquisition' },
+    { id: 'exit', label: 'Exit' },
+    { id: 'breeding', label: 'Breeding' },
   ]
 
   return (
@@ -467,6 +589,171 @@ export function AnimalDetail() {
           </div>
         )}
       </div>
+
+      {/* Acquisition tab */}
+        {tab === 'acquisition' && (
+          <div className="pb-24 md:pb-8">
+            <div className="flex justify-end mb-4">
+              <Button size="sm" onClick={openAddAcquisition}>Add record</Button>
+            </div>
+            {acquisitionRecords.length === 0 ? (
+              <div className="text-center py-12" style={{ color: '#6a6458' }}>No acquisition records yet</div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {acquisitionRecords.map((r) => (
+                  <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{r.source_name ?? r.source ?? 'Unknown source'}</p>
+                        {r.source && <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{r.source.replace('_', ' ')}</p>}
+                        {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                      </div>
+                      <div className="text-right shrink-0 mr-1">
+                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.acquired_at), 'MMM d, yyyy')}</p>
+                        {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
+                      </div>
+                      <RecordActions onEdit={() => openEditAcquisition(r)} onDelete={() => handleDeleteAcquisition(r)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Exit tab */}
+        {tab === 'exit' && (
+          <div className="pb-24 md:pb-8">
+            <div className="flex justify-end mb-4">
+              <Button size="sm" onClick={openAddExit}>Add record</Button>
+            </div>
+            {exitRecords.length === 0 ? (
+              <div className="text-center py-12" style={{ color: '#6a6458' }}>No exit records yet</div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {exitRecords.map((r) => (
+                  <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium capitalize" style={{ color: '#f0ece0' }}>{r.reason.replace('_', ' ')}</p>
+                        {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                      </div>
+                      <div className="text-right shrink-0 mr-1">
+                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.exited_at), 'MMM d, yyyy')}</p>
+                        {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
+                      </div>
+                      <RecordActions onEdit={() => openEditExit(r)} onDelete={() => handleDeleteExit(r)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Breeding tab */}
+        {tab === 'breeding' && (
+          <div className="pb-24 md:pb-8">
+            <div className="flex justify-end mb-4">
+              <Button size="sm" onClick={openAddBreeding}>Add record</Button>
+            </div>
+            {breedingRecords.length === 0 ? (
+              <div className="text-center py-12" style={{ color: '#6a6458' }}>No breeding records yet</div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {breedingRecords.map((r) => (
+                  <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex items-start gap-2">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+                          {r.paired_with_name ? `Paired with ${r.paired_with_name}` : 'Pairing'}
+                        </p>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {r.outcome && <Badge status={r.outcome === 'fertile' ? 'green' : r.outcome === 'infertile' ? 'red' : 'muted'}>{r.outcome}</Badge>}
+                          {r.clutch_size != null && <span className="text-xs" style={{ color: '#a8a090' }}>{r.clutch_size} eggs</span>}
+                          {r.eggs_fertile != null && <span className="text-xs" style={{ color: '#8fbe5a' }}>{r.eggs_fertile} fertile</span>}
+                        </div>
+                        {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Hatch: {format(new Date(r.hatch_date), 'MMM d, yyyy')}</p>}
+                        {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                      </div>
+                      <div className="text-right shrink-0 mr-1">
+                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.pairing_date), 'MMM d, yyyy')}</p>
+                      </div>
+                      <RecordActions onEdit={() => openEditBreeding(r)} onDelete={() => handleDeleteBreeding(r)} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Acquisition modal */}
+      <Modal open={acquisitionOpen} onClose={() => setAcquisitionOpen(false)} title={editingAcquisition ? 'Edit acquisition' : 'Add acquisition'}>
+        <div className="flex flex-col gap-4">
+          <Input label="Date acquired" type="date" value={acqDate} onChange={(e) => setAcqDate(e.target.value)} />
+          <Select label="Source" value={acqSource} onChange={(e) => setAcqSource(e.target.value)}>
+            <option value="">Select source</option>
+            <option value="breeder">Breeder</option>
+            <option value="rescue">Rescue</option>
+            <option value="pet_store">Pet store</option>
+            <option value="wild_caught">Wild caught</option>
+            <option value="gift">Gift</option>
+            <option value="other">Other</option>
+          </Select>
+          <Input label="Source name" value={acqSourceName} onChange={(e) => setAcqSourceName(e.target.value)} placeholder="e.g. John's Reptiles" />
+          <Input label="Price (AUD)" type="number" min={0} step={0.01} value={acqPrice} onChange={(e) => setAcqPrice(e.target.value)} placeholder="0.00" />
+          <Textarea label="Notes" value={acqNotes} onChange={(e) => setAcqNotes(e.target.value)} rows={2} />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setAcquisitionOpen(false)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveAcquisition} loading={savingAcq}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Exit modal */}
+      <Modal open={exitOpen} onClose={() => setExitOpen(false)} title={editingExit ? 'Edit exit record' : 'Add exit record'}>
+        <div className="flex flex-col gap-4">
+          <Input label="Date" type="date" value={exitDate} onChange={(e) => setExitDate(e.target.value)} />
+          <Select label="Reason" value={exitReason} onChange={(e) => setExitReason(e.target.value)}>
+            <option value="sold">Sold</option>
+            <option value="rehomed">Rehomed</option>
+            <option value="deceased">Deceased</option>
+            <option value="escaped">Escaped</option>
+            <option value="other">Other</option>
+          </Select>
+          <Input label="Sale price (AUD)" type="number" min={0} step={0.01} value={exitPrice} onChange={(e) => setExitPrice(e.target.value)} placeholder="0.00" />
+          <Textarea label="Notes" value={exitNotes} onChange={(e) => setExitNotes(e.target.value)} rows={2} />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setExitOpen(false)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveExit} loading={savingExit}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Breeding modal */}
+      <Modal open={breedingOpen} onClose={() => setBreedingOpen(false)} title={editingBreeding ? 'Edit breeding record' : 'Add breeding record'}>
+        <div className="flex flex-col gap-4">
+          <Input label="Pairing date" type="date" value={breedPairingDate} onChange={(e) => setBreedPairingDate(e.target.value)} />
+          <Input label="Paired with" value={breedPartnerName} onChange={(e) => setBreedPartnerName(e.target.value)} placeholder="Partner name or ID" />
+          <Select label="Outcome" value={breedOutcome} onChange={(e) => setBreedOutcome(e.target.value)}>
+            <option value="unknown">Unknown</option>
+            <option value="fertile">Fertile</option>
+            <option value="infertile">Infertile</option>
+          </Select>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Clutch size" type="number" min={0} value={breedClutchSize} onChange={(e) => setBreedClutchSize(e.target.value)} placeholder="0" />
+            <Input label="Fertile eggs" type="number" min={0} value={breedEggsFertile} onChange={(e) => setBreedEggsFertile(e.target.value)} placeholder="0" />
+          </div>
+          <Input label="Hatch date" type="date" value={breedHatchDate} onChange={(e) => setBreedHatchDate(e.target.value)} />
+          <Textarea label="Notes" value={breedNotes} onChange={(e) => setBreedNotes(e.target.value)} rows={2} />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setBreedingOpen(false)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveBreeding} loading={savingBreed}>Save</Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Edit animal modal */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit animal">
