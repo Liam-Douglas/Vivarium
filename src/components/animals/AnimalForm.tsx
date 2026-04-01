@@ -119,7 +119,8 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
         onSuccess()
       }
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Something went wrong', 'error')
+      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Something went wrong'
+      showToast(msg, 'error')
     } finally {
       setSaving(false)
     }
