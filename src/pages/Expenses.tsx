@@ -71,7 +71,7 @@ export function Expenses() {
 
       showToast('Expense added', 'success')
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Error', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
     } finally {
       setSaving(false)
     }

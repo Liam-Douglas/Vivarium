@@ -28,7 +28,7 @@ export function useSheddingLogs(animalId?: string) {
       const result = await getSheddingLogs(householdId, animalId)
       setData(result as SheddingLog[])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load shedding logs')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load shedding logs')
     } finally {
       setLoading(false)
     }

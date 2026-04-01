@@ -37,7 +37,7 @@ export function useFeederInventory() {
       )
       setData(itemsWithStock)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load feeder inventory')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load feeder inventory')
     } finally {
       setLoading(false)
     }

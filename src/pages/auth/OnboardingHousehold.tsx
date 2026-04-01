@@ -29,7 +29,7 @@ export function OnboardingHousehold() {
       await createHousehold(user.id, collectionName)
       await refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to create collection')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to create collection')
     } finally {
       setLoading(false)
     }
@@ -43,7 +43,7 @@ export function OnboardingHousehold() {
       await joinHouseholdByCode(inviteCode, user.id)
       setMode('pending')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Invalid invite code')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Invalid invite code')
     } finally {
       setLoading(false)
     }

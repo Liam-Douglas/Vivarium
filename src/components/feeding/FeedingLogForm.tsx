@@ -89,7 +89,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
 
       onSuccess()
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to save', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to save', 'error')
     } finally {
       setSaving(false)
     }

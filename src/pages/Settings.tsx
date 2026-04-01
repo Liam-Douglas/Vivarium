@@ -29,7 +29,7 @@ export function Settings() {
       await refreshProfile()
       showToast('Name updated', 'success')
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Error', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
     } finally {
       setSavingName(false)
     }
@@ -90,7 +90,7 @@ export function Settings() {
       refreshHousehold()
       showToast('Left collection', 'info')
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Error', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
     }
   }
 

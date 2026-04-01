@@ -29,7 +29,7 @@ export function useHealthEvents(animalId?: string) {
       const result = await getHealthEvents(householdId, animalId)
       setData(result as HealthEvent[])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load health events')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load health events')
     } finally {
       setLoading(false)
     }

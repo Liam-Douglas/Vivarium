@@ -27,7 +27,7 @@ export function useWeightLogs(animalId: string) {
       const result = await getWeightLogs(householdId, animalId)
       setData(result as WeightLog[])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load weight logs')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load weight logs')
     } finally {
       setLoading(false)
     }

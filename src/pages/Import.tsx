@@ -229,7 +229,7 @@ export function Import() {
       setProgress(100)
       setResult({ animals: animalsInserted, feedings: feedingsInserted, sheds: shedsInserted, skipped })
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Import failed', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed', 'error')
       setImporting(false)
     }
   }

@@ -91,7 +91,7 @@ export function FeederInventory() {
       setFeederName('')
       showToast('Feeder type added', 'success')
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Error', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
     } finally {
       setSavingFeeder(false)
     }
@@ -109,7 +109,7 @@ export function FeederInventory() {
       setStockNotes('')
       showToast('Stock added', 'success')
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Error', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
     } finally {
       setSavingStock(false)
     }
