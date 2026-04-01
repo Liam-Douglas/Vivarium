@@ -24,7 +24,7 @@ type FormValues = z.infer<typeof schema>
 
 interface AnimalFormProps {
   animal?: Animal
-  onSuccess: () => void
+  onSuccess: (updated?: Partial<Animal>) => void
   onCancel: () => void
 }
 
@@ -104,9 +104,23 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
       }
 
       showToast(animal ? 'Animal updated' : 'Animal added', 'success')
-      onSuccess()
+      if (animal) {
+        onSuccess({
+          name: values.name,
+          species: values.species,
+          morph: values.morph || null,
+          sex: values.sex || null,
+          date_of_birth: values.date_of_birth || null,
+          feeding_frequency_days: values.feeding_frequency_days ? Number(values.feeding_frequency_days) : 7,
+          notes: values.notes || null,
+          photo_url,
+        })
+      } else {
+        onSuccess()
+      }
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Something went wrong', 'error')
+      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Something went wrong'
+      showToast(msg, 'error')
     } finally {
       setSaving(false)
     }
