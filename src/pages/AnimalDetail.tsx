@@ -175,13 +175,13 @@ export function AnimalDetail() {
       }
       refreshWeight()
       setWeightOpen(false)
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingWeight(false) }
   }
   async function handleDeleteWeight(log: WeightLog) {
     if (!confirm('Delete this weight entry?')) return
     try { await deleteWeightLog(log.id); refreshWeight(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
   }
 
   // ── Shedding handlers ─────────────────────────────────────────────────────
@@ -212,13 +212,13 @@ export function AnimalDetail() {
       }
       refreshShedding()
       setShedOpen(false)
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingShed(false) }
   }
   async function handleDeleteShed(log: SheddingLog) {
     if (!confirm('Delete this shed record?')) return
     try { await deleteSheddingLog(log.id); refreshShedding(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
   }
 
   // ── Health handlers ───────────────────────────────────────────────────────
@@ -254,13 +254,13 @@ export function AnimalDetail() {
       }
       refreshHealth()
       setHealthOpen(false)
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingHealth(false) }
   }
   async function handleDeleteHealth(ev: HealthEvent) {
     if (!confirm('Delete this health event?')) return
     try { await deleteHealthEvent(ev.id); refreshHealth(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
   }
 
   // ── Feeding edit handlers ─────────────────────────────────────────────────
@@ -281,13 +281,13 @@ export function AnimalDetail() {
       refreshFeeding()
       setEditingFeed(null)
       showToast('Feeding updated', 'success')
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingFeedEdit(false) }
   }
   async function handleDeleteFeed(log: FeedingLog) {
     if (!confirm('Delete this feeding record?')) return
     try { await deleteFeedingLog(log.id); refreshFeeding(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
   }
 
   // ── Acquisition handlers ──────────────────────────────────────────────────
@@ -306,13 +306,13 @@ export function AnimalDetail() {
         showToast('Acquisition recorded', 'success')
       }
       refreshAcquisition(); setAcquisitionOpen(false)
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingAcq(false) }
   }
   async function handleDeleteAcquisition(r: AcquisitionRecord) {
     if (!confirm('Delete this acquisition record?')) return
     try { await deleteAcquisitionRecord(r.id); refreshAcquisition(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
   }
 
   // ── Exit handlers ─────────────────────────────────────────────────────────
@@ -331,13 +331,13 @@ export function AnimalDetail() {
         showToast('Exit recorded', 'success')
       }
       refreshExit(); setExitOpen(false)
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingExit(false) }
   }
   async function handleDeleteExit(r: ExitRecord) {
     if (!confirm('Delete this exit record?')) return
     try { await deleteExitRecord(r.id); refreshExit(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
   }
 
   // ── Breeding handlers ─────────────────────────────────────────────────────
@@ -355,13 +355,13 @@ export function AnimalDetail() {
         showToast('Breeding recorded', 'success')
       }
       refreshBreeding(); setBreedingOpen(false)
-    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingBreed(false) }
   }
   async function handleDeleteBreeding(r: BreedingRecord) {
     if (!confirm('Delete this breeding record?')) return
     try { await deleteBreedingRecord(r.id); refreshBreeding(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
   }
 
   async function handleDeactivate() {

@@ -31,7 +31,7 @@ export function useFeedingLogs(animalId?: string) {
       const result = await getFeedingLogs(householdId, animalId)
       setData(result as FeedingLog[])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load feeding logs')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load feeding logs')
     } finally {
       setLoading(false)
     }

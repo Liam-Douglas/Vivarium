@@ -42,7 +42,7 @@ export function useExpenses(year: number, month: number) {
       const result = await getExpenses(householdId, year, month)
       setData(result as Expense[])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load expenses')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load expenses')
     } finally {
       setLoading(false)
     }

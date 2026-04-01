@@ -35,7 +35,7 @@ export function useAnimals() {
       const result = await getAnimals(householdId)
       setData(result as Animal[])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load animals')
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load animals')
     } finally {
       setLoading(false)
     }
