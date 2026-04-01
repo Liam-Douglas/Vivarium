@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useExpenses, EXPENSE_CATEGORIES } from '@/hooks/useExpenses'
+import { useExpenses, EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
 import { useAnimals } from '@/hooks/useAnimals'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -12,12 +12,12 @@ import { Input, Select } from '@/components/ui/Input'
 import { format } from 'date-fns'
 
 const CATEGORY_ICONS: Record<string, string> = {
-  'Feeder stock': '🐛',
-  'Veterinary': '🏥',
-  'Enclosure': '🏠',
-  'Acquisition': '🦎',
-  'Supplies': '🛍️',
-  'Misc': '📦',
+  feeder_stock: '🐛',
+  veterinary: '🏥',
+  enclosure: '🏠',
+  acquisition: '🦎',
+  supplies: '🛍️',
+  misc: '📦',
 }
 
 export function Expenses() {
@@ -32,7 +32,7 @@ export function Expenses() {
   const [addOpen, setAddOpen] = useState(false)
 
   // Form state
-  const [category, setCategory] = useState('Misc')
+  const [category, setCategory] = useState('misc')
   const [amount, setAmount] = useState('')
   const [description, setDescription] = useState('')
   const [animalId, setAnimalId] = useState('')
@@ -117,7 +117,7 @@ export function Expenses() {
               <div className="px-4 py-3 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span>{CATEGORY_ICONS[cat] ?? '📦'}</span>
-                  <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{cat}</span>
+                  <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{EXPENSE_CATEGORY_LABELS[cat] ?? cat}</span>
                 </div>
                 <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>${(total / 100).toFixed(2)}</span>
               </div>
@@ -144,7 +144,7 @@ export function Expenses() {
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add expense">
         <div className="flex flex-col gap-4">
           <Select label="Category" value={category} onChange={(e) => setCategory(e.target.value)}>
-            {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+            {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{EXPENSE_CATEGORY_LABELS[c]}</option>)}
           </Select>
           <Input label="Amount (AUD)" type="number" min={0} step={0.01} value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" />
           <Input label="Description" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What did you buy?" />

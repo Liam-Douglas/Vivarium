@@ -18,13 +18,22 @@ export interface Expense {
 }
 
 export const EXPENSE_CATEGORIES = [
-  'Feeder stock',
-  'Veterinary',
-  'Enclosure',
-  'Acquisition',
-  'Supplies',
-  'Misc',
+  'feeder_stock',
+  'veterinary',
+  'enclosure',
+  'acquisition',
+  'supplies',
+  'misc',
 ] as const
+
+export const EXPENSE_CATEGORY_LABELS: Record<string, string> = {
+  feeder_stock: 'Feeder stock',
+  veterinary: 'Veterinary',
+  enclosure: 'Enclosure',
+  acquisition: 'Acquisition',
+  supplies: 'Supplies',
+  misc: 'Misc',
+}
 
 export type ExpenseCategory = (typeof EXPENSE_CATEGORIES)[number]
 
