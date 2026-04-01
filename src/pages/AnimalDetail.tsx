@@ -426,7 +426,7 @@ export function AnimalDetail() {
         <div className="mb-4">
           <h1 className="text-3xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{animal.name}</h1>
           <p className="text-sm mt-1" style={{ color: '#a8a090' }}>
-            {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex}` : ''}{age ? ` · ${age}` : ''}
+            {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex.charAt(0).toUpperCase() + animal.sex.slice(1)}` : ''}{age ? ` · ${age}` : ''}
           </p>
           {animal.weight_grams && <p className="text-sm mt-0.5" style={{ color: '#8fbe5a' }}>{animal.weight_grams}g</p>}
         </div>
