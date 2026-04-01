@@ -756,7 +756,7 @@ export function AnimalDetail() {
 
       {/* Edit animal modal */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit animal">
-        <AnimalForm animal={animal} onSuccess={() => { setEditOpen(false); getAnimal(animal.id).then((a) => setAnimal(a as Animal)) }} onCancel={() => setEditOpen(false)} />
+        <AnimalForm animal={animal} onSuccess={(updated) => { setEditOpen(false); if (updated) setAnimal((prev) => prev ? { ...prev, ...updated } : prev) }} onCancel={() => setEditOpen(false)} />
       </Modal>
 
       {/* Log feeding modal */}
