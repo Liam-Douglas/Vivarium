@@ -154,8 +154,8 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
 
       <Select label="Sex" {...register('sex')}>
         <option value="">Unknown</option>
-        <option value="Male">Male</option>
-        <option value="Female">Female</option>
+        <option value="male">Male</option>
+        <option value="female">Female</option>
       </Select>
 
       <Input label="Date of birth" type="date" {...register('date_of_birth')} />
