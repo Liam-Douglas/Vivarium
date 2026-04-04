@@ -149,8 +149,14 @@ export function FeederInventory() {
     try {
       const formData = new FormData()
       formData.append('file', file)
-      const { data, error } = await supabase.functions.invoke('parse-receipt', { body: formData })
-      if (error) throw new Error(error.message)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-receipt`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+        body: formData,
+      })
+      if (!res.ok) throw new Error(`Scan failed (${res.status})`)
+      const data = await res.json()
       const items: ParsedReceiptItem[] = (data?.items ?? []).map((item: { name: string; quantity: number; unit_price_cents: number; total_price_cents: number }, i: number) => ({
         _id: String(i),
         name: item.name,
