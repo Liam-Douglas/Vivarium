@@ -21,6 +21,8 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { AnimalForm } from '@/components/animals/AnimalForm'
 import type { Animal } from '@/hooks/useAnimals'
 import type { FeedingLog } from '@/hooks/useFeedingLogs'
@@ -142,6 +144,12 @@ export function AnimalDetail() {
   const [breedNotes, setBreedNotes] = useState('')
   const [savingBreed, setSavingBreed] = useState(false)
 
+  // ── Confirm dialog ────────────────────────────────────────────────────────
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
+  function requestConfirm(title: string, message: string, onConfirm: () => void) {
+    setConfirmDialog({ title, message, onConfirm })
+  }
+
   useEffect(() => {
     if (!id) return
     getAnimal(id).then((a) => { setAnimal(a as Animal); setLoading(false) }).catch(() => setLoading(false))
@@ -178,10 +186,12 @@ export function AnimalDetail() {
     } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingWeight(false) }
   }
-  async function handleDeleteWeight(log: WeightLog) {
-    if (!confirm('Delete this weight entry?')) return
-    try { await deleteWeightLog(log.id); refreshWeight(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+  function handleDeleteWeight(log: WeightLog) {
+    requestConfirm('Delete weight entry', 'This weight entry will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteWeightLog(log.id); refreshWeight(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
   }
 
   // ── Shedding handlers ─────────────────────────────────────────────────────
@@ -215,10 +225,12 @@ export function AnimalDetail() {
     } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingShed(false) }
   }
-  async function handleDeleteShed(log: SheddingLog) {
-    if (!confirm('Delete this shed record?')) return
-    try { await deleteSheddingLog(log.id); refreshShedding(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+  function handleDeleteShed(log: SheddingLog) {
+    requestConfirm('Delete shed record', 'This shed record will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteSheddingLog(log.id); refreshShedding(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
   }
 
   // ── Health handlers ───────────────────────────────────────────────────────
@@ -257,10 +269,12 @@ export function AnimalDetail() {
     } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingHealth(false) }
   }
-  async function handleDeleteHealth(ev: HealthEvent) {
-    if (!confirm('Delete this health event?')) return
-    try { await deleteHealthEvent(ev.id); refreshHealth(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+  function handleDeleteHealth(ev: HealthEvent) {
+    requestConfirm('Delete health event', 'This health event will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteHealthEvent(ev.id); refreshHealth(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
   }
 
   // ── Feeding edit handlers ─────────────────────────────────────────────────
@@ -284,10 +298,12 @@ export function AnimalDetail() {
     } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingFeedEdit(false) }
   }
-  async function handleDeleteFeed(log: FeedingLog) {
-    if (!confirm('Delete this feeding record?')) return
-    try { await deleteFeedingLog(log.id); refreshFeeding(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+  function handleDeleteFeed(log: FeedingLog) {
+    requestConfirm('Delete feeding record', 'This feeding record will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteFeedingLog(log.id); refreshFeeding(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
   }
 
   // ── Acquisition handlers ──────────────────────────────────────────────────
@@ -309,10 +325,12 @@ export function AnimalDetail() {
     } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingAcq(false) }
   }
-  async function handleDeleteAcquisition(r: AcquisitionRecord) {
-    if (!confirm('Delete this acquisition record?')) return
-    try { await deleteAcquisitionRecord(r.id); refreshAcquisition(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+  function handleDeleteAcquisition(r: AcquisitionRecord) {
+    requestConfirm('Delete acquisition record', 'This acquisition record will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteAcquisitionRecord(r.id); refreshAcquisition(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
   }
 
   // ── Exit handlers ─────────────────────────────────────────────────────────
@@ -334,10 +352,12 @@ export function AnimalDetail() {
     } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingExit(false) }
   }
-  async function handleDeleteExit(r: ExitRecord) {
-    if (!confirm('Delete this exit record?')) return
-    try { await deleteExitRecord(r.id); refreshExit(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+  function handleDeleteExit(r: ExitRecord) {
+    requestConfirm('Delete exit record', 'This exit record will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteExitRecord(r.id); refreshExit(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
   }
 
   // ── Breeding handlers ─────────────────────────────────────────────────────
@@ -358,16 +378,25 @@ export function AnimalDetail() {
     } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     finally { setSavingBreed(false) }
   }
-  async function handleDeleteBreeding(r: BreedingRecord) {
-    if (!confirm('Delete this breeding record?')) return
-    try { await deleteBreedingRecord(r.id); refreshBreeding(); showToast('Deleted', 'success') }
-    catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+  function handleDeleteBreeding(r: BreedingRecord) {
+    requestConfirm('Delete breeding record', 'This breeding record will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteBreedingRecord(r.id); refreshBreeding(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
   }
 
-  async function handleDeactivate() {
-    if (!id || !confirm(`Remove ${animal?.name} from your collection?`)) return
-    await deactivateAnimal(id)
-    navigate('/animals')
+  function handleDeactivate() {
+    if (!id) return
+    requestConfirm(
+      `Remove ${animal?.name}`,
+      `This will remove ${animal?.name} from your collection. This action cannot be undone.`,
+      async () => {
+        setConfirmDialog(null)
+        await deactivateAnimal(id)
+        navigate('/animals')
+      }
+    )
   }
 
   if (loading) {
@@ -487,7 +516,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={() => setFeedOpen(true)}>Log feeding</Button>
             </div>
             {feedingLogs.length === 0 ? (
-              <div className="text-center py-12" style={{ color: '#6a6458' }}>No feedings logged yet</div>
+              <EmptyState icon="🍖" title="No feedings logged" description="Tap 'Log feeding' to record the first meal." />
             ) : (
               <div className="flex flex-col gap-2">
                 {feedingLogs.map((log) => (
@@ -515,7 +544,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={openAddWeight}>Log weight</Button>
             </div>
             {weightLogs.length === 0 ? (
-              <div className="text-center py-12" style={{ color: '#6a6458' }}>No weights logged yet</div>
+              <EmptyState icon="⚖️" title="No weights logged" description="Tap 'Log weight' to start tracking growth." />
             ) : (
               <div className="flex flex-col gap-2">
                 {weightLogs.map((log) => (
@@ -540,7 +569,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={openAddShed}>Log shed</Button>
             </div>
             {sheddingLogs.length === 0 ? (
-              <div className="text-center py-12" style={{ color: '#6a6458' }}>No sheds logged yet</div>
+              <EmptyState icon="🐍" title="No sheds logged" description="Tap 'Log shed' to record a shedding event." />
             ) : (
               <div className="flex flex-col gap-2">
                 {sheddingLogs.map((log) => (
@@ -565,7 +594,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={openAddHealth}>Add event</Button>
             </div>
             {healthEvents.length === 0 ? (
-              <div className="text-center py-12" style={{ color: '#6a6458' }}>No health events logged yet</div>
+              <EmptyState icon="🏥" title="No health events" description="Tap 'Add event' to log an observation or vet visit." />
             ) : (
               <div className="flex flex-col gap-2">
                 {healthEvents.map((ev) => (
@@ -596,7 +625,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={openAddAcquisition}>Add record</Button>
             </div>
             {acquisitionRecords.length === 0 ? (
-              <div className="text-center py-12" style={{ color: '#6a6458' }}>No acquisition records yet</div>
+              <EmptyState icon="🏷️" title="No acquisition records" description="Tap 'Add record' to document where this animal came from." />
             ) : (
               <div className="flex flex-col gap-2">
                 {acquisitionRecords.map((r) => (
@@ -627,7 +656,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={openAddExit}>Add record</Button>
             </div>
             {exitRecords.length === 0 ? (
-              <div className="text-center py-12" style={{ color: '#6a6458' }}>No exit records yet</div>
+              <EmptyState icon="🚪" title="No exit records" description="Tap 'Add record' to log a sale, rehoming, or other exit." />
             ) : (
               <div className="flex flex-col gap-2">
                 {exitRecords.map((r) => (
@@ -657,7 +686,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={openAddBreeding}>Add record</Button>
             </div>
             {breedingRecords.length === 0 ? (
-              <div className="text-center py-12" style={{ color: '#6a6458' }}>No breeding records yet</div>
+              <EmptyState icon="🥚" title="No breeding records" description="Tap 'Add record' to log a pairing or clutch." />
             ) : (
               <div className="flex flex-col gap-2">
                 {breedingRecords.map((r) => (
@@ -763,6 +792,14 @@ export function AnimalDetail() {
       <Modal open={feedOpen} onClose={() => setFeedOpen(false)} title="Log feeding">
         <FeedingLogForm preselectedAnimalId={id} onSuccess={() => { setFeedOpen(false); refreshFeeding() }} onCancel={() => setFeedOpen(false)} />
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title ?? 'Are you sure?'}
+        message={confirmDialog?.message ?? ''}
+        onConfirm={() => confirmDialog?.onConfirm()}
+      />
 
       {/* Edit feeding modal */}
       <Modal open={!!editingFeed} onClose={() => setEditingFeed(null)} title="Edit feeding">

@@ -164,7 +164,11 @@ export function Expenses() {
           <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
         </div>
       ) : byCategory.length === 0 ? (
-        <div className="text-center py-12" style={{ color: '#6a6458' }}>No expenses this month</div>
+        <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+          <div className="text-5xl mb-4 opacity-60">💸</div>
+          <h3 className="text-lg font-semibold mb-2" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>No expenses this month</h3>
+          <p className="text-sm max-w-xs" style={{ color: '#a8a090' }}>Tap 'Add expense' to record a purchase or cost.</p>
+        </div>
       ) : (
         <div className="flex flex-col gap-4">
           {byCategory.map(({ cat, total, items }) => (

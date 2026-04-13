@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Link } from 'react-router-dom'
 
 export function Settings() {
@@ -20,6 +21,10 @@ export function Settings() {
   const [displayName, setDisplayName] = useState(profile?.full_name ?? '')
   const [savingName, setSavingName] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
+  function requestConfirm(title: string, message: string, onConfirm: () => void) {
+    setConfirmDialog({ title, message, onConfirm })
+  }
 
   async function handleSaveName() {
     if (!user) return
@@ -61,15 +66,17 @@ export function Settings() {
     }
   }
 
-  async function handleRemoveMember(memberId: string, name: string) {
-    if (!confirm(`Remove ${name} from the collection?`)) return
-    try {
-      await removeMember(memberId)
-      refreshHousehold()
-      showToast('Member removed', 'success')
-    } catch {
-      showToast('Failed to remove member', 'error')
-    }
+  function handleRemoveMember(memberId: string, name: string) {
+    requestConfirm(`Remove ${name}`, `${name} will lose access to this collection.`, async () => {
+      setConfirmDialog(null)
+      try {
+        await removeMember(memberId)
+        refreshHousehold()
+        showToast('Member removed', 'success')
+      } catch {
+        showToast('Failed to remove member', 'error')
+      }
+    })
   }
 
   async function handleToggleRole(memberId: string, currentRole: string) {
@@ -83,15 +90,18 @@ export function Settings() {
     }
   }
 
-  async function handleLeave() {
-    if (!householdId || !user || !confirm('Leave this collection? You will lose access to all shared data.')) return
-    try {
-      await leaveHousehold(householdId, user.id)
-      refreshHousehold()
-      showToast('Left collection', 'info')
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
-    }
+  function handleLeave() {
+    if (!householdId || !user) return
+    requestConfirm('Leave collection', 'You will lose access to all shared data. This cannot be undone.', async () => {
+      setConfirmDialog(null)
+      try {
+        await leaveHousehold(householdId, user.id)
+        refreshHousehold()
+        showToast('Left collection', 'info')
+      } catch (e) {
+        showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+      }
+    })
   }
 
   async function handleSignOut() {
@@ -236,6 +246,14 @@ export function Settings() {
       <div className="mt-6">
         <Button variant="ghost" onClick={handleSignOut} fullWidth>Sign out</Button>
       </div>
+
+      <ConfirmDialog
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title ?? 'Are you sure?'}
+        message={confirmDialog?.message ?? ''}
+        onConfirm={() => confirmDialog?.onConfirm()}
+      />
     </div>
   )
 }
