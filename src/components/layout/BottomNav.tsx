@@ -39,7 +39,7 @@ export function BottomNav() {
           key={tab.to}
           to={tab.to}
           end={tab.exact}
-          className="flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5"
+          className="relative flex-1 flex flex-col items-center justify-center py-2.5 gap-0.5"
         >
           {({ isActive }) => (
             <>

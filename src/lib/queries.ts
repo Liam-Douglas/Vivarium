@@ -365,6 +365,18 @@ export async function createExpense(expense: {
   return data
 }
 
+export async function updateExpense(id: string, updates: {
+  category?: string
+  amount_cents?: number
+  description?: string
+  animal_id?: string | null
+  expense_date?: string
+}) {
+  const { data, error } = await supabase.from('expenses').update(updates).eq('id', id).select().single()
+  if (error) throw error
+  return data
+}
+
 export async function softDeleteExpense(id: string) {
   const { error } = await supabase
     .from('expenses')

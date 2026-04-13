@@ -120,7 +120,7 @@ export function FeederInventory() {
     if (!user || !householdId || !stockQty) return
     setSavingStock(true)
     try {
-      await createFeederStockEvent({ household_id: householdId, feeder_item_id: feederId, user_id: user.id, event_type: 'restock', quantity_delta: Number(stockQty), unit_cost: stockCost ? Number(stockCost) * 100 : undefined, notes: stockNotes || undefined })
+      await createFeederStockEvent({ household_id: householdId, feeder_item_id: feederId, user_id: user.id, event_type: 'purchase', quantity_delta: Number(stockQty), unit_cost: stockCost ? Number(stockCost) * 100 : undefined, notes: stockNotes || undefined })
       refresh()
       setAddStockOpen(null)
       setStockQty('')
@@ -345,7 +345,7 @@ export function FeederInventory() {
           ) : history.map((ev: any) => (
             <div key={ev.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
               <div>
-                <p className="text-sm" style={{ color: '#f0ece0' }}>{ev.event_type === 'restock' ? '+' : ''}{ev.quantity_delta}</p>
+                <p className="text-sm" style={{ color: '#f0ece0' }}>{ev.event_type === 'purchase' ? '+' : ''}{ev.quantity_delta}</p>
                 <p className="text-xs" style={{ color: '#6a6458' }}>{ev.notes ?? ev.event_type}</p>
               </div>
               <p className="text-xs" style={{ color: '#6a6458' }}>{new Date(ev.created_at).toLocaleDateString()}</p>
