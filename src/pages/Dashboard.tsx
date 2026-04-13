@@ -175,7 +175,10 @@ export function Dashboard() {
             <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
           </div>
         ) : activity.length === 0 ? (
-          <p className="text-sm text-center py-8" style={{ color: '#6a6458' }}>No activity yet</p>
+          <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
+            <div className="text-4xl mb-3 opacity-60">📋</div>
+            <p className="text-sm" style={{ color: '#a8a090' }}>No activity yet</p>
+          </div>
         ) : (
           <div className="flex flex-col">
             {activity.map((item, i) => (
