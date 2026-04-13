@@ -4,7 +4,8 @@ import { useAnimals } from '@/hooks/useAnimals'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { createExpense } from '@/lib/queries'
+import { createExpense, updateExpense, softDeleteExpense } from '@/lib/queries'
+import type { Expense } from '@/hooks/useExpenses'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -39,6 +40,55 @@ export function Expenses() {
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0])
 
   const [saving, setSaving] = useState(false)
+
+  // Edit state
+  const [editExpense, setEditExpense] = useState<Expense | null>(null)
+  const [editCategory, setEditCategory] = useState('misc')
+  const [editAmount, setEditAmount] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [editAnimalId, setEditAnimalId] = useState('')
+  const [editDate, setEditDate] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
+
+  function openEdit(expense: Expense) {
+    setEditExpense(expense)
+    setEditCategory(expense.category)
+    setEditAmount((expense.amount_cents / 100).toFixed(2))
+    setEditDescription(expense.description)
+    setEditAnimalId(expense.animal_id ?? '')
+    setEditDate(expense.expense_date.split('T')[0])
+  }
+
+  async function handleEdit() {
+    if (!editExpense || !editAmount || !editDescription) return
+    setEditSaving(true)
+    try {
+      await updateExpense(editExpense.id, {
+        category: editCategory,
+        amount_cents: Math.round(Number(editAmount) * 100),
+        description: editDescription,
+        animal_id: editAnimalId || null,
+        expense_date: new Date(editDate).toISOString(),
+      })
+      refresh()
+      setEditExpense(null)
+      showToast('Expense updated', 'success')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  async function handleDelete(expense: Expense) {
+    try {
+      await softDeleteExpense(expense.id)
+      refresh()
+      showToast('Expense deleted', 'success')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+    }
+  }
 
   const totalCents = expenses.reduce((s, e) => s + e.amount_cents, 0)
 
@@ -128,18 +178,43 @@ export function Expenses() {
                 </div>
               </div>
               {items.map((expense) => (
-                <div key={expense.id} className="px-4 py-2 flex items-center justify-between" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div className="min-w-0">
+                <div key={expense.id} className="px-4 py-2 flex items-center justify-between gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div className="min-w-0 flex-1">
                     <p className="text-sm truncate" style={{ color: '#a8a090' }}>{expense.description}</p>
                     <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(expense.expense_date), 'MMM d')}</p>
                   </div>
-                  <p className="text-sm shrink-0 ml-3" style={{ color: '#f0ece0' }}>${(expense.amount_cents / 100).toFixed(2)}</p>
+                  <p className="text-sm shrink-0" style={{ color: '#f0ece0' }}>${(expense.amount_cents / 100).toFixed(2)}</p>
+                  <button onClick={() => openEdit(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#6a6458' }} title="Edit">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                  </button>
+                  <button onClick={() => handleDelete(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#6a6458' }} title="Delete">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
                 </div>
               ))}
             </div>
           ))}
         </div>
       )}
+
+      <Modal open={!!editExpense} onClose={() => setEditExpense(null)} title="Edit expense">
+        <div className="flex flex-col gap-4">
+          <Select label="Category" value={editCategory} onChange={(e) => setEditCategory(e.target.value)}>
+            {EXPENSE_CATEGORIES.map((c) => <option key={c} value={c}>{EXPENSE_CATEGORY_LABELS[c]}</option>)}
+          </Select>
+          <Input label="Amount (AUD)" type="number" min={0} step={0.01} value={editAmount} onChange={(e) => setEditAmount(e.target.value)} placeholder="0.00" />
+          <Input label="Description" value={editDescription} onChange={(e) => setEditDescription(e.target.value)} placeholder="What did you buy?" />
+          <Select label="Animal (optional)" value={editAnimalId} onChange={(e) => setEditAnimalId(e.target.value)}>
+            <option value="">No specific animal</option>
+            {animals.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          </Select>
+          <Input label="Date" type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setEditExpense(null)}>Cancel</Button>
+            <Button fullWidth onClick={handleEdit} loading={editSaving}>Save changes</Button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add expense">
         <div className="flex flex-col gap-4">
