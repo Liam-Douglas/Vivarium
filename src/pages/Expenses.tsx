@@ -92,11 +92,16 @@ export function Expenses() {
 
   const totalCents = expenses.reduce((s, e) => s + e.amount_cents, 0)
 
-  const byCategory = EXPENSE_CATEGORIES.map((cat) => {
-    const items = expenses.filter((e) => e.category === cat)
-    const total = items.reduce((s, e) => s + e.amount_cents, 0)
-    return { cat, total, items }
-  }).filter((g) => g.total > 0)
+  const byCategory = Object.entries(
+    expenses.reduce((acc, e) => {
+      acc[e.category] = [...(acc[e.category] ?? []), e]
+      return acc
+    }, {} as Record<string, typeof expenses>)
+  ).map(([cat, items]) => ({
+    cat,
+    items,
+    total: items.reduce((s, e) => s + e.amount_cents, 0),
+  })).filter((g) => g.total > 0)
 
   const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' })
 
