@@ -1,105 +1,85 @@
+<div align="center">
+
 # Vivarium
 
-A collaborative collection management app for reptile keepers and breeders. Track feeding schedules, health events, breeding records, feeder inventory, and expenses — all in one place, shared across your household.
+**The collection management app built for serious reptile keepers.**
+
+Vivarium is a mobile-first PWA that gives reptile hobbyists and breeders one place to manage their entire collection — feeding schedules, health records, shedding events, weight tracking, feeder inventory, and expenses — all shared in real time across a household.
+
+</div>
+
+---
+
+## What is Vivarium?
+
+Keeping reptiles well means staying on top of a lot of moving parts. Feeding windows, weight trends, shed cycles, vet visits, clutch records — and when you're managing a collection of 10, 20, or 50+ animals, spreadsheets and memory don't cut it.
+
+Vivarium was built to solve that. It's designed around the way keepers actually work: quick daily log entries from your phone, at-a-glance feeding status across the whole collection, and a full history for every animal. Share it with a partner or family member and everyone stays in sync automatically.
+
+---
+
+## Screenshots
+
+<table>
+  <tr>
+    <td align="center"><img src="docs/screenshots/dashboard.png" width="220"/><br/><sub>Dashboard</sub></td>
+    <td align="center"><img src="docs/screenshots/animals.png" width="220"/><br/><sub>Animal collection</sub></td>
+    <td align="center"><img src="docs/screenshots/animal-detail.png" width="220"/><br/><sub>Animal profile</sub></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="docs/screenshots/feeding.png" width="220"/><br/><sub>Feeding log</sub></td>
+    <td align="center"><img src="docs/screenshots/feeders.png" width="220"/><br/><sub>Feeder inventory</sub></td>
+    <td align="center"><img src="docs/screenshots/expenses.png" width="220"/><br/><sub>Expenses</sub></td>
+  </tr>
+</table>
 
 ---
 
 ## Features
 
-### Animal Management
-- Add animals with photo, species, morph, sex, date of birth, and feeding schedule
-- Colour-coded feeding status indicators (on schedule / due soon / overdue)
-- Full lifecycle tracking: acquisition → care → breeding → exit
-- Free tier supports up to 5 animals; Pro tier is unlimited
+### Dashboard
+The home screen gives you an immediate read on your collection. See how many animals have been fed this week, how many are overdue, and scroll through your animals sorted by feeding urgency. Recent activity from everyone in the household shows up in a live feed below. A floating action button gives you quick access to log a feeding, shed, weight entry, or expense without leaving the screen.
 
-### Per-Animal Record Keeping
-Each animal has a dedicated hub with tabs for:
-- **Feeding logs** — prey type, size, quantity, refusals
-- **Weight tracking** — logged measurements with a line chart showing growth trends
-- **Shedding events** — complete or incomplete, with dates and notes
-- **Health events** — observations, vet visits, and treatments with optional cost tracking
-- **Acquisition records** — source, price paid, and date acquired
-- **Breeding records** — pairings, clutch size, egg fertility, hatch dates, and outcomes
-- **Exit records** — reason for leaving the collection (sale, rehoming, death) with optional sale price
+### Animal Profiles
+Every animal gets its own profile with photo, species, morph, sex, date of birth, and feeding schedule. A colour-coded status indicator shows whether each animal is on schedule (green), due soon (amber), or overdue (red) at a glance.
+
+Each profile has dedicated tabs for the full history of that animal:
+
+| Tab | What's tracked |
+|---|---|
+| **Feeding** | Prey type, size, quantity, refusals, date |
+| **Weight** | Logged measurements with a growth chart |
+| **Shedding** | Complete or incomplete events with dates |
+| **Health** | Observations, vet visits, treatments, costs |
+| **Acquisition** | Source, price paid, acquisition date |
+| **Breeding** | Pairings, clutch size, egg fertility, hatch dates, outcomes |
+| **Exit** | Sale, rehoming, or death records with optional sale price |
+
+All records can be edited or deleted.
 
 ### Feeder Inventory
-- Track stock levels for insects, rodents, and other feeders
-- Visual stock gauge with low-stock threshold alerts (green / amber / red)
-- 20+ built-in presets (Dubia roaches, crickets, pinky mice, rats, etc.)
-- Log purchases with quantity, unit cost, and notes
-- Auto-generates a shopping list of items below threshold
-- Stock automatically decremented when feedings are logged
+Track live and frozen feeder stock across 20+ built-in presets — Dubia roaches, crickets, pinky mice, adult rats, and more. Each item has a configurable low-stock threshold. When stock drops below it, the item turns amber or red and automatically appears on a generated shopping list. Stock is decremented automatically when feedings are logged.
 
 ### Expenses
-- Monthly expense tracking across 6 categories: Feeder stock, Veterinary, Enclosure, Acquisition, Supplies, and Misc
-- Month-by-month navigation with category breakdowns
-- Link individual expenses to specific animals
-- Costs tracked in AUD
+Monthly expense tracking across six categories: Feeder stock, Veterinary, Enclosure, Acquisition, Supplies, and Misc. Navigate month-by-month, see a category breakdown with proportional bars, and link individual expenses to a specific animal. All amounts are tracked in AUD.
 
 ### Bulk Import
-- Import animals, feeding logs, and shedding records from `.csv` or `.xlsx` files
-- 4-step wizard: Upload → Map → Preview → Import
-- Downloadable template with example data
-- Intelligently links feeding/shedding logs to animals by name
-- Supports multiple date formats (ISO, DD/MM/YYYY, MM/DD/YYYY)
+Migrate an existing collection in minutes. Upload a `.csv` or `.xlsx` file through a 4-step wizard — Upload → Map → Preview → Import. A downloadable template shows the expected format. Feeding and shedding logs are automatically linked to animals by name. Supports ISO, DD/MM/YYYY, and MM/DD/YYYY date formats.
 
 ### Household & Collaboration
-- Share a collection with multiple people via invite code
-- Owner and Member roles with permission controls
-- Owners can promote members, remove members, and manage join requests
-- Activity feed on the dashboard shows recent actions across the whole household
+Create a shared collection and invite household members via a unique invite code. Owners and members each have their own login. Owners can approve join requests, promote or remove members, and see who logged what in the activity feed. All data syncs in real time.
 
 ---
 
 ## Tech Stack
 
-| Layer | Technology |
+| | |
 |---|---|
 | Framework | React 19 + TypeScript |
-| Build | Vite |
 | Styling | Tailwind CSS v4 |
 | Routing | React Router v7 |
-| Forms | React Hook Form + Zod |
 | Charts | Recharts |
-| Spreadsheets | SheetJS (xlsx) |
+| Spreadsheets | SheetJS |
 | Backend | Supabase (PostgreSQL + Auth + Realtime) |
 | PWA | vite-plugin-pwa |
-
----
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- A [Supabase](https://supabase.com) project
-
-### Setup
-
-```bash
-git clone https://github.com/liam-douglas/vivarium.git
-cd vivarium
-npm install
-```
-
-Create a `.env` file:
-
-```env
-VITE_SUPABASE_URL=your_supabase_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-```bash
-npm run dev
-```
-
-### Build
-
-```bash
-npm run build
-```
-
----
-
-## Deployment
-
-The app is deployed on [Vercel](https://vercel.com). Connect your repository, set the environment variables, and Vercel handles the rest.
+| Build | Vite |
