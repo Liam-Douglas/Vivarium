@@ -53,6 +53,7 @@ export function Import() {
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number } | null>(null)
   const [importing, setImporting] = useState(false)
+  const [importError, setImportError] = useState<string | null>(null)
 
   function downloadTemplate() {
     const wb = XLSX.utils.book_new()
@@ -123,7 +124,7 @@ export function Import() {
             name: name.trim(),
             species: species.trim(),
             morph: row['Morph'] || row['morph'] || null,
-            sex: row['Sex'] || row['sex'] || null,
+            sex: (row['Sex'] || row['sex'] || '').toLowerCase() || null,
             date_of_birth: row['Date of birth'] ? parseDate(row['Date of birth']) : null,
             feeding_frequency_days: row['Feeding frequency'] ? Number(row['Feeding frequency']) || null : null,
             notes: row['Notes'] || row['notes'] || null,
@@ -173,8 +174,12 @@ export function Import() {
   }
 
   async function handleImport() {
-    if (!householdId || !user) return
+    if (!householdId || !user) {
+      showToast('Not connected to a collection', 'error')
+      return
+    }
     setImporting(true)
+    setImportError(null)
     setStep(4)
     setProgress(0)
 
@@ -229,7 +234,8 @@ export function Import() {
       setProgress(100)
       setResult({ animals: animalsInserted, feedings: feedingsInserted, sheds: shedsInserted, skipped })
     } catch (e) {
-      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed', 'error')
+      const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed'
+      setImportError(msg)
       setImporting(false)
     }
   }
@@ -348,7 +354,14 @@ export function Import() {
 
       {step === 4 && (
         <div>
-          {!result ? (
+          {importError ? (
+            <div className="text-center">
+              <div className="text-4xl mb-4">❌</div>
+              <p className="text-lg font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Import failed</p>
+              <p className="text-sm mb-6 px-4" style={{ color: '#c45a5a' }}>{importError}</p>
+              <Button variant="secondary" onClick={() => { setStep(3); setImportError(null) }}>Go back and try again</Button>
+            </div>
+          ) : !result ? (
             <div>
               <div className="flex justify-center mb-6">
                 <div className="w-10 h-10 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
