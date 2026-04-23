@@ -43,7 +43,6 @@ function parseDate(raw: string): string | null {
 interface MatchCandidate {
   importName: string
   existing: { id: string; name: string; species: string }
-  decision: 'merge' | 'new'
 }
 
 export function Import() {
@@ -58,13 +57,29 @@ export function Import() {
   const [fileName, setFileName] = useState('')
   const [sheets, setSheets] = useState<{ name: string; rows: ParsedRow[] }[]>([])
   const [importData, setImportData] = useState<ImportData>({ animals: [], feedingLogs: [], sheddingLogs: [] })
-  const [matchCandidates, setMatchCandidates] = useState<MatchCandidate[]>([])
+  // decisions keyed by lowercased import name; default is 'merge' when unset
+  const [matchDecisions, setMatchDecisions] = useState<Record<string, 'merge' | 'new'>>({})
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number } | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+
+  // Computed reactively so it updates when existingAnimals finishes loading
+  const matchCandidates: MatchCandidate[] = importData.animals
+    .map((a) => {
+      const importName = a.name as string
+      const existing = existingAnimals.find(
+        (e) => e.name.toLowerCase() === importName.toLowerCase()
+      )
+      return existing ? { importName, existing: { id: existing.id, name: existing.name, species: existing.species } } : null
+    })
+    .filter(Boolean) as MatchCandidate[]
+
+  function getDecision(importName: string): 'merge' | 'new' {
+    return matchDecisions[importName.toLowerCase()] ?? 'merge'
+  }
 
   function downloadTemplate() {
     const wb = XLSX.utils.book_new()
@@ -185,21 +200,7 @@ export function Import() {
     }
 
     setImportData({ animals, feedingLogs, sheddingLogs })
-
-    // Detect name collisions with existing animals
-    const candidates: MatchCandidate[] = []
-    for (const imported of animals) {
-      const importedName = (imported.name as string).toLowerCase()
-      const existing = existingAnimals.find((e) => e.name.toLowerCase() === importedName)
-      if (existing) {
-        candidates.push({
-          importName: imported.name as string,
-          existing: { id: existing.id, name: existing.name, species: existing.species },
-          decision: 'merge',
-        })
-      }
-    }
-    setMatchCandidates(candidates)
+    setMatchDecisions({})
   }
 
   async function handleImport() {
@@ -221,12 +222,12 @@ export function Import() {
       // Pre-populate map with merged animals so their logs link correctly
       const animalMap = new Map<string, string>()
       matchCandidates
-        .filter((m) => m.decision === 'merge')
+        .filter((m) => getDecision(m.importName) === 'merge')
         .forEach((m) => animalMap.set(m.importName.toLowerCase(), m.existing.id))
 
       // Only insert animals not being merged with an existing one
       const mergedNames = new Set(
-        matchCandidates.filter((m) => m.decision === 'merge').map((m) => m.importName.toLowerCase())
+        matchCandidates.filter((m) => getDecision(m.importName) === 'merge').map((m) => m.importName.toLowerCase())
       )
       const animalsToInsert = importData.animals.filter(
         (a) => !mergedNames.has((a.name as string).toLowerCase())
@@ -386,39 +387,42 @@ export function Import() {
                   {matchCandidates.length} animal{matchCandidates.length !== 1 ? 's' : ''} already exist in your collection
                 </p>
               </div>
-              {matchCandidates.map((m) => (
-                <div key={m.importName} className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                  <div className="flex items-center gap-2 mb-2.5">
-                    <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{m.importName}</span>
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                    <span className="text-sm" style={{ color: '#a8a090' }}>{m.existing.name} <span style={{ color: '#6a6458' }}>({m.existing.species})</span></span>
+              {matchCandidates.map((m) => {
+                const decision = getDecision(m.importName)
+                return (
+                  <div key={m.importName} className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{m.importName}</span>
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                      <span className="text-sm" style={{ color: '#a8a090' }}>{m.existing.name} <span style={{ color: '#6a6458' }}>({m.existing.species})</span></span>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setMatchDecisions((prev) => ({ ...prev, [m.importName.toLowerCase()]: 'merge' }))}
+                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        style={{
+                          backgroundColor: decision === 'merge' ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${decision === 'merge' ? 'rgba(143,190,90,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                          color: decision === 'merge' ? '#8fbe5a' : '#6a6458',
+                        }}
+                      >
+                        ✓ Same animal — merge logs
+                      </button>
+                      <button
+                        onClick={() => setMatchDecisions((prev) => ({ ...prev, [m.importName.toLowerCase()]: 'new' }))}
+                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        style={{
+                          backgroundColor: decision === 'new' ? 'rgba(196,90,90,0.12)' : 'rgba(255,255,255,0.04)',
+                          border: `1px solid ${decision === 'new' ? 'rgba(196,90,90,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                          color: decision === 'new' ? '#c45a5a' : '#6a6458',
+                        }}
+                      >
+                        + Import as new animal
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setMatchCandidates((prev) => prev.map((c) => c.importName === m.importName ? { ...c, decision: 'merge' } : c))}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
-                      style={{
-                        backgroundColor: m.decision === 'merge' ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${m.decision === 'merge' ? 'rgba(143,190,90,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                        color: m.decision === 'merge' ? '#8fbe5a' : '#6a6458',
-                      }}
-                    >
-                      ✓ Same animal — merge logs
-                    </button>
-                    <button
-                      onClick={() => setMatchCandidates((prev) => prev.map((c) => c.importName === m.importName ? { ...c, decision: 'new' } : c))}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
-                      style={{
-                        backgroundColor: m.decision === 'new' ? 'rgba(196,90,90,0.12)' : 'rgba(255,255,255,0.04)',
-                        border: `1px solid ${m.decision === 'new' ? 'rgba(196,90,90,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                        color: m.decision === 'new' ? '#c45a5a' : '#6a6458',
-                      }}
-                    >
-                      + Import as new animal
-                    </button>
-                  </div>
-                </div>
-              ))}
+                )
+              })}
             </div>
           )}
 
