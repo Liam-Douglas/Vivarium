@@ -13,6 +13,16 @@ export async function getAnimals(householdId: string) {
   return data
 }
 
+export async function getAllAnimalsForMatching(householdId: string) {
+  const { data, error } = await supabase
+    .from('animals')
+    .select('id, name, species')
+    .eq('household_id', householdId)
+    .order('name')
+  if (error) throw error
+  return data ?? []
+}
+
 export async function getAnimal(id: string) {
   const { data, error } = await supabase
     .from('animals')

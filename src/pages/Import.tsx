@@ -1,12 +1,11 @@
-import { useState, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { parseISO, parse, isValid } from 'date-fns'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
-import { useAnimals } from '@/hooks/useAnimals'
 import { useToast } from '@/components/ui/Toast'
-import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs } from '@/lib/queries'
+import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -49,11 +48,11 @@ export function Import() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { householdId } = useHousehold()
-  const { data: existingAnimals } = useAnimals()
   const { showToast } = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [step, setStep] = useState<Step>(1)
+  const [allAnimals, setAllAnimals] = useState<{ id: string; name: string; species: string }[]>([])
   const [fileName, setFileName] = useState('')
   const [sheets, setSheets] = useState<{ name: string; rows: ParsedRow[] }[]>([])
   const [importData, setImportData] = useState<ImportData>({ animals: [], feedingLogs: [], sheddingLogs: [] })
@@ -66,14 +65,20 @@ export function Import() {
   const [processing, setProcessing] = useState(false)
   const [dragOver, setDragOver] = useState(false)
 
-  // Computed reactively so it updates when existingAnimals finishes loading
+  // Load all animals (active + inactive) once for matching
+  useEffect(() => {
+    if (!householdId) return
+    getAllAnimalsForMatching(householdId).then(setAllAnimals).catch(() => {})
+  }, [householdId])
+
+  // Computed reactively so it updates once allAnimals loads
   const matchCandidates: MatchCandidate[] = importData.animals
     .map((a) => {
-      const importName = a.name as string
-      const existing = existingAnimals.find(
-        (e) => e.name.toLowerCase() === importName.toLowerCase()
+      const importName = (a.name as string).trim()
+      const existing = allAnimals.find(
+        (e) => e.name.trim().toLowerCase() === importName.toLowerCase()
       )
-      return existing ? { importName, existing: { id: existing.id, name: existing.name, species: existing.species } } : null
+      return existing ? { importName, existing } : null
     })
     .filter(Boolean) as MatchCandidate[]
 
