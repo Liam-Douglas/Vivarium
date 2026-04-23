@@ -58,6 +58,8 @@ export function Import() {
   const [importData, setImportData] = useState<ImportData>({ animals: [], feedingLogs: [], sheddingLogs: [] })
   // decisions keyed by lowercased import name; default is 'merge' when unset
   const [matchDecisions, setMatchDecisions] = useState<Record<string, 'merge' | 'new'>>({})
+  // manual links for unmatched animals: key = lowercased import name, value = existing animal id or '' (import as new)
+  const [manualLinks, setManualLinks] = useState<Record<string, string>>({})
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number } | null>(null)
   const [importing, setImporting] = useState(false)
@@ -85,6 +87,13 @@ export function Import() {
   function getDecision(importName: string): 'merge' | 'new' {
     return matchDecisions[importName.toLowerCase()] ?? 'merge'
   }
+
+  // Import animals that didn't auto-match any existing animal
+  const unmatchedAnimals = importData.animals.filter(
+    (a) => !matchCandidates.some(
+      (m) => m.importName.toLowerCase() === (a.name as string).toLowerCase()
+    )
+  )
 
   function downloadTemplate() {
     const wb = XLSX.utils.book_new()
@@ -224,18 +233,30 @@ export function Import() {
     let shedsInserted = 0
 
     try {
-      // Pre-populate map with merged animals so their logs link correctly
+      // Pre-populate map: auto-merged + manually linked animals
       const animalMap = new Map<string, string>()
+
+      // Auto-matched merges
       matchCandidates
         .filter((m) => getDecision(m.importName) === 'merge')
-        .forEach((m) => animalMap.set(m.importName.toLowerCase(), m.existing.id))
+        .forEach((m) => {
+          animalMap.set(m.importName.trim().toLowerCase(), m.existing.id)
+          animalMap.set(m.existing.name.trim().toLowerCase(), m.existing.id)
+        })
 
-      // Only insert animals not being merged with an existing one
-      const mergedNames = new Set(
-        matchCandidates.filter((m) => getDecision(m.importName) === 'merge').map((m) => m.importName.toLowerCase())
-      )
+      // Manual links
+      for (const [key, existingId] of Object.entries(manualLinks)) {
+        if (existingId) animalMap.set(key, existingId)
+      }
+
+      // Names to skip inserting (merged or manually linked to existing)
+      const skipInsertNames = new Set([
+        ...matchCandidates.filter((m) => getDecision(m.importName) === 'merge').map((m) => m.importName.trim().toLowerCase()),
+        ...Object.entries(manualLinks).filter(([, v]) => v).map(([k]) => k),
+      ])
+
       const animalsToInsert = importData.animals.filter(
-        (a) => !mergedNames.has((a.name as string).toLowerCase())
+        (a) => !skipInsertNames.has((a.name as string).trim().toLowerCase())
       )
 
       if (animalsToInsert.length > 0) {
@@ -243,14 +264,14 @@ export function Import() {
         setProgress(33)
       }
 
-      // Fetch all animals (newly inserted + pre-existing) to fill the map
+      // Fetch all animals from DB and add to map (catches newly inserted + any name variants)
       const { data: dbAnimals } = await supabase.from('animals').select('id, name').eq('household_id', householdId)
-      dbAnimals?.forEach((a) => animalMap.set(a.name.toLowerCase(), a.id))
+      dbAnimals?.forEach((a) => animalMap.set(a.name.trim().toLowerCase(), a.id))
 
       // Insert feedings
       const feedingsToInsert = importData.feedingLogs
         .map((log) => {
-          const name = (log.animal_name as string).toLowerCase()
+          const name = (log.animal_name as string).trim().toLowerCase()
           const animal_id = animalMap.get(name)
           if (!animal_id) { skipped++; return null }
           const { animal_name: _, ...rest } = log
@@ -266,7 +287,7 @@ export function Import() {
       // Insert sheds
       const shedsToInsert = importData.sheddingLogs
         .map((log) => {
-          const name = (log.animal_name as string).toLowerCase()
+          const name = (log.animal_name as string).trim().toLowerCase()
           const animal_id = animalMap.get(name)
           if (!animal_id) { skipped++; return null }
           const { animal_name: _, ...rest } = log
@@ -431,6 +452,36 @@ export function Import() {
             </div>
           )}
 
+          {/* Unmatched animals — manual link */}
+          {unmatchedAnimals.length > 0 && allAnimals.length > 0 && (
+            <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: '#6a6458', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                No match found — link manually or import as new
+              </p>
+              {unmatchedAnimals.map((a, i) => {
+                const key = (a.name as string).trim().toLowerCase()
+                const linkedId = manualLinks[key] ?? ''
+                return (
+                  <div key={i} className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: i < unmatchedAnimals.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                    <span className="text-sm shrink-0" style={{ color: '#f0ece0' }}>{String(a.name)}</span>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2} className="shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    <select
+                      value={linkedId}
+                      onChange={(e) => setManualLinks((prev) => ({ ...prev, [key]: e.target.value }))}
+                      className="flex-1 text-sm rounded-lg px-3 py-1.5 focus:outline-none"
+                      style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.1)', color: linkedId ? '#8fbe5a' : '#a8a090' }}
+                    >
+                      <option value="">Import as new animal</option>
+                      {allAnimals.map((e) => (
+                        <option key={e.id} value={e.id}>{e.name} ({e.species})</option>
+                      ))}
+                    </select>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* Animal name preview */}
           {importData.animals.length > 0 && (
             <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -527,13 +578,30 @@ export function Import() {
             </div>
           ) : (
             <div className="text-center">
-              <div className="text-4xl mb-4">✅</div>
-              <p className="text-lg font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Import complete</p>
-              <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
-                Imported {result.animals} animals, {result.feedings} feeding logs, {result.sheds} shed records.
-                {result.skipped > 0 ? ` ${result.skipped} rows skipped.` : ''}
-              </p>
-              <Button onClick={() => navigate('/animals')}>View your animals</Button>
+              <div className="text-4xl mb-4">{result.skipped > 0 ? '⚠️' : '✅'}</div>
+              <p className="text-lg font-semibold mb-4" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Import complete</p>
+              <div className="rounded-xl p-4 mb-4 text-left" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Animals added</span><span style={{ color: '#f0ece0' }}>{result.animals}</span></div>
+                  <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Feeding logs</span><span style={{ color: '#f0ece0' }}>{result.feedings}</span></div>
+                  <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Shed records</span><span style={{ color: '#f0ece0' }}>{result.sheds}</span></div>
+                  {result.skipped > 0 && (
+                    <div className="flex justify-between text-sm pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span style={{ color: '#c45a5a' }}>Skipped (no matching animal)</span>
+                      <span style={{ color: '#c45a5a' }}>{result.skipped}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {result.skipped > 0 && (
+                <p className="text-xs mb-4 px-2" style={{ color: '#a8a090' }}>
+                  Some logs couldn't be linked because the animal name in the file didn't match any animal in your collection. Go back and use manual linking to fix this.
+                </p>
+              )}
+              <div className="flex gap-2">
+                {result.skipped > 0 && <Button variant="secondary" fullWidth onClick={() => { setStep(2); setResult(null) }}>Go back</Button>}
+                <Button fullWidth onClick={() => navigate('/animals')}>View your animals</Button>
+              </div>
             </div>
           )}
         </div>
