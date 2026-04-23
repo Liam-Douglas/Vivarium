@@ -54,6 +54,8 @@ export function Import() {
   const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number } | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
+  const [processing, setProcessing] = useState(false)
+  const [dragOver, setDragOver] = useState(false)
 
   function downloadTemplate() {
     const wb = XLSX.utils.book_new()
@@ -88,17 +90,20 @@ export function Import() {
 
   function handleFile(file: File) {
     setFileName(file.name)
+    setProcessing(true)
+    setDragOver(false)
     const reader = new FileReader()
     reader.onload = (e) => {
       const data = new Uint8Array(e.target!.result as ArrayBuffer)
-      const wb = XLSX.read(data, { type: 'array' })
+      const wb = XLSX.read(data, { type: 'array', cellDates: true })
       const parsed = wb.SheetNames.map((name) => {
         const ws = wb.Sheets[name]
-        const rows = XLSX.utils.sheet_to_json<ParsedRow>(ws, { defval: '' })
+        const rows = XLSX.utils.sheet_to_json<ParsedRow>(ws, { defval: '', raw: false })
         return { name, rows }
       })
       setSheets(parsed)
       autoMap(parsed)
+      setProcessing(false)
       setStep(2)
     }
     reader.readAsArrayBuffer(file)
@@ -147,7 +152,7 @@ export function Import() {
             prey_type: preyType.trim(),
             prey_size: row['Prey size'] || row['prey_size'] || null,
             quantity: Number(row['Quantity'] || row['quantity'] || '1') || 1,
-            refused: (row['Refused'] || '').toLowerCase() === 'true' || (row['Refused'] || '').toLowerCase() === 'yes',
+            refused: ['true', 'yes', '1'].includes((row['Refused'] || '').toLowerCase()),
             notes: row['Notes'] || row['notes'] || null,
           })
         })
@@ -163,7 +168,7 @@ export function Import() {
             user_id: user.id,
             animal_name: animalName.trim(),
             shed_at,
-            complete: !((row['Complete'] || '').toLowerCase() === 'false' || (row['Complete'] || '').toLowerCase() === 'no'),
+            complete: !['false', 'no', '0'].includes((row['Complete'] || '').toLowerCase()),
             notes: row['Notes'] || row['notes'] || null,
           })
         })
@@ -268,19 +273,36 @@ export function Import() {
       {step === 1 && (
         <div>
           <div
-            className="rounded-2xl p-8 text-center cursor-pointer mb-4"
-            style={{ border: '2px dashed rgba(255,255,255,0.1)', backgroundColor: '#242420' }}
-            onClick={() => fileRef.current?.click()}
-            onDragOver={(e) => e.preventDefault()}
+            className="rounded-2xl p-10 text-center cursor-pointer mb-4 transition-all duration-150"
+            style={{
+              border: `2px dashed ${dragOver ? '#8fbe5a' : 'rgba(255,255,255,0.1)'}`,
+              backgroundColor: dragOver ? 'rgba(143,190,90,0.06)' : '#242420',
+            }}
+            onClick={() => !processing && fileRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
+            onDragLeave={() => setDragOver(false)}
             onDrop={(e) => {
               e.preventDefault()
               const file = e.dataTransfer.files[0]
               if (file) handleFile(file)
             }}
           >
-            <div className="text-4xl mb-3">📁</div>
-            <p className="text-sm font-medium mb-1" style={{ color: '#f0ece0' }}>Drop your file here</p>
-            <p className="text-xs" style={{ color: '#6a6458' }}>Supports .csv and .xlsx</p>
+            {processing ? (
+              <>
+                <div className="flex justify-center mb-4">
+                  <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+                </div>
+                <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>Reading {fileName}…</p>
+              </>
+            ) : (
+              <>
+                <div className="text-4xl mb-3">{dragOver ? '📂' : '📁'}</div>
+                <p className="text-sm font-medium mb-1" style={{ color: '#f0ece0' }}>
+                  {dragOver ? 'Drop to upload' : 'Drop your file here or tap to browse'}
+                </p>
+                <p className="text-xs" style={{ color: '#6a6458' }}>Supports .csv and .xlsx</p>
+              </>
+            )}
             <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
           </div>
           <div className="text-center">
@@ -293,20 +315,62 @@ export function Import() {
 
       {step === 2 && (
         <div>
-          <p className="text-sm mb-4" style={{ color: '#a8a090' }}>
-            File: <strong style={{ color: '#f0ece0' }}>{fileName}</strong> — {sheets.length} sheet{sheets.length !== 1 ? 's' : ''} detected
-          </p>
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-sm font-medium mb-2" style={{ color: '#f0ece0' }}>Ready to import:</p>
-            <div className="flex flex-col gap-1">
-              <p className="text-sm" style={{ color: '#a8a090' }}>• {importData.animals.length} animals</p>
-              <p className="text-sm" style={{ color: '#a8a090' }}>• {importData.feedingLogs.length} feeding logs</p>
-              <p className="text-sm" style={{ color: '#a8a090' }}>• {importData.sheddingLogs.length} shedding records</p>
+          {/* File badge */}
+          <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl" style={{ backgroundColor: 'rgba(143,190,90,0.08)', border: '1px solid rgba(143,190,90,0.2)' }}>
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(143,190,90,0.15)' }}>
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#8fbe5a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{fileName}</p>
+              <p className="text-xs" style={{ color: '#8fbe5a' }}>{sheets.length} sheet{sheets.length !== 1 ? 's' : ''} detected</p>
             </div>
           </div>
+
+          {/* Stat cards */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {[
+              { icon: '🦎', label: 'Animals', count: importData.animals.length },
+              { icon: '🍖', label: 'Feedings', count: importData.feedingLogs.length },
+              { icon: '🐍', label: 'Sheds', count: importData.sheddingLogs.length },
+            ].map(({ icon, label, count }) => (
+              <div key={label} className="rounded-xl p-4 text-center" style={{ backgroundColor: '#242420', border: `1px solid ${count > 0 ? 'rgba(143,190,90,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                <div className="text-2xl mb-1">{icon}</div>
+                <p className="text-xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: count > 0 ? '#8fbe5a' : '#6a6458' }}>{count}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Animal name preview */}
+          {importData.animals.length > 0 && (
+            <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: '#6a6458', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                Animals detected
+              </p>
+              {importData.animals.slice(0, 5).map((a, i) => (
+                <div key={i} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: i < Math.min(importData.animals.length, 5) - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
+                  <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#8fbe5a' }} />
+                  <span className="text-sm" style={{ color: '#f0ece0' }}>{String(a.name)}</span>
+                  <span className="text-xs ml-auto" style={{ color: '#6a6458' }}>{String(a.species)}</span>
+                </div>
+              ))}
+              {importData.animals.length > 5 && (
+                <p className="px-4 py-2.5 text-xs" style={{ color: '#6a6458' }}>+{importData.animals.length - 5} more animals…</p>
+              )}
+            </div>
+          )}
+
+          {importData.animals.length === 0 && importData.feedingLogs.length === 0 && importData.sheddingLogs.length === 0 && (
+            <div className="rounded-xl p-4 mb-6 text-center" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
+              <p className="text-sm" style={{ color: '#c45a5a' }}>No data detected. Make sure your file matches the template format.</p>
+            </div>
+          )}
+
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => setStep(1)}>Back</Button>
-            <Button onClick={() => setStep(3)}>Continue to preview</Button>
+            <Button onClick={() => setStep(3)} disabled={importData.animals.length === 0 && importData.feedingLogs.length === 0 && importData.sheddingLogs.length === 0}>
+              Continue to preview
+            </Button>
           </div>
         </div>
       )}
