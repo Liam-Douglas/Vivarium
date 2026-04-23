@@ -91,10 +91,10 @@ export function Import() {
     const reader = new FileReader()
     reader.onload = (e) => {
       const data = new Uint8Array(e.target!.result as ArrayBuffer)
-      const wb = XLSX.read(data, { type: 'array' })
+      const wb = XLSX.read(data, { type: 'array', cellDates: true })
       const parsed = wb.SheetNames.map((name) => {
         const ws = wb.Sheets[name]
-        const rows = XLSX.utils.sheet_to_json<ParsedRow>(ws, { defval: '' })
+        const rows = XLSX.utils.sheet_to_json<ParsedRow>(ws, { defval: '', raw: false })
         return { name, rows }
       })
       setSheets(parsed)
@@ -147,7 +147,7 @@ export function Import() {
             prey_type: preyType.trim(),
             prey_size: row['Prey size'] || row['prey_size'] || null,
             quantity: Number(row['Quantity'] || row['quantity'] || '1') || 1,
-            refused: (row['Refused'] || '').toLowerCase() === 'true' || (row['Refused'] || '').toLowerCase() === 'yes',
+            refused: ['true', 'yes', '1'].includes((row['Refused'] || '').toLowerCase()),
             notes: row['Notes'] || row['notes'] || null,
           })
         })
@@ -163,7 +163,7 @@ export function Import() {
             user_id: user.id,
             animal_name: animalName.trim(),
             shed_at,
-            complete: !((row['Complete'] || '').toLowerCase() === 'false' || (row['Complete'] || '').toLowerCase() === 'no'),
+            complete: !['false', 'no', '0'].includes((row['Complete'] || '').toLowerCase()),
             notes: row['Notes'] || row['notes'] || null,
           })
         })
