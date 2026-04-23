@@ -4,6 +4,7 @@ import * as XLSX from 'xlsx'
 import { parseISO, parse, isValid } from 'date-fns'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useAnimals } from '@/hooks/useAnimals'
 import { useToast } from '@/components/ui/Toast'
 import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
@@ -39,10 +40,17 @@ function parseDate(raw: string): string | null {
   return null
 }
 
+interface MatchCandidate {
+  importName: string
+  existing: { id: string; name: string; species: string }
+  decision: 'merge' | 'new'
+}
+
 export function Import() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { householdId } = useHousehold()
+  const { data: existingAnimals } = useAnimals()
   const { showToast } = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -50,6 +58,7 @@ export function Import() {
   const [fileName, setFileName] = useState('')
   const [sheets, setSheets] = useState<{ name: string; rows: ParsedRow[] }[]>([])
   const [importData, setImportData] = useState<ImportData>({ animals: [], feedingLogs: [], sheddingLogs: [] })
+  const [matchCandidates, setMatchCandidates] = useState<MatchCandidate[]>([])
   const [progress, setProgress] = useState(0)
   const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number } | null>(null)
   const [importing, setImporting] = useState(false)
@@ -176,6 +185,21 @@ export function Import() {
     }
 
     setImportData({ animals, feedingLogs, sheddingLogs })
+
+    // Detect name collisions with existing animals
+    const candidates: MatchCandidate[] = []
+    for (const imported of animals) {
+      const importedName = (imported.name as string).toLowerCase()
+      const existing = existingAnimals.find((e) => e.name.toLowerCase() === importedName)
+      if (existing) {
+        candidates.push({
+          importName: imported.name as string,
+          existing: { id: existing.id, name: existing.name, species: existing.species },
+          decision: 'merge',
+        })
+      }
+    }
+    setMatchCandidates(candidates)
   }
 
   async function handleImport() {
@@ -194,15 +218,27 @@ export function Import() {
     let shedsInserted = 0
 
     try {
-      // Insert animals
-      if (importData.animals.length > 0) {
-        animalsInserted = await batchInsertAnimals(importData.animals)
+      // Pre-populate map with merged animals so their logs link correctly
+      const animalMap = new Map<string, string>()
+      matchCandidates
+        .filter((m) => m.decision === 'merge')
+        .forEach((m) => animalMap.set(m.importName.toLowerCase(), m.existing.id))
+
+      // Only insert animals not being merged with an existing one
+      const mergedNames = new Set(
+        matchCandidates.filter((m) => m.decision === 'merge').map((m) => m.importName.toLowerCase())
+      )
+      const animalsToInsert = importData.animals.filter(
+        (a) => !mergedNames.has((a.name as string).toLowerCase())
+      )
+
+      if (animalsToInsert.length > 0) {
+        animalsInserted = await batchInsertAnimals(animalsToInsert)
         setProgress(33)
       }
 
-      // Fetch inserted animals to resolve names → IDs
+      // Fetch all animals (newly inserted + pre-existing) to fill the map
       const { data: dbAnimals } = await supabase.from('animals').select('id, name').eq('household_id', householdId)
-      const animalMap = new Map<string, string>()
       dbAnimals?.forEach((a) => animalMap.set(a.name.toLowerCase(), a.id))
 
       // Insert feedings
@@ -340,6 +376,51 @@ export function Import() {
               </div>
             ))}
           </div>
+
+          {/* Match candidates */}
+          {matchCandidates.length > 0 && (
+            <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(212,146,74,0.3)' }}>
+              <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)', backgroundColor: 'rgba(212,146,74,0.08)' }}>
+                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="#d4924a" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                <p className="text-xs font-medium" style={{ color: '#d4924a' }}>
+                  {matchCandidates.length} animal{matchCandidates.length !== 1 ? 's' : ''} already exist in your collection
+                </p>
+              </div>
+              {matchCandidates.map((m) => (
+                <div key={m.importName} className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div className="flex items-center gap-2 mb-2.5">
+                    <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{m.importName}</span>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    <span className="text-sm" style={{ color: '#a8a090' }}>{m.existing.name} <span style={{ color: '#6a6458' }}>({m.existing.species})</span></span>
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setMatchCandidates((prev) => prev.map((c) => c.importName === m.importName ? { ...c, decision: 'merge' } : c))}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{
+                        backgroundColor: m.decision === 'merge' ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${m.decision === 'merge' ? 'rgba(143,190,90,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                        color: m.decision === 'merge' ? '#8fbe5a' : '#6a6458',
+                      }}
+                    >
+                      ✓ Same animal — merge logs
+                    </button>
+                    <button
+                      onClick={() => setMatchCandidates((prev) => prev.map((c) => c.importName === m.importName ? { ...c, decision: 'new' } : c))}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{
+                        backgroundColor: m.decision === 'new' ? 'rgba(196,90,90,0.12)' : 'rgba(255,255,255,0.04)',
+                        border: `1px solid ${m.decision === 'new' ? 'rgba(196,90,90,0.3)' : 'rgba(255,255,255,0.08)'}`,
+                        color: m.decision === 'new' ? '#c45a5a' : '#6a6458',
+                      }}
+                    >
+                      + Import as new animal
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* Animal name preview */}
           {importData.animals.length > 0 && (
