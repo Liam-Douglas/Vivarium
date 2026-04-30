@@ -2,12 +2,12 @@ export const PREY_TYPES = [
   {
     category: 'Rodents',
     items: [
-      { name: 'Rat', sizes: ['Pinky', 'Fuzzy', 'Pup', 'Small', 'Medium', 'Large', 'X-Large', 'Jumbo'] },
-      { name: 'Mouse', sizes: ['Pinky', 'Fuzzy', 'Hopper', 'Small', 'Medium', 'Large', 'X-Large'] },
-      { name: 'Multimammate mouse', sizes: ['Pinky', 'Fuzzy', 'Small', 'Medium', 'Large'] },
-      { name: 'Gerbil', sizes: ['Pinky', 'Small', 'Medium', 'Large'] },
+      { name: 'Rat', sizes: ['Pinkie', 'Fuzzie', 'Hopper', 'Weaner', 'Juvenile', 'Medium', 'Large', 'X-Large', 'Jumbo'] },
+      { name: 'Mouse', sizes: ['Pinkie', 'Fuzzie', 'Hopper', 'Weaner', 'Adult', 'X-Large'] },
+      { name: 'Rabbit', sizes: ['Small', 'Medium', 'Large', 'X-Large'] },
+      { name: 'Multimammate mouse', sizes: ['Pinkie', 'Fuzzie', 'Small', 'Medium', 'Large'] },
+      { name: 'Gerbil', sizes: ['Pinkie', 'Small', 'Medium', 'Large'] },
       { name: 'Guinea pig', sizes: ['Pup', 'Small', 'Medium', 'Large'] },
-      { name: 'Rabbit', sizes: ['Pinky', 'Pup', 'Small', 'Medium', 'Large'] },
     ],
   },
   {
