@@ -342,6 +342,16 @@ export async function getFeederStockEvents(householdId: string, feederItemId: st
   return data
 }
 
+export async function updateFeederItem(id: string, updates: { name?: string; unit_label?: string; low_stock_threshold?: number }) {
+  const { error } = await supabase.from('feeder_items').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteFeederItem(id: string) {
+  const { error } = await supabase.from('feeder_items').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ─── Expenses ────────────────────────────────────────────────────────────────
 
 export async function getExpenses(householdId: string, year: number, month: number) {

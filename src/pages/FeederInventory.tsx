@@ -3,12 +3,13 @@ import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { createFeederItem, createFeederStockEvent, getFeederStockEvents } from '@/lib/queries'
+import { createFeederItem, createFeederStockEvent, getFeederStockEvents, updateFeederItem, deleteFeederItem } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 const FEEDER_PRESETS = [
   // Insects
@@ -67,6 +68,8 @@ export function FeederInventory() {
   const [historyOpen, setHistoryOpen] = useState<string | null>(null)
   const [shoppingOpen, setShoppingOpen] = useState(false)
   const [history, setHistory] = useState<any[]>([])
+  const [editFeeder, setEditFeeder] = useState<typeof feeders[number] | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
 
   // Add feeder form
   const [feederName, setFeederName] = useState('')
@@ -74,6 +77,12 @@ export function FeederInventory() {
   const [unitLabel, setUnitLabel] = useState('insects')
   const [lowThreshold, setLowThreshold] = useState('10')
   const [savingFeeder, setSavingFeeder] = useState(false)
+
+  // Edit feeder form
+  const [editName, setEditName] = useState('')
+  const [editUnitLabel, setEditUnitLabel] = useState('')
+  const [editThreshold, setEditThreshold] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   // Add stock form
   const [stockQty, setStockQty] = useState('')
@@ -113,6 +122,45 @@ export function FeederInventory() {
     } finally {
       setSavingStock(false)
     }
+  }
+
+  function openEdit(f: typeof feeders[number]) {
+    setEditName(f.name)
+    setEditUnitLabel(f.unit_label)
+    setEditThreshold(String(f.low_stock_threshold))
+    setEditFeeder(f)
+  }
+
+  async function handleSaveEdit() {
+    if (!editFeeder) return
+    setSavingEdit(true)
+    try {
+      await updateFeederItem(editFeeder.id, { name: editName, unit_label: editUnitLabel, low_stock_threshold: Number(editThreshold) })
+      refresh()
+      setEditFeeder(null)
+      showToast('Feeder updated', 'success')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  function handleDeleteFeeder(f: typeof feeders[number]) {
+    setConfirmDialog({
+      title: `Delete ${f.name}`,
+      message: 'This will remove the feeder item and all its stock history. This cannot be undone.',
+      onConfirm: async () => {
+        setConfirmDialog(null)
+        try {
+          await deleteFeederItem(f.id)
+          refresh()
+          showToast('Feeder deleted', 'success')
+        } catch (e) {
+          showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+        }
+      },
+    })
   }
 
   async function openHistory(feederId: string) {
@@ -155,15 +203,27 @@ export function FeederInventory() {
           {feeders.map((f) => (
             <div key={f.id} className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-sm truncate" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{f.name}</h3>
                   <p className="text-xs" style={{ color: '#6a6458' }}>{f.unit_label}</p>
                 </div>
-                <button onClick={() => openHistory(f.id)} style={{ color: '#6a6458' }} className="shrink-0 mt-0.5">
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => openHistory(f.id)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => openEdit(f)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => handleDeleteFeeder(f)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <StockGauge current={f.currentStock} threshold={f.low_stock_threshold} />
               <Button size="sm" fullWidth className="mt-3" onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes('') }}>
@@ -251,6 +311,19 @@ export function FeederInventory() {
         </div>
       </Modal>
 
+      {/* Edit feeder modal */}
+      <Modal open={!!editFeeder} onClose={() => setEditFeeder(null)} title="Edit feeder">
+        <div className="flex flex-col gap-4">
+          <Input label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+          <Input label="Unit label" value={editUnitLabel} onChange={(e) => setEditUnitLabel(e.target.value)} placeholder="e.g. insects, mice" />
+          <Input label="Low stock threshold" type="number" min={0} value={editThreshold} onChange={(e) => setEditThreshold(e.target.value)} />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setEditFeeder(null)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveEdit} loading={savingEdit}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+
       {/* Shopping list modal */}
       <Modal open={shoppingOpen} onClose={() => setShoppingOpen(false)} title="Shopping list">
         <div className="flex flex-col gap-3">
@@ -267,6 +340,14 @@ export function FeederInventory() {
           ))}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title ?? 'Are you sure?'}
+        message={confirmDialog?.message ?? ''}
+        onConfirm={() => confirmDialog?.onConfirm()}
+      />
     </div>
   )
 }
