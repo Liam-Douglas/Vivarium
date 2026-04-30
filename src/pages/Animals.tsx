@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAnimals } from '@/hooks/useAnimals'
+import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useAuth } from '@/context/AuthContext'
 import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
@@ -12,7 +13,28 @@ import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 
 export function Animals() {
   const { data: animals, loading, error, refresh } = useAnimals()
+  const { data: allLogs } = useFeedingLogs()
   const { canAddAnimal } = useAuth()
+
+  const streakByAnimal = useMemo(() => {
+    const map = new Map<string, number>()
+    const byAnimal = new Map<string, typeof allLogs>()
+    allLogs.forEach((log) => {
+      const list = byAnimal.get(log.animal_id) ?? []
+      list.push(log)
+      byAnimal.set(log.animal_id, list)
+    })
+    byAnimal.forEach((logs, animalId) => {
+      const sorted = [...logs].sort((a, b) => new Date(b.fed_at).getTime() - new Date(a.fed_at).getTime())
+      let streak = 0
+      for (const log of sorted) {
+        if (log.refused) break
+        streak++
+      }
+      map.set(animalId, streak)
+    })
+    return map
+  }, [allLogs])
   const [addOpen, setAddOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
   const [filter, setFilter] = useState('')
@@ -84,7 +106,7 @@ export function Animals() {
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {filtered.map((animal) => (
-            <AnimalCard key={animal.id} animal={animal} />
+            <AnimalCard key={animal.id} animal={animal} streak={streakByAnimal.get(animal.id) ?? 0} />
           ))}
         </div>
       )}

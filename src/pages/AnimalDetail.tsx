@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays } from 'date-fns'
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
 import {
   getAnimal, deactivateAnimal,
   createWeightLog, updateWeightLog, deleteWeightLog,
@@ -39,6 +39,7 @@ import {
   createAcquisitionRecord, updateAcquisitionRecord, deleteAcquisitionRecord,
   createExitRecord, updateExitRecord, deleteExitRecord,
   createBreedingRecord, updateBreedingRecord, deleteBreedingRecord,
+  createExpense,
 } from '@/lib/queries'
 
 type Tab = 'overview' | 'feeding' | 'weight' | 'shedding' | 'health' | 'acquisition' | 'exit' | 'breeding'
@@ -84,6 +85,19 @@ export function AnimalDetail() {
   const [weightDate, setWeightDate] = useState(new Date().toISOString().split('T')[0])
   const [weightNotes, setWeightNotes] = useState('')
   const [savingWeight, setSavingWeight] = useState(false)
+  const [targetWeightInput, setTargetWeightInput] = useState('')
+  const [targetWeight, setTargetWeight] = useState<number | null>(() => {
+    if (!id) return null
+    const stored = localStorage.getItem(`vivarium-target-weight-${id}`)
+    return stored ? Number(stored) : null
+  })
+  function saveTargetWeight() {
+    const val = Number(targetWeightInput)
+    if (!id || !val || val <= 0) return
+    localStorage.setItem(`vivarium-target-weight-${id}`, String(val))
+    setTargetWeight(val)
+    setTargetWeightInput('')
+  }
 
   // ── Shedding state ────────────────────────────────────────────────────────
   const [shedOpen, setShedOpen] = useState(false)
@@ -101,6 +115,7 @@ export function AnimalDetail() {
   const [healthDate, setHealthDate] = useState(new Date().toISOString().split('T')[0])
   const [healthNotes, setHealthNotes] = useState('')
   const [healthCost, setHealthCost] = useState('')
+  const [healthAddToExpenses, setHealthAddToExpenses] = useState(false)
   const [savingHealth, setSavingHealth] = useState(false)
 
   // ── Feeding edit state ────────────────────────────────────────────────────
@@ -235,6 +250,7 @@ export function AnimalDetail() {
 
   // ── Health handlers ───────────────────────────────────────────────────────
   function openAddHealth() {
+    setHealthAddToExpenses(false)
     setEditingHealth(null)
     setHealthTitle('')
     setHealthType('observation')
@@ -262,6 +278,9 @@ export function AnimalDetail() {
         showToast('Health event updated', 'success')
       } else {
         await createHealthEvent({ household_id: householdId, animal_id: id, user_id: user.id, event_type: healthType, event_date: new Date(healthDate).toISOString(), title: healthTitle, notes: healthNotes || undefined, cost_cents: cost ?? undefined })
+        if (healthAddToExpenses && cost && cost > 0) {
+          await createExpense({ household_id: householdId, user_id: user.id, animal_id: id, category: 'veterinary', amount_cents: cost, currency: 'AUD', description: healthTitle, expense_date: healthDate })
+        }
         showToast('Health event added', 'success')
       }
       refreshHealth()
@@ -461,6 +480,17 @@ export function AnimalDetail() {
 
   const totalHealthCost = healthEvents.reduce((sum, ev) => sum + (ev.cost_cents ?? 0), 0)
 
+  const predictedNextShed = (() => {
+    if (sheddingIntervalData.length < 2) return null
+    const recent = sheddingIntervalData.slice(-5)
+    const avgDays = Math.round(recent.reduce((s, d) => s + d.days, 0) / recent.length)
+    const lastShed = sheddingLogs[0]
+    if (!lastShed) return null
+    const predicted = new Date(lastShed.shed_at)
+    predicted.setDate(predicted.getDate() + avgDays)
+    return predicted
+  })()
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'feeding', label: 'Feeding' },
@@ -531,10 +561,11 @@ export function AnimalDetail() {
                 { label: 'Feed every', value: animal.feeding_frequency_days ? `${animal.feeding_frequency_days} days` : '—' },
                 { label: 'Last shed', value: sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—' },
                 { label: 'Current weight', value: animal.weight_grams ? `${animal.weight_grams}g` : '—' },
+                ...(predictedNextShed ? [{ label: 'Next shed ~', value: format(predictedNextShed, 'MMM d'), color: predictedNextShed < new Date() ? '#d4924a' : '#a8a090' }] : []),
               ].map((stat) => (
                 <div key={stat.label} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                   <p className="text-xs" style={{ color: '#6a6458' }}>{stat.label}</p>
-                  <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>{stat.value}</p>
+                  <p className="text-base font-semibold mt-0.5" style={{ color: ('color' in stat && stat.color) ? stat.color : '#f0ece0' }}>{stat.value}</p>
                 </div>
               ))}
             </div>
@@ -636,8 +667,31 @@ export function AnimalDetail() {
                         <YAxis hide domain={['auto', 'auto']} />
                         <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v: number) => [`${v}g`, 'Weight']} />
                         <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
+                        {targetWeight && (
+                          <ReferenceLine y={targetWeight} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${targetWeight}g`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
+                        )}
                       </AreaChart>
                     </ResponsiveContainer>
+                    {/* Target weight setter */}
+                    <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <input
+                        type="number"
+                        min={1}
+                        value={targetWeightInput}
+                        onChange={(e) => setTargetWeightInput(e.target.value)}
+                        placeholder={targetWeight ? `Target: ${targetWeight}g` : 'Set target weight (g)'}
+                        className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+                        style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
+                      />
+                      <button onClick={saveTargetWeight} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>
+                        Set
+                      </button>
+                      {targetWeight && (
+                        <button onClick={() => { localStorage.removeItem(`vivarium-target-weight-${id}`); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>
+                          Clear
+                        </button>
+                      )}
+                    </div>
                     {(() => {
                       const first = [...weightLogs].at(-1)!
                       const last = weightLogs[0]
@@ -1050,6 +1104,12 @@ export function AnimalDetail() {
           <Input label="Date" type="date" value={healthDate} onChange={(e) => setHealthDate(e.target.value)} />
           <Input label="Cost (AUD)" type="number" min={0} step={0.01} value={healthCost} onChange={(e) => setHealthCost(e.target.value)} placeholder="0.00" />
           <Textarea label="Notes" value={healthNotes} onChange={(e) => setHealthNotes(e.target.value)} rows={2} />
+          {!editingHealth && healthCost && Number(healthCost) > 0 && (
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={healthAddToExpenses} onChange={(e) => setHealthAddToExpenses(e.target.checked)} className="accent-[#8fbe5a]" />
+              <span className="text-sm" style={{ color: '#a8a090' }}>Also add to expenses</span>
+            </label>
+          )}
           <div className="flex gap-2">
             <Button variant="secondary" fullWidth onClick={() => setHealthOpen(false)}>Cancel</Button>
             <Button fullWidth onClick={handleSaveHealth} loading={savingHealth}>Save</Button>

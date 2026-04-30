@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
+import { useAnimals } from '@/hooks/useAnimals'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -8,7 +9,9 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { format } from 'date-fns'
 
 export function FeedingLog() {
-  const { data: logs, loading, refresh } = useFeedingLogs()
+  const { data: animals } = useAnimals()
+  const [selectedAnimalId, setSelectedAnimalId] = useState<string | undefined>(undefined)
+  const { data: logs, loading, refresh } = useFeedingLogs(selectedAnimalId)
   const [addOpen, setAddOpen] = useState(false)
 
   return (
@@ -18,6 +21,23 @@ export function FeedingLog() {
         action={<Button size="sm" onClick={() => setAddOpen(true)}>Log feeding</Button>}
       />
 
+      {/* Animal filter */}
+      {animals.length > 0 && (
+        <div className="mb-4">
+          <select
+            value={selectedAnimalId ?? ''}
+            onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
+            className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+            style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#6a6458' }}
+          >
+            <option value="">All animals</option>
+            {animals.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       {loading ? (
         <div className="flex justify-center py-12">
           <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
@@ -25,7 +45,7 @@ export function FeedingLog() {
       ) : logs.length === 0 ? (
         <EmptyState
           icon="🍽️"
-          title="No feedings logged yet"
+          title={selectedAnimalId ? 'No feedings logged for this animal' : 'No feedings logged yet'}
           description="Tap to log one"
           action={<Button onClick={() => setAddOpen(true)}>Log first feeding</Button>}
         />
@@ -42,7 +62,8 @@ export function FeedingLog() {
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : '#5a9e6a' }} />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>
-                    {a?.name ?? 'Unknown'} — {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
+                    {!selectedAnimalId && a?.name ? `${a.name} — ` : ''}
+                    {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                   </p>
                   {log.notes && <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>{log.notes}</p>}
                 </div>
