@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
 import { createFeederItem, createFeederStockEvent, getFeederStockEvents, updateFeederItem, deleteFeederItem } from '@/lib/queries'
+import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -236,6 +237,10 @@ export function FeederInventory() {
     }
   }
 
+  function updateReceiptItem(id: string, updates: Partial<ParsedReceiptItem>) {
+    setReceiptItems((prev) => prev.map((item) => item._id === id ? { ...item, ...updates } : item))
+  }
+
   async function handleConfirmReceipt() {
     if (!user || !householdId) return
     setConfirmingReceipt(true)
@@ -449,6 +454,62 @@ export function FeederInventory() {
               </p>
             </div>
           ))}
+        </div>
+      </Modal>
+
+      {/* Receipt scanner review modal */}
+      <Modal open={receiptOpen} onClose={() => { setReceiptOpen(false); setReceiptItems([]) }} title="Review scanned receipt">
+        <div className="flex flex-col gap-3">
+          <p className="text-xs" style={{ color: '#a8a090' }}>Select which items to add to inventory and adjust quantities as needed.</p>
+          <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
+            {receiptItems.map((item) => (
+              <div
+                key={item._id}
+                className="flex items-start gap-3 p-3 rounded-xl"
+                style={{ backgroundColor: item.selected ? 'rgba(143,190,90,0.07)' : 'rgba(255,255,255,0.03)', border: `1px solid ${item.selected ? 'rgba(143,190,90,0.2)' : 'rgba(255,255,255,0.05)'}` }}
+              >
+                <input
+                  type="checkbox"
+                  checked={item.selected}
+                  onChange={(e) => updateReceiptItem(item._id, { selected: e.target.checked })}
+                  className="mt-1 accent-[#8fbe5a]"
+                />
+                <div className="flex-1 flex flex-col gap-2 min-w-0">
+                  <Input
+                    value={item.editedName}
+                    onChange={(e) => updateReceiptItem(item._id, { editedName: e.target.value })}
+                    disabled={!item.selected}
+                  />
+                  <div className="flex items-center gap-2">
+                    <Input
+                      label="Qty"
+                      type="number"
+                      min={1}
+                      value={item.editedQty}
+                      onChange={(e) => updateReceiptItem(item._id, { editedQty: e.target.value })}
+                      disabled={!item.selected}
+                    />
+                    {item.unit_price_cents > 0 && (
+                      <p className="text-xs whitespace-nowrap" style={{ color: '#6a6458' }}>
+                        ${(item.unit_price_cents / 100).toFixed(2)} ea
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 pt-1">
+            <Button variant="secondary" fullWidth onClick={() => { setReceiptOpen(false); setReceiptItems([]) }}>Cancel</Button>
+            <Button
+              fullWidth
+              loading={confirmingReceipt}
+              onClick={handleConfirmReceipt}
+              disabled={!receiptItems.some((i) => i.selected && i.editedName.trim())}
+            >
+              Add to inventory
+            </Button>
+          </div>
         </div>
       </Modal>
 
