@@ -665,7 +665,7 @@ export function AnimalDetail() {
                         </defs>
                         <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                         <YAxis hide domain={['auto', 'auto']} />
-                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v: number) => [`${v}g`, 'Weight']} />
+                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v}g`, 'Weight']} />
                         <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
                         {targetWeight && (
                           <ReferenceLine y={targetWeight} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${targetWeight}g`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
@@ -771,7 +771,7 @@ export function AnimalDetail() {
                       <BarChart data={sheddingIntervalData} barCategoryGap="25%">
                         <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
                         <YAxis hide />
-                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v: number) => [`${v} days`, 'Interval']} />
+                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v} days`, 'Interval']} />
                         <Bar dataKey="days" radius={[4, 4, 0, 0]}>
                           {sheddingIntervalData.map((entry, i) => (
                             <Cell key={i} fill={entry.complete ? '#5a9e6a' : '#d4924a'} />
@@ -827,7 +827,7 @@ export function AnimalDetail() {
                       <BarChart data={healthCostByType} layout="vertical" margin={{ left: 8, right: 16 }}>
                         <XAxis type="number" hide />
                         <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: '#a8a090' }} axisLine={false} tickLine={false} width={80} />
-                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v: number) => [`$${v.toFixed(2)}`, 'Cost']} />
+                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Cost']} />
                         <Bar dataKey="cost" fill="#d4924a" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
