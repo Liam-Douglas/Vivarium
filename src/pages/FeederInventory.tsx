@@ -3,13 +3,13 @@ import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { createFeederItem, createFeederStockEvent, getFeederStockEvents } from '@/lib/queries'
-import { supabase } from '@/lib/supabase'
+import { createFeederItem, createFeederStockEvent, getFeederStockEvents, updateFeederItem, deleteFeederItem } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 
 interface ParsedReceiptItem {
   _id: string
@@ -36,16 +36,25 @@ const FEEDER_PRESETS = [
   { label: 'Hornworms',               name: 'Hornworms',               type: 'insect', unit: 'worms' },
   { label: 'Black Soldier Fly Larvae',name: 'BSFL',                   type: 'insect', unit: 'larvae' },
   // Rodents
-  { label: 'Pinky Mice',              name: 'Pinky Mice',              type: 'rodent', unit: 'mice' },
-  { label: 'Fuzzy Mice',              name: 'Fuzzy Mice',              type: 'rodent', unit: 'mice' },
-  { label: 'Hopper Mice',             name: 'Hopper Mice',             type: 'rodent', unit: 'mice' },
-  { label: 'Mice – Small',            name: 'Mice (Small)',            type: 'rodent', unit: 'mice' },
-  { label: 'Mice – Medium',           name: 'Mice (Medium)',           type: 'rodent', unit: 'mice' },
-  { label: 'Mice – Large',            name: 'Mice (Large)',            type: 'rodent', unit: 'mice' },
-  { label: 'Rats – Small',            name: 'Rats (Small)',            type: 'rodent', unit: 'rats' },
+  { label: 'Mice – Pinkie',           name: 'Mice (Pinkie)',           type: 'rodent', unit: 'mice' },
+  { label: 'Mice – Fuzzie',           name: 'Mice (Fuzzie)',           type: 'rodent', unit: 'mice' },
+  { label: 'Mice – Hopper',           name: 'Mice (Hopper)',           type: 'rodent', unit: 'mice' },
+  { label: 'Mice – Weaner',           name: 'Mice (Weaner)',           type: 'rodent', unit: 'mice' },
+  { label: 'Mice – Adult',            name: 'Mice (Adult)',            type: 'rodent', unit: 'mice' },
+  { label: 'Mice – X-Large',          name: 'Mice (X-Large)',          type: 'rodent', unit: 'mice' },
+  { label: 'Rats – Pinkie',           name: 'Rats (Pinkie)',           type: 'rodent', unit: 'rats' },
+  { label: 'Rats – Fuzzie',           name: 'Rats (Fuzzie)',           type: 'rodent', unit: 'rats' },
+  { label: 'Rats – Hopper',           name: 'Rats (Hopper)',           type: 'rodent', unit: 'rats' },
+  { label: 'Rats – Weaner',           name: 'Rats (Weaner)',           type: 'rodent', unit: 'rats' },
+  { label: 'Rats – Juvenile',         name: 'Rats (Juvenile)',         type: 'rodent', unit: 'rats' },
   { label: 'Rats – Medium',           name: 'Rats (Medium)',           type: 'rodent', unit: 'rats' },
   { label: 'Rats – Large',            name: 'Rats (Large)',            type: 'rodent', unit: 'rats' },
+  { label: 'Rats – X-Large',          name: 'Rats (X-Large)',          type: 'rodent', unit: 'rats' },
   { label: 'Rats – Jumbo',            name: 'Rats (Jumbo)',            type: 'rodent', unit: 'rats' },
+  { label: 'Rabbits – Small',         name: 'Rabbits (Small)',         type: 'rodent', unit: 'rabbits' },
+  { label: 'Rabbits – Medium',        name: 'Rabbits (Medium)',        type: 'rodent', unit: 'rabbits' },
+  { label: 'Rabbits – Large',         name: 'Rabbits (Large)',         type: 'rodent', unit: 'rabbits' },
+  { label: 'Rabbits – X-Large',       name: 'Rabbits (X-Large)',       type: 'rodent', unit: 'rabbits' },
   // Other
   { label: 'Quail',                   name: 'Quail',                   type: 'other',  unit: 'quail' },
   { label: 'Day-old Chicks',          name: 'Day-old Chicks',          type: 'other',  unit: 'chicks' },
@@ -79,6 +88,8 @@ export function FeederInventory() {
   const [historyOpen, setHistoryOpen] = useState<string | null>(null)
   const [shoppingOpen, setShoppingOpen] = useState(false)
   const [history, setHistory] = useState<any[]>([])
+  const [editFeeder, setEditFeeder] = useState<typeof feeders[number] | null>(null)
+  const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
 
   // Add feeder form
   const [feederName, setFeederName] = useState('')
@@ -86,6 +97,12 @@ export function FeederInventory() {
   const [unitLabel, setUnitLabel] = useState('insects')
   const [lowThreshold, setLowThreshold] = useState('10')
   const [savingFeeder, setSavingFeeder] = useState(false)
+
+  // Edit feeder form
+  const [editName, setEditName] = useState('')
+  const [editUnitLabel, setEditUnitLabel] = useState('')
+  const [editThreshold, setEditThreshold] = useState('')
+  const [savingEdit, setSavingEdit] = useState(false)
 
   // Add stock form
   const [stockQty, setStockQty] = useState('')
@@ -132,6 +149,45 @@ export function FeederInventory() {
     } finally {
       setSavingStock(false)
     }
+  }
+
+  function openEdit(f: typeof feeders[number]) {
+    setEditName(f.name)
+    setEditUnitLabel(f.unit_label)
+    setEditThreshold(String(f.low_stock_threshold))
+    setEditFeeder(f)
+  }
+
+  async function handleSaveEdit() {
+    if (!editFeeder) return
+    setSavingEdit(true)
+    try {
+      await updateFeederItem(editFeeder.id, { name: editName, unit_label: editUnitLabel, low_stock_threshold: Number(editThreshold) })
+      refresh()
+      setEditFeeder(null)
+      showToast('Feeder updated', 'success')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  function handleDeleteFeeder(f: typeof feeders[number]) {
+    setConfirmDialog({
+      title: `Delete ${f.name}`,
+      message: 'This will remove the feeder item and all its stock history. This cannot be undone.',
+      onConfirm: async () => {
+        setConfirmDialog(null)
+        try {
+          await deleteFeederItem(f.id)
+          refresh()
+          showToast('Feeder deleted', 'success')
+        } catch (e) {
+          showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+        }
+      },
+    })
   }
 
   async function openHistory(feederId: string) {
@@ -258,15 +314,27 @@ export function FeederInventory() {
           {feeders.map((f) => (
             <div key={f.id} className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <h3 className="font-semibold text-sm truncate" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{f.name}</h3>
                   <p className="text-xs" style={{ color: '#6a6458' }}>{f.unit_label}</p>
                 </div>
-                <button onClick={() => openHistory(f.id)} style={{ color: '#6a6458' }} className="shrink-0 mt-0.5">
-                  <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </button>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button onClick={() => openHistory(f.id)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => openEdit(f)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+                  <button onClick={() => handleDeleteFeeder(f)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
               <StockGauge current={f.currentStock} threshold={f.low_stock_threshold} />
               <Button size="sm" fullWidth className="mt-3" onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes('') }}>
@@ -354,54 +422,15 @@ export function FeederInventory() {
         </div>
       </Modal>
 
-      {/* Receipt scan confirmation modal */}
-      <Modal open={receiptOpen} onClose={() => setReceiptOpen(false)} title="Receipt scan results">
+      {/* Edit feeder modal */}
+      <Modal open={!!editFeeder} onClose={() => setEditFeeder(null)} title="Edit feeder">
         <div className="flex flex-col gap-4">
-          <p className="text-sm" style={{ color: '#a8a090' }}>
-            Found {receiptItems.length} feeder item{receiptItems.length !== 1 ? 's' : ''}. Edit names/quantities and select which to add.
-          </p>
-          <div className="flex flex-col gap-3 max-h-72 overflow-y-auto pr-1">
-            {receiptItems.map((item, idx) => (
-              <div key={item._id} className="rounded-xl p-3" style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <input
-                    type="checkbox"
-                    checked={item.selected}
-                    onChange={(e) => setReceiptItems((prev) => prev.map((it, i) => i === idx ? { ...it, selected: e.target.checked } : it))}
-                    className="w-4 h-4 accent-[#8fbe5a] shrink-0"
-                  />
-                  <input
-                    type="text"
-                    value={item.editedName}
-                    onChange={(e) => setReceiptItems((prev) => prev.map((it, i) => i === idx ? { ...it, editedName: e.target.value } : it))}
-                    className="flex-1 bg-transparent text-sm border-b outline-none"
-                    style={{ color: '#f0ece0', borderColor: 'rgba(255,255,255,0.1)' }}
-                  />
-                </div>
-                <div className="flex items-center gap-2 pl-7">
-                  <span className="text-xs" style={{ color: '#6a6458' }}>Qty:</span>
-                  <input
-                    type="number"
-                    min={1}
-                    value={item.editedQty}
-                    onChange={(e) => setReceiptItems((prev) => prev.map((it, i) => i === idx ? { ...it, editedQty: e.target.value } : it))}
-                    className="w-16 bg-transparent text-sm border-b outline-none text-center"
-                    style={{ color: '#f0ece0', borderColor: 'rgba(255,255,255,0.1)' }}
-                  />
-                  {item.total_price_cents > 0 && (
-                    <span className="text-xs ml-auto" style={{ color: '#8fbe5a' }}>
-                      ${(item.total_price_cents / 100).toFixed(2)}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
+          <Input label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
+          <Input label="Unit label" value={editUnitLabel} onChange={(e) => setEditUnitLabel(e.target.value)} placeholder="e.g. insects, mice" />
+          <Input label="Low stock threshold" type="number" min={0} value={editThreshold} onChange={(e) => setEditThreshold(e.target.value)} />
           <div className="flex gap-2">
-            <Button variant="secondary" fullWidth onClick={() => setReceiptOpen(false)}>Cancel</Button>
-            <Button fullWidth onClick={handleConfirmReceipt} loading={confirmingReceipt}>
-              Add {receiptItems.filter((i) => i.selected).length} items
-            </Button>
+            <Button variant="secondary" fullWidth onClick={() => setEditFeeder(null)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveEdit} loading={savingEdit}>Save</Button>
           </div>
         </div>
       </Modal>
@@ -422,6 +451,14 @@ export function FeederInventory() {
           ))}
         </div>
       </Modal>
+
+      <ConfirmDialog
+        open={!!confirmDialog}
+        onClose={() => setConfirmDialog(null)}
+        title={confirmDialog?.title ?? 'Are you sure?'}
+        message={confirmDialog?.message ?? ''}
+        onConfirm={() => confirmDialog?.onConfirm()}
+      />
     </div>
   )
 }
