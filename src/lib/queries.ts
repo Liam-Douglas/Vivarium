@@ -369,6 +369,17 @@ export async function getExpenses(householdId: string, year: number, month: numb
   return data
 }
 
+export async function getAllExpenses(householdId: string) {
+  const { data, error } = await supabase
+    .from('expenses')
+    .select('*')
+    .eq('household_id', householdId)
+    .is('deleted_at', null)
+    .order('expense_date', { ascending: false })
+  if (error) throw error
+  return data
+}
+
 export async function createExpense(expense: {
   household_id: string
   user_id: string

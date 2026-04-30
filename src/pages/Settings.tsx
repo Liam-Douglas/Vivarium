@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole } from '@/lib/queries'
+import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -21,6 +21,47 @@ export function Settings() {
   const [displayName, setDisplayName] = useState(profile?.full_name ?? '')
   const [savingName, setSavingName] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [exporting, setExporting] = useState(false)
+
+  async function handleExport() {
+    if (!householdId) return
+    setExporting(true)
+    try {
+      const { utils, writeFile } = await import('xlsx')
+      const [animals, feedingLogs, sheddingLogs, expenses] = await Promise.all([
+        getAnimals(householdId),
+        getFeedingLogs(householdId),
+        getSheddingLogs(householdId),
+        getAllExpenses(householdId),
+      ])
+      const wb = utils.book_new()
+      utils.book_append_sheet(wb, utils.json_to_sheet(animals.map((a) => ({
+        Name: a.name, Species: a.species, Morph: a.morph ?? '', Sex: a.sex ?? '',
+        DOB: a.date_of_birth ?? '', 'Weight (g)': a.weight_grams ?? '', Notes: a.notes ?? '',
+        'Feeding frequency (days)': a.feeding_frequency_days ?? '', 'Last fed': a.last_fed_at ?? '',
+      }))), 'Animals')
+      utils.book_append_sheet(wb, utils.json_to_sheet(feedingLogs.map((l) => ({
+        Animal: (l.animals as { name: string } | null)?.name ?? l.animal_id,
+        Date: l.fed_at, 'Prey type': l.prey_type, Size: l.prey_size ?? '',
+        Quantity: l.quantity, Refused: l.refused ? 'Yes' : 'No', Notes: l.notes ?? '',
+      }))), 'Feeding log')
+      utils.book_append_sheet(wb, utils.json_to_sheet(sheddingLogs.map((l) => ({
+        Animal: (l.animals as { name: string } | null)?.name ?? l.animal_id,
+        Date: l.shed_at, Complete: l.complete ? 'Yes' : 'No', Notes: l.notes ?? '',
+      }))), 'Shedding log')
+      utils.book_append_sheet(wb, utils.json_to_sheet(expenses.map((e) => ({
+        Date: e.expense_date, Category: e.category,
+        'Amount (AUD)': (e.amount_cents / 100).toFixed(2),
+        Description: e.description, 'Animal ID': e.animal_id ?? '',
+      }))), 'Expenses')
+      writeFile(wb, `vivarium-export-${new Date().toISOString().slice(0, 10)}.xlsx`)
+      showToast('Export downloaded', 'success')
+    } catch {
+      showToast('Export failed', 'error')
+    } finally {
+      setExporting(false)
+    }
+  }
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
   function requestConfirm(title: string, message: string, onConfirm: () => void) {
     setConfirmDialog({ title, message, onConfirm })
@@ -231,6 +272,7 @@ export function Settings() {
       <Section title="Data">
         <div className="flex flex-col gap-3">
           <Button variant="secondary" size="sm" onClick={() => navigate('/import')}>Import data</Button>
+          <Button variant="secondary" size="sm" onClick={handleExport} loading={exporting}>Export collection</Button>
         </div>
       </Section>
 

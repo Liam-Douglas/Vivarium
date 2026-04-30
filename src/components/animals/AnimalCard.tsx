@@ -15,9 +15,10 @@ function getFeedingStatus(animal: Animal): { color: string; label: string } {
 
 interface AnimalCardProps {
   animal: Animal
+  streak?: number
 }
 
-export function AnimalCard({ animal }: AnimalCardProps) {
+export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
   const status = getFeedingStatus(animal)
 
   return (
@@ -39,6 +40,12 @@ export function AnimalCard({ animal }: AnimalCardProps) {
           style={{ backgroundColor: status.color, boxShadow: `0 0 0 3px rgba(0,0,0,0.4)` }}
           title={status.label}
         />
+        {/* Streak badge */}
+        {streak >= 3 && (
+          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-semibold" style={{ backgroundColor: 'rgba(0,0,0,0.55)', color: '#f0ece0' }}>
+            🔥 {streak}
+          </div>
+        )}
       </div>
 
       {/* Info */}

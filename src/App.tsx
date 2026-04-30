@@ -5,6 +5,8 @@ import { ToastProvider } from '@/components/ui/Toast'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { useAnimals } from '@/hooks/useAnimals'
+import { useOverdueNotification } from '@/hooks/useOverdueNotification'
 
 // Auth pages
 import { SignIn } from '@/pages/auth/SignIn'
@@ -51,6 +53,12 @@ function RequireHousehold() {
   return <Outlet />
 }
 
+function OverdueWatcher() {
+  const { data: animals } = useAnimals()
+  useOverdueNotification(animals)
+  return null
+}
+
 // Main app layout
 function AppShell() {
   return (
@@ -59,7 +67,7 @@ function AppShell() {
       <main className="flex-1 flex flex-col min-w-0">
         <Routes>
           <Route element={<RequireHousehold />}>
-            <Route path="/" element={<ErrorBoundary><Dashboard /></ErrorBoundary>} />
+            <Route path="/" element={<><OverdueWatcher /><ErrorBoundary><Dashboard /></ErrorBoundary></>} />
             <Route path="/animals" element={<ErrorBoundary><Animals /></ErrorBoundary>} />
             <Route path="/animals/:id" element={<ErrorBoundary><AnimalDetail /></ErrorBoundary>} />
             <Route path="/feeding" element={<ErrorBoundary><FeedingLog /></ErrorBoundary>} />
