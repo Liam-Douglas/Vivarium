@@ -296,7 +296,11 @@ export function Dashboard() {
       <div className="md:hidden fixed bottom-20 right-4 z-30 flex flex-col items-end gap-3">
         {/* Backdrop */}
         {fabOpen && (
-          <div className="fixed inset-0 z-0" onClick={() => setFabOpen(false)} />
+          <div
+            className="fixed inset-0 z-0"
+            style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
+            onClick={() => setFabOpen(false)}
+          />
         )}
 
         {/* Action items */}
