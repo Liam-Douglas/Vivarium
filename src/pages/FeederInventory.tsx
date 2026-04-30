@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -10,6 +10,17 @@ import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+
+interface ParsedReceiptItem {
+  _id: string
+  name: string
+  quantity: number
+  unit_price_cents: number
+  total_price_cents: number
+  selected: boolean
+  editedName: string
+  editedQty: string
+}
 
 const FEEDER_PRESETS = [
   // Insects
@@ -99,6 +110,13 @@ export function FeederInventory() {
   const [stockNotes, setStockNotes] = useState('')
   const [savingStock, setSavingStock] = useState(false)
 
+  // Receipt scanner
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [scanning, setScanning] = useState(false)
+  const [receiptItems, setReceiptItems] = useState<ParsedReceiptItem[]>([])
+  const [receiptOpen, setReceiptOpen] = useState(false)
+  const [confirmingReceipt, setConfirmingReceipt] = useState(false)
+
   async function handleAddFeeder() {
     if (!user || !householdId || !feederName) return
     setSavingFeeder(true)
@@ -179,10 +197,91 @@ export function FeederInventory() {
     setHistoryOpen(feederId)
   }
 
+  async function handleReceiptFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    e.target.value = ''
+    setScanning(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const { data: { session } } = await supabase.auth.getSession()
+      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-receipt`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${session?.access_token}` },
+        body: formData,
+      })
+      if (!res.ok) throw new Error(`Scan failed (${res.status})`)
+      const data = await res.json()
+      const items: ParsedReceiptItem[] = (data?.items ?? []).map((item: { name: string; quantity: number; unit_price_cents: number; total_price_cents: number }, i: number) => ({
+        _id: String(i),
+        name: item.name,
+        quantity: item.quantity ?? 1,
+        unit_price_cents: item.unit_price_cents ?? 0,
+        total_price_cents: item.total_price_cents ?? 0,
+        selected: true,
+        editedName: item.name,
+        editedQty: String(item.quantity ?? 1),
+      }))
+      if (items.length === 0) {
+        showToast('No feeder items found on receipt', 'error')
+        return
+      }
+      setReceiptItems(items)
+      setReceiptOpen(true)
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Scan failed', 'error')
+    } finally {
+      setScanning(false)
+    }
+  }
+
+  async function handleConfirmReceipt() {
+    if (!user || !householdId) return
+    setConfirmingReceipt(true)
+    const selected = receiptItems.filter((i) => i.selected && i.editedName.trim())
+    try {
+      for (const item of selected) {
+        // Find existing feeder item by name (case-insensitive) or create one
+        const match = feeders.find((f) => f.name.toLowerCase() === item.editedName.trim().toLowerCase())
+        let feederId = match?.id
+        if (!feederId) {
+          const created = await createFeederItem({
+            household_id: householdId,
+            user_id: user.id,
+            name: item.editedName.trim(),
+            feeder_type: 'other',
+            unit_label: 'units',
+            low_stock_threshold: 10,
+          })
+          feederId = (created as { id: string }).id
+        }
+        await createFeederStockEvent({
+          household_id: householdId,
+          feeder_item_id: feederId,
+          user_id: user.id,
+          event_type: 'restock',
+          quantity_delta: Number(item.editedQty) || 1,
+          unit_cost: item.unit_price_cents || undefined,
+          notes: 'Added from receipt scan',
+        })
+      }
+      refresh()
+      setReceiptOpen(false)
+      setReceiptItems([])
+      showToast(`Added ${selected.length} item${selected.length !== 1 ? 's' : ''} from receipt`, 'success')
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to add items', 'error')
+    } finally {
+      setConfirmingReceipt(false)
+    }
+  }
+
   const lowStockFeeders = feeders.filter((f) => f.currentStock < f.low_stock_threshold)
 
   return (
     <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-5xl mx-auto w-full">
+      <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleReceiptFile} />
       <Header
         title="Feeder Inventory"
         action={
@@ -192,6 +291,9 @@ export function FeederInventory() {
                 🛒 Shopping list
               </Button>
             )}
+            <Button size="sm" variant="secondary" loading={scanning} onClick={() => fileInputRef.current?.click()}>
+              {scanning ? 'Scanning…' : '📷 Scan receipt'}
+            </Button>
             <Button size="sm" onClick={() => setAddFeederOpen(true)}>Add feeder</Button>
           </div>
         }
