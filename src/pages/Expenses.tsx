@@ -41,6 +41,25 @@ export function Expenses() {
 
   const [saving, setSaving] = useState(false)
 
+  // Monthly budgets stored in localStorage per household
+  const [budgets, setBudgets] = useState<Record<string, number>>(() => {
+    const stored = localStorage.getItem(`vivarium-budgets-${householdId ?? 'default'}`)
+    return stored ? (JSON.parse(stored) as Record<string, number>) : {}
+  })
+  const [editingBudget, setEditingBudget] = useState<string | null>(null)
+  const [budgetInput, setBudgetInput] = useState('')
+
+  function saveBudget(cat: string) {
+    const val = Number(budgetInput)
+    const updated = { ...budgets }
+    if (val > 0) updated[cat] = val
+    else delete updated[cat]
+    setBudgets(updated)
+    localStorage.setItem(`vivarium-budgets-${householdId ?? 'default'}`, JSON.stringify(updated))
+    setEditingBudget(null)
+    setBudgetInput('')
+  }
+
   // Edit state
   const [editExpense, setEditExpense] = useState<Expense | null>(null)
   const [editCategory, setEditCategory] = useState('misc')
@@ -178,13 +197,65 @@ export function Expenses() {
                   <span>{CATEGORY_ICONS[cat] ?? '📦'}</span>
                   <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{EXPENSE_CATEGORY_LABELS[cat] ?? cat}</span>
                 </div>
-                <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>${(total / 100).toFixed(2)}</span>
+                <div className="flex items-center gap-2">
+                  {budgets[cat] && (
+                    <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#c45a5a' : '#6a6458' }}>
+                      / ${budgets[cat].toFixed(2)}
+                    </span>
+                  )}
+                  <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>${(total / 100).toFixed(2)}</span>
+                  <button
+                    onClick={() => { setEditingBudget(editingBudget === cat ? null : cat); setBudgetInput(budgets[cat] ? String(budgets[cat]) : '') }}
+                    className="w-6 h-6 rounded flex items-center justify-center text-xs"
+                    style={{ color: '#6a6458' }}
+                    title="Set budget"
+                  >
+                    🎯
+                  </button>
+                </div>
               </div>
+              {/* Budget inline editor */}
+              {editingBudget === cat && (
+                <div className="mx-4 mb-2 flex gap-2">
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={budgetInput}
+                    onChange={(e) => setBudgetInput(e.target.value)}
+                    placeholder="Monthly budget (AUD)"
+                    className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+                    style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
+                    autoFocus
+                  />
+                  <button onClick={() => saveBudget(cat)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>Set</button>
+                  {budgets[cat] && <button onClick={() => { setBudgetInput(''); saveBudget(cat) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>Clear</button>}
+                </div>
+              )}
               {/* Progress bar */}
               <div className="mx-4 mb-3">
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                  <div className="h-full rounded-full" style={{ width: `${totalCents > 0 ? (total / totalCents) * 100 : 0}%`, backgroundColor: '#8fbe5a' }} />
-                </div>
+                {budgets[cat] ? (
+                  <div>
+                    <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, (total / 100 / budgets[cat]) * 100)}%`,
+                          backgroundColor: total / 100 > budgets[cat] ? '#c45a5a' : total / 100 > budgets[cat] * 0.8 ? '#d4924a' : '#8fbe5a',
+                        }}
+                      />
+                    </div>
+                    <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                      {total / 100 > budgets[cat]
+                        ? `$${((total / 100) - budgets[cat]).toFixed(2)} over budget`
+                        : `$${(budgets[cat] - total / 100).toFixed(2)} remaining`}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                    <div className="h-full rounded-full" style={{ width: `${totalCents > 0 ? (total / totalCents) * 100 : 0}%`, backgroundColor: '#8fbe5a' }} />
+                  </div>
+                )}
               </div>
               {items.map((expense) => (
                 <div key={expense.id} className="px-4 py-2 flex items-center justify-between gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>

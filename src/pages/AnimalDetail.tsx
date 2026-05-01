@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays } from 'date-fns'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
@@ -42,7 +42,7 @@ import {
   createExpense,
 } from '@/lib/queries'
 
-type Tab = 'overview' | 'feeding' | 'weight' | 'shedding' | 'health' | 'acquisition' | 'exit' | 'breeding'
+type Tab = 'overview' | 'feeding' | 'weight' | 'shedding' | 'health' | 'acquisition' | 'exit' | 'breeding' | 'timeline'
 
 function RecordActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   return (
@@ -158,6 +158,18 @@ export function AnimalDetail() {
   const [breedHatchDate, setBreedHatchDate] = useState('')
   const [breedNotes, setBreedNotes] = useState('')
   const [savingBreed, setSavingBreed] = useState(false)
+
+  // ── QR code ───────────────────────────────────────────────────────────────
+  const [qrOpen, setQrOpen] = useState(false)
+  const [qrDataUrl, setQrDataUrl] = useState('')
+
+  async function openQr() {
+    const QRCode = await import('qrcode')
+    const url = `${window.location.origin}/animals/${id}`
+    const dataUrl = await QRCode.toDataURL(url, { color: { dark: '#8fbe5a', light: '#1a1a18' }, width: 240 })
+    setQrDataUrl(dataUrl)
+    setQrOpen(true)
+  }
 
   // ── Confirm dialog ────────────────────────────────────────────────────────
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
@@ -491,8 +503,33 @@ export function AnimalDetail() {
     return predicted
   })()
 
+  // ── Timeline events ───────────────────────────────────────────────────────
+  const timelineEvents = useMemo(() => {
+    type TEvent = { id: string; date: Date; type: string; icon: string; label: string; detail: string; color: string }
+    const events: TEvent[] = []
+    feedingLogs.forEach((l) => events.push({ id: `f-${l.id}`, date: new Date(l.fed_at), type: 'feeding', icon: l.refused ? '🚫' : '🍖', label: l.refused ? 'Refused food' : `Fed ${l.prey_type}${l.prey_size ? ` (${l.prey_size})` : ''} ×${l.quantity}`, detail: l.notes ?? '', color: l.refused ? '#c45a5a' : '#5a9e6a' }))
+    sheddingLogs.forEach((l) => events.push({ id: `s-${l.id}`, date: new Date(l.shed_at), type: 'shed', icon: '🐍', label: `Shed — ${l.complete ? 'complete' : 'incomplete'}`, detail: l.notes ?? '', color: l.complete ? '#8fbe5a' : '#d4924a' }))
+    weightLogs.forEach((l) => events.push({ id: `w-${l.id}`, date: new Date(l.logged_at), type: 'weight', icon: '⚖️', label: `Weighed: ${l.weight_grams}g`, detail: l.notes ?? '', color: '#5a8ebe' }))
+    healthEvents.forEach((l) => events.push({ id: `h-${l.id}`, date: new Date(l.event_date), type: 'health', icon: '🏥', label: l.title, detail: `${l.event_type.replace(/_/g, ' ')}${l.cost_cents ? ` · $${(l.cost_cents / 100).toFixed(2)}` : ''}`, color: '#d4924a' }))
+    acquisitionRecords.forEach((l) => events.push({ id: `a-${l.id}`, date: new Date(l.acquired_at), type: 'acquisition', icon: '🏷️', label: 'Acquired', detail: l.source_name ?? l.source ?? '', color: '#8fbe5a' }))
+    exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: '🚪', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: '#c45a5a' }))
+    breedingRecords.forEach((l) => events.push({ id: `b-${l.id}`, date: new Date(l.pairing_date), type: 'breeding', icon: '🥚', label: l.paired_with_name ? `Paired with ${l.paired_with_name}` : 'Pairing', detail: l.outcome ?? '', color: '#a87ac4' }))
+    return events.sort((a, b) => b.date.getTime() - a.date.getTime())
+  }, [feedingLogs, sheddingLogs, weightLogs, healthEvents, acquisitionRecords, exitRecords, breedingRecords])
+
+  // ── ROI / financials ──────────────────────────────────────────────────────
+  const financials = useMemo(() => {
+    const acqCost = acquisitionRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
+    const salePrice = exitRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
+    const vetCost = totalHealthCost
+    const totalCost = acqCost + vetCost
+    const net = salePrice - totalCost
+    return { acqCost, salePrice, vetCost, totalCost, net }
+  }, [acquisitionRecords, exitRecords, totalHealthCost])
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
+    { id: 'timeline', label: 'Timeline' },
     { id: 'feeding', label: 'Feeding' },
     { id: 'weight', label: 'Weight' },
     { id: 'shedding', label: 'Shedding' },
@@ -517,6 +554,9 @@ export function AnimalDetail() {
         </button>
         <button onClick={() => setEditOpen(true)} className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: '#f0ece0' }}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+        </button>
+        <button onClick={openQr} className="absolute top-4 right-16 w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} title="QR label">
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: '#f0ece0' }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
         </button>
       </div>
 
@@ -569,6 +609,39 @@ export function AnimalDetail() {
                 </div>
               ))}
             </div>
+            {/* Financials / ROI */}
+            {(financials.acqCost > 0 || financials.salePrice > 0 || financials.vetCost > 0) && (
+              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>FINANCIALS</p>
+                <div className="flex flex-col gap-1.5">
+                  {financials.acqCost > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#a8a090' }}>Acquisition</span>
+                      <span style={{ color: '#f0ece0' }}>−${(financials.acqCost / 100).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {financials.vetCost > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#a8a090' }}>Vet / health</span>
+                      <span style={{ color: '#f0ece0' }}>−${(financials.vetCost / 100).toFixed(2)}</span>
+                    </div>
+                  )}
+                  {financials.salePrice > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span style={{ color: '#a8a090' }}>Sale price</span>
+                      <span style={{ color: '#8fbe5a' }}>+${(financials.salePrice / 100).toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm pt-1.5 mt-0.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <span className="font-medium" style={{ color: '#f0ece0' }}>Net cost</span>
+                    <span className="font-semibold" style={{ color: financials.net > 0 ? '#8fbe5a' : '#c45a5a' }}>
+                      {financials.net >= 0 ? '+' : ''}${(financials.net / 100).toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {animal.notes && (
               <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>NOTES</p>
@@ -576,6 +649,32 @@ export function AnimalDetail() {
               </div>
             )}
             <Button variant="danger" size="sm" onClick={handleDeactivate}>Remove from collection</Button>
+          </div>
+        )}
+
+        {/* Timeline */}
+        {tab === 'timeline' && (
+          <div className="pb-24 md:pb-8">
+            {timelineEvents.length === 0 ? (
+              <EmptyState icon="📋" title="No records yet" description="Start logging feedings, sheds, weights or health events to see the timeline." />
+            ) : (
+              <div className="flex flex-col">
+                {timelineEvents.map((ev, i) => (
+                  <div key={ev.id} className="flex gap-3 pb-4" style={{ borderLeft: i < timelineEvents.length - 1 ? `2px solid rgba(255,255,255,0.06)` : '2px solid transparent', marginLeft: 11 }}>
+                    <div className="flex-shrink-0 -ml-3.5 w-6 h-6 rounded-full flex items-center justify-center text-sm" style={{ backgroundColor: '#1a1a18', border: `2px solid ${ev.color}` }}>
+                      <span style={{ fontSize: 11 }}>{ev.icon}</span>
+                    </div>
+                    <div className="flex-1 min-w-0 -mt-0.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.label}</p>
+                        <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{format(ev.date, 'MMM d, yy')}</p>
+                      </div>
+                      {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: '#6a6458' }}>{ev.detail}</p>}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -1029,6 +1128,26 @@ export function AnimalDetail() {
       {/* Log feeding modal */}
       <Modal open={feedOpen} onClose={() => setFeedOpen(false)} title="Log feeding">
         <FeedingLogForm preselectedAnimalId={id} onSuccess={() => { setFeedOpen(false); refreshFeeding() }} onCancel={() => setFeedOpen(false)} />
+      </Modal>
+
+      {/* QR label modal */}
+      <Modal open={qrOpen} onClose={() => setQrOpen(false)} title="QR enclosure label">
+        <div className="flex flex-col items-center gap-4">
+          {qrDataUrl && (
+            <img src={qrDataUrl} alt="QR code" className="rounded-xl" style={{ width: 240, height: 240 }} />
+          )}
+          <div className="text-center">
+            <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{animal?.name}</p>
+            <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{animal?.species}{animal?.morph ? ` · ${animal.morph}` : ''}</p>
+          </div>
+          <p className="text-xs text-center" style={{ color: '#6a6458' }}>Print or screenshot this QR code to label an enclosure. Scanning it will open the animal's profile.</p>
+          <Button variant="secondary" fullWidth onClick={() => {
+            const a = document.createElement('a')
+            a.href = qrDataUrl
+            a.download = `${animal?.name ?? 'animal'}-qr.png`
+            a.click()
+          }}>Download PNG</Button>
+        </div>
       </Modal>
 
       <ConfirmDialog

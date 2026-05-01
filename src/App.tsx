@@ -23,6 +23,8 @@ import { FeederInventory } from '@/pages/FeederInventory'
 import { Expenses } from '@/pages/Expenses'
 import { Import } from '@/pages/Import'
 import { Settings } from '@/pages/Settings'
+import { Stats } from '@/pages/Stats'
+import { FeedingCalendar } from '@/pages/FeedingCalendar'
 import { Terms } from '@/pages/Terms'
 import { Privacy } from '@/pages/Privacy'
 
@@ -74,6 +76,8 @@ function AppShell() {
             <Route path="/feeders" element={<ErrorBoundary><FeederInventory /></ErrorBoundary>} />
             <Route path="/expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
             <Route path="/import" element={<ErrorBoundary><Import /></ErrorBoundary>} />
+            <Route path="/stats" element={<ErrorBoundary><Stats /></ErrorBoundary>} />
+            <Route path="/calendar" element={<ErrorBoundary><FeedingCalendar /></ErrorBoundary>} />
           </Route>
           <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           <Route path="/terms" element={<Terms />} />
