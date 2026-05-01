@@ -39,6 +39,10 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
     n.toLowerCase().includes(preySearch.toLowerCase())
   )
 
+  const selectedAnimal = animals.find((a) => a.id === animalId)
+  const preyWeightMin = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.10) : null
+  const preyWeightMax = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.15) : null
+
   // Find matching feeder for this prey type
   function findMatchingFeeder() {
     const lc = preyType.toLowerCase()
@@ -174,6 +178,13 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
           </div>
         )}
       </div>
+
+      {/* Prey weight recommendation */}
+      {preyType && preyWeightMin && preyWeightMax && (
+        <p className="text-xs -mt-2" style={{ color: '#8fbe5a' }}>
+          Recommended prey: {preyWeightMin}–{preyWeightMax}g (10–15% of {selectedAnimal?.weight_grams}g body weight)
+        </p>
+      )}
 
       {/* Prey size */}
       {sizes.length > 0 && (

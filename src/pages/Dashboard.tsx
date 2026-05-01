@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { useAnimals } from '@/hooks/useAnimals'
@@ -8,6 +8,7 @@ import {
   getRecentActivity, approveHouseholdRequest, denyHouseholdRequest,
   createSheddingLog, createWeightLog, createExpense,
 } from '@/lib/queries'
+import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
 import { Button } from '@/components/ui/Button'
@@ -51,7 +52,31 @@ export function Dashboard() {
   const { profile, user, canAddAnimal } = useAuth()
   const { householdId, pendingRequests, currentUserRole, refresh: refreshHousehold } = useHousehold()
   const { data: animals, loading: animalsLoading, refresh: refreshAnimals } = useAnimals()
+  const { data: allLogs } = useFeedingLogs()
   const { showToast } = useToast()
+
+  const strikeAnimals = useMemo(() => {
+    const byAnimal = new Map<string, typeof allLogs>()
+    allLogs.forEach((log) => {
+      const list = byAnimal.get(log.animal_id) ?? []
+      list.push(log)
+      byAnimal.set(log.animal_id, list)
+    })
+    const strikes: typeof animals = []
+    byAnimal.forEach((logs, animalId) => {
+      const sorted = [...logs].sort((a, b) => new Date(b.fed_at).getTime() - new Date(a.fed_at).getTime())
+      let count = 0
+      for (const log of sorted) {
+        if (!log.refused) break
+        count++
+      }
+      if (count >= 3) {
+        const animal = animals.find((a) => a.id === animalId)
+        if (animal) strikes.push(animal)
+      }
+    })
+    return strikes
+  }, [allLogs, animals])
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
   const [approvingId, setApprovingId] = useState<string | null>(null)
@@ -218,6 +243,18 @@ export function Dashboard() {
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Feeding strike warning */}
+      {strikeAnimals.length > 0 && (
+        <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
+          <p className="text-sm font-medium mb-1" style={{ color: '#c45a5a' }}>
+            Feeding strike detected
+          </p>
+          <p className="text-xs" style={{ color: '#a8a090' }}>
+            {strikeAnimals.map((a) => a.name).join(', ')} {strikeAnimals.length === 1 ? 'has' : 'have'} refused 3+ consecutive meals. Consider checking for health issues or environment problems.
+          </p>
         </div>
       )}
 
