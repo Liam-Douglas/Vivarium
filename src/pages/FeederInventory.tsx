@@ -61,22 +61,6 @@ const FEEDER_PRESETS = [
   { label: 'Day-old Chicks',          name: 'Day-old Chicks',          type: 'other',  unit: 'chicks' },
 ]
 
-function StockGauge({ current, threshold }: { current: number; threshold: number }) {
-  const max = threshold * 2
-  const pct = Math.min(current / max, 1)
-  const color = current <= 0 ? '#c45a5a' : current < threshold ? '#d4924a' : '#5a9e6a'
-  return (
-    <div className="mt-2">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-lg font-bold" style={{ color, fontFamily: 'Playfair Display, serif' }}>{current}</span>
-        <span className="text-xs" style={{ color: '#6a6458' }}>threshold: {threshold}</span>
-      </div>
-      <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
-      </div>
-    </div>
-  )
-}
 
 export function FeederInventory() {
   const { data: feeders, loading, error, refresh } = useFeederInventory()
@@ -307,46 +291,65 @@ export function FeederInventory() {
       {error && <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>{error}</div>}
 
       {loading ? (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+        <div className="flex flex-col gap-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="skeleton rounded-xl h-32" />
+            <div key={i} className="skeleton rounded-xl h-16" />
           ))}
         </div>
       ) : feeders.length === 0 ? (
         <EmptyState icon="📦" title="No feeder inventory" description="Set up your feeder inventory to track stock" action={<Button onClick={() => setAddFeederOpen(true)}>Add first feeder</Button>} />
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {feeders.map((f) => (
-            <div key={f.id} className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold text-sm truncate" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{f.name}</h3>
-                  <p className="text-xs" style={{ color: '#6a6458' }}>{f.unit_label}</p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {feeders.map((f) => {
+            const pct = Math.min(f.currentStock / (f.low_stock_threshold * 2), 1)
+            const color = f.currentStock <= 0 ? '#c45a5a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
+            return (
+              <div key={f.id} className="rounded-xl px-4 py-3 flex items-center gap-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {/* Stock count */}
+                <div className="text-center shrink-0 w-12">
+                  <p className="text-2xl font-bold leading-tight" style={{ color, fontFamily: 'Playfair Display, serif' }}>{f.currentStock}</p>
+                  <p className="text-xs truncate" style={{ color: '#6a6458' }}>{f.unit_label}</p>
                 </div>
+
+                {/* Name + progress bar */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                    <h3 className="font-semibold text-sm truncate" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{f.name}</h3>
+                    <span className="text-xs shrink-0" style={{ color: '#6a6458' }}>/{f.low_stock_threshold}</span>
+                  </div>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
+                  </div>
+                </div>
+
+                {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
-                  <button onClick={() => openHistory(f.id)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <button
+                    onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes('') }}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}
+                  >
+                    + Stock
+                  </button>
+                  <button onClick={() => openHistory(f.id)} style={{ color: '#6a6458' }} className="p-1.5 rounded-lg hover:bg-white/5">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </button>
-                  <button onClick={() => openEdit(f)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <button onClick={() => openEdit(f)} style={{ color: '#6a6458' }} className="p-1.5 rounded-lg hover:bg-white/5">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
                     </svg>
                   </button>
-                  <button onClick={() => handleDeleteFeeder(f)} style={{ color: '#6a6458' }} className="p-1 rounded-lg hover:bg-white/5">
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <button onClick={() => handleDeleteFeeder(f)} style={{ color: '#6a6458' }} className="p-1.5 rounded-lg hover:bg-white/5">
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                     </svg>
                   </button>
                 </div>
               </div>
-              <StockGauge current={f.currentStock} threshold={f.low_stock_threshold} />
-              <Button size="sm" fullWidth className="mt-3" onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes('') }}>
-                Add stock
-              </Button>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
