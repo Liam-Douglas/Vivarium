@@ -7,7 +7,6 @@ const navItems = [
   { to: '/animals', label: 'Animals', icon: AnimalsIcon },
   { to: '/feeding', label: 'Feeding', icon: FeedingIcon },
   { to: '/calendar', label: 'Calendar', icon: CalendarIcon },
-  { to: '/feeders', label: 'Feeders', icon: FeedersIcon },
   { to: '/expenses', label: 'Expenses', icon: ExpensesIcon },
   { to: '/stats', label: 'Stats', icon: StatsIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
@@ -27,13 +26,7 @@ function AnimalsIcon({ active }: { active: boolean }) {
     </svg>
   )
 }
-function FeedersIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-    </svg>
-  )
-}
+
 function ExpensesIcon({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75}>

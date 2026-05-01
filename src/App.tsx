@@ -19,7 +19,6 @@ import { Dashboard } from '@/pages/Dashboard'
 import { Animals } from '@/pages/Animals'
 import { AnimalDetail } from '@/pages/AnimalDetail'
 import { FeedingLog } from '@/pages/FeedingLog'
-import { FeederInventory } from '@/pages/FeederInventory'
 import { Expenses } from '@/pages/Expenses'
 import { Import } from '@/pages/Import'
 import { Settings } from '@/pages/Settings'
@@ -73,7 +72,7 @@ function AppShell() {
             <Route path="/animals" element={<ErrorBoundary><Animals /></ErrorBoundary>} />
             <Route path="/animals/:id" element={<ErrorBoundary><AnimalDetail /></ErrorBoundary>} />
             <Route path="/feeding" element={<ErrorBoundary><FeedingLog /></ErrorBoundary>} />
-            <Route path="/feeders" element={<ErrorBoundary><FeederInventory /></ErrorBoundary>} />
+            <Route path="/feeders" element={<Navigate to="/expenses" replace />} />
             <Route path="/expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
             <Route path="/import" element={<ErrorBoundary><Import /></ErrorBoundary>} />
             <Route path="/stats" element={<ErrorBoundary><Stats /></ErrorBoundary>} />
