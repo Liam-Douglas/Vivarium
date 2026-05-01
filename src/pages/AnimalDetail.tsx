@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays } from 'date-fns'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
@@ -504,8 +504,8 @@ export function AnimalDetail() {
   })()
 
   // ── Timeline events ───────────────────────────────────────────────────────
-  const timelineEvents = useMemo(() => {
-    type TEvent = { id: string; date: Date; type: string; icon: string; label: string; detail: string; color: string }
+  type TEvent = { id: string; date: Date; type: string; icon: string; label: string; detail: string; color: string }
+  const timelineEvents: TEvent[] = (() => {
     const events: TEvent[] = []
     feedingLogs.forEach((l) => events.push({ id: `f-${l.id}`, date: new Date(l.fed_at), type: 'feeding', icon: l.refused ? '🚫' : '🍖', label: l.refused ? 'Refused food' : `Fed ${l.prey_type}${l.prey_size ? ` (${l.prey_size})` : ''} ×${l.quantity}`, detail: l.notes ?? '', color: l.refused ? '#c45a5a' : '#5a9e6a' }))
     sheddingLogs.forEach((l) => events.push({ id: `s-${l.id}`, date: new Date(l.shed_at), type: 'shed', icon: '🐍', label: `Shed — ${l.complete ? 'complete' : 'incomplete'}`, detail: l.notes ?? '', color: l.complete ? '#8fbe5a' : '#d4924a' }))
@@ -515,17 +515,12 @@ export function AnimalDetail() {
     exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: '🚪', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: '#c45a5a' }))
     breedingRecords.forEach((l) => events.push({ id: `b-${l.id}`, date: new Date(l.pairing_date), type: 'breeding', icon: '🥚', label: l.paired_with_name ? `Paired with ${l.paired_with_name}` : 'Pairing', detail: l.outcome ?? '', color: '#a87ac4' }))
     return events.sort((a, b) => b.date.getTime() - a.date.getTime())
-  }, [feedingLogs, sheddingLogs, weightLogs, healthEvents, acquisitionRecords, exitRecords, breedingRecords])
+  })()
 
   // ── ROI / financials ──────────────────────────────────────────────────────
-  const financials = useMemo(() => {
-    const acqCost = acquisitionRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
-    const salePrice = exitRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
-    const vetCost = totalHealthCost
-    const totalCost = acqCost + vetCost
-    const net = salePrice - totalCost
-    return { acqCost, salePrice, vetCost, totalCost, net }
-  }, [acquisitionRecords, exitRecords, totalHealthCost])
+  const acqCost = acquisitionRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
+  const salePrice = exitRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
+  const financials = { acqCost, salePrice, vetCost: totalHealthCost, totalCost: acqCost + totalHealthCost, net: salePrice - acqCost - totalHealthCost }
 
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
