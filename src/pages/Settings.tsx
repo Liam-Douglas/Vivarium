@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Import } from '@/pages/Import'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -14,6 +15,7 @@ import { Link } from 'react-router-dom'
 
 export function Settings() {
   const navigate = useNavigate()
+  const [activeTab, setActiveTab] = useState<'settings' | 'import'>('settings')
   const { user, profile, refreshProfile } = useAuth()
   const { householdId, householdName, inviteCode, members, currentUserRole, pendingRequests, refresh: refreshHousehold } = useHousehold()
   const { showToast } = useToast()
@@ -154,6 +156,28 @@ export function Settings() {
     <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-2xl mx-auto w-full">
       <Header title="Settings" />
 
+      {/* Tab switcher */}
+      <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+        {(['settings', 'import'] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            style={{
+              backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
+              color: activeTab === tab ? '#8fbe5a' : '#6a6458',
+              border: activeTab === tab ? '1px solid rgba(143,190,90,0.25)' : '1px solid transparent',
+            }}
+          >
+            {tab === 'settings' ? 'Settings' : 'Import & Export'}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === 'import' && <Import embedded />}
+
+      {activeTab === 'settings' && <>
+
       {/* Profile */}
       <Section title="Profile">
         <div className="flex flex-col gap-4">
@@ -271,7 +295,6 @@ export function Settings() {
       {/* Data */}
       <Section title="Data">
         <div className="flex flex-col gap-3">
-          <Button variant="secondary" size="sm" onClick={() => navigate('/import')}>Import data</Button>
           <Button variant="secondary" size="sm" onClick={handleExport} loading={exporting}>Export collection</Button>
         </div>
       </Section>
@@ -288,6 +311,8 @@ export function Settings() {
       <div className="mt-6">
         <Button variant="ghost" onClick={handleSignOut} fullWidth>Sign out</Button>
       </div>
+
+      </>}
 
       <ConfirmDialog
         open={!!confirmDialog}

@@ -6,7 +6,6 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: DashboardIcon, exact: true },
   { to: '/animals', label: 'Animals', icon: AnimalsIcon },
   { to: '/feeding', label: 'Feeding', icon: FeedingIcon },
-  { to: '/calendar', label: 'Calendar', icon: CalendarIcon },
   { to: '/expenses', label: 'Expenses', icon: ExpensesIcon },
   { to: '/stats', label: 'Stats', icon: StatsIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
@@ -41,13 +40,7 @@ function FeedingIcon({ active }: { active: boolean }) {
     </svg>
   )
 }
-function CalendarIcon({ active }: { active: boolean }) {
-  return (
-    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-    </svg>
-  )
-}
+
 function StatsIcon({ active }: { active: boolean }) {
   return (
     <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75}>

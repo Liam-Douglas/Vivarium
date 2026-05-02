@@ -77,6 +77,37 @@ export function Dashboard() {
     })
     return strikes
   }, [allLogs, animals])
+
+  const feedingsThisMonth = useMemo(() => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth()
+    return allLogs.filter((log) => {
+      if (log.refused) return false
+      const d = new Date(log.fed_at)
+      return d.getFullYear() === year && d.getMonth() === month
+    }).length
+  }, [allLogs])
+
+  const bestStreak = useMemo(() => {
+    const byAnimal = new Map<string, typeof allLogs>()
+    allLogs.forEach((log) => {
+      const list = byAnimal.get(log.animal_id) ?? []
+      list.push(log)
+      byAnimal.set(log.animal_id, list)
+    })
+    let best = 0
+    byAnimal.forEach((logs) => {
+      const sorted = [...logs].sort((a, b) => new Date(b.fed_at).getTime() - new Date(a.fed_at).getTime())
+      let count = 0
+      for (const log of sorted) {
+        if (log.refused) break
+        count++
+      }
+      if (count > best) best = count
+    })
+    return best
+  }, [allLogs])
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
   const [approvingId, setApprovingId] = useState<string | null>(null)
@@ -106,6 +137,9 @@ export function Dashboard() {
   const [expDescription, setExpDescription] = useState('')
   const [expDate, setExpDate] = useState(new Date().toISOString().split('T')[0])
   const [savingExpense, setSavingExpense] = useState(false)
+
+  // Quick-feed from urgency section
+  const [quickFeedAnimalId, setQuickFeedAnimalId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!householdId) return
@@ -272,6 +306,66 @@ export function Dashboard() {
         </div>
       </div>
 
+      {/* Needs feeding */}
+      {(() => {
+        const urgentAnimals = animals
+          .filter((a) => {
+            const s = getStatusForAnimal(a)
+            return s === 'red' || s === 'amber'
+          })
+          .sort((a, b) => {
+            const order = { red: 0, amber: 1 }
+            return (order[getStatusForAnimal(a) as 'red' | 'amber'] ?? 2) - (order[getStatusForAnimal(b) as 'red' | 'amber'] ?? 2)
+          })
+        if (urgentAnimals.length === 0) return null
+        return (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Needs feeding</h2>
+              <span
+                className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                style={{ backgroundColor: 'rgba(196,90,90,0.18)', color: '#c45a5a' }}
+              >
+                {urgentAnimals.length}
+              </span>
+            </div>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              {urgentAnimals.map((animal, i) => {
+                const status = getStatusForAnimal(animal)
+                const daysSince = animal.last_fed_at
+                  ? differenceInDays(new Date(), new Date(animal.last_fed_at))
+                  : null
+                const subtitle = daysSince === null ? 'Never fed' : `${daysSince} day${daysSince !== 1 ? 's' : ''} since last fed`
+                const dotColor = status === 'red' ? '#c45a5a' : '#d4900a'
+                return (
+                  <div
+                    key={animal.id}
+                    className="flex items-center gap-3 px-4 py-3"
+                    style={{ borderBottom: i < urgentAnimals.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                  >
+                    <span
+                      className="w-2.5 h-2.5 rounded-full shrink-0"
+                      style={{ backgroundColor: dotColor }}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{animal.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{subtitle}</p>
+                    </div>
+                    <button
+                      onClick={() => { setQuickFeedAnimalId(animal.id); setActiveModal('feeding') }}
+                      className="text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 transition-opacity active:opacity-70"
+                      style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
+                    >
+                      Feed
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Animals */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-3">
@@ -329,6 +423,21 @@ export function Dashboard() {
         )}
       </div>
 
+      {/* Mini stats strip */}
+      <div className="grid grid-cols-3 gap-3 mt-6">
+        {[
+          { value: feedingsThisMonth, label: 'This month', sub: 'feedings' },
+          { value: bestStreak, label: 'Best streak', sub: 'meals in a row' },
+          { value: animals.length, label: 'Animals', sub: 'in collection' },
+        ].map(({ value, label, sub }) => (
+          <div key={label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-xs mb-1 truncate" style={{ color: '#6a6458' }}>{label}</p>
+            <p className="text-xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{value}</p>
+            <p className="text-xs mt-0.5 leading-tight" style={{ color: '#6a6458' }}>{sub}</p>
+          </div>
+        ))}
+      </div>
+
       {/* FAB speed dial (mobile only) */}
       <div className="md:hidden fixed bottom-20 right-4 z-30 flex flex-col items-end gap-3">
         {/* Backdrop */}
@@ -376,7 +485,7 @@ export function Dashboard() {
 
       {/* Modals */}
       <Modal open={activeModal === 'feeding'} onClose={closeModal} title="Log feeding">
-        <FeedingLogForm onSuccess={() => { closeModal(); refreshAnimals() }} onCancel={closeModal} />
+        <FeedingLogForm preselectedAnimalId={quickFeedAnimalId ?? undefined} onSuccess={() => { closeModal(); refreshAnimals() }} onCancel={closeModal} />
       </Modal>
 
       <Modal open={activeModal === 'animal'} onClose={closeModal} title="Add animal">

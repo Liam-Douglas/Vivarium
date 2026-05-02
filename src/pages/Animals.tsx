@@ -5,6 +5,7 @@ import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useAuth } from '@/context/AuthContext'
 import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
+import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Header } from '@/components/layout/Header'
@@ -47,6 +48,8 @@ export function Animals() {
 
   const [addOpen, setAddOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
+  const [quickFeedId, setQuickFeedId] = useState<string | null>(null)
+  const [quickFeedOpen, setQuickFeedOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('name-asc')
@@ -103,6 +106,17 @@ export function Animals() {
     return list
   }, [animals, search, categoryFilter, sort])
 
+  const urgentAnimals = animals.filter(a => {
+    if (!a.last_fed_at || !a.feeding_frequency_days) return false
+    const days = differenceInDays(new Date(), new Date(a.last_fed_at))
+    return days >= a.feeding_frequency_days - 1  // amber or red
+  }).sort((a, b) => {
+    // overdue first
+    const daysA = differenceInDays(new Date(), new Date(a.last_fed_at!))
+    const daysB = differenceInDays(new Date(), new Date(b.last_fed_at!))
+    return daysB - daysA
+  })
+
   function handleAddClick() {
     if (!canAddAnimal(animals.length)) setUpgradeOpen(true)
     else setAddOpen(true)
@@ -124,6 +138,43 @@ export function Animals() {
           </Button>
         }
       />
+
+      {urgentAnimals.length > 0 && (
+        <div className="mb-4">
+          <div
+            className="flex gap-2 overflow-x-auto pb-0.5"
+            style={{ scrollbarWidth: 'none' }}
+          >
+            {urgentAnimals.map((a) => {
+              const days = differenceInDays(new Date(), new Date(a.last_fed_at!))
+              const isOverdue = days >= a.feeding_frequency_days!
+              return (
+                <div
+                  key={a.id}
+                  className="shrink-0 flex flex-col gap-1 rounded-xl px-3 py-2"
+                  style={{
+                    width: 140,
+                    backgroundColor: isOverdue ? 'rgba(196,90,90,0.08)' : 'rgba(212,146,74,0.08)',
+                    border: `1px solid ${isOverdue ? 'rgba(196,90,90,0.2)' : 'rgba(212,146,74,0.2)'}`,
+                  }}
+                >
+                  <span className="text-xs font-medium truncate" style={{ color: '#f0ece0' }}>{a.name}</span>
+                  <span className="text-xs" style={{ color: isOverdue ? '#c45a5a' : '#d4924a' }}>
+                    {isOverdue ? 'Overdue' : 'Due today'}
+                  </span>
+                  <button
+                    onClick={() => { setQuickFeedId(a.id); setQuickFeedOpen(true) }}
+                    className="rounded-full px-2 py-0.5 text-xs font-medium mt-0.5 self-start"
+                    style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
+                  >
+                    Feed
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {animals.length > 0 && (
         <div className="flex flex-col gap-3 mb-4">
@@ -192,6 +243,14 @@ export function Animals() {
       </Modal>
 
       <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
+
+      <Modal open={quickFeedOpen} onClose={() => setQuickFeedOpen(false)} title="Log feeding">
+        <FeedingLogForm
+          preselectedAnimalId={quickFeedId ?? undefined}
+          onSuccess={() => { setQuickFeedOpen(false); refresh() }}
+          onCancel={() => setQuickFeedOpen(false)}
+        />
+      </Modal>
     </div>
   )
 }
