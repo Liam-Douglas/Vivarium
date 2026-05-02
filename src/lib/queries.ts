@@ -680,6 +680,48 @@ export async function batchInsertFeedingLogs(logs: Record<string, unknown>[]) {
   return inserted
 }
 
+// ─── Data repair ─────────────────────────────────────────────────────────────
+
+export async function detectOrphanedFeedingLogs(householdId: string) {
+  const { data: activeAnimals, error: animalsErr } = await supabase
+    .from('animals')
+    .select('id, name')
+    .eq('household_id', householdId)
+    .eq('is_active', true)
+  if (animalsErr) throw animalsErr
+
+  const activeIds = new Set((activeAnimals ?? []).map((a) => a.id))
+
+  const { data: logs, error: logsErr } = await supabase
+    .from('feeding_logs')
+    .select('id, animal_id, animals(id, name)')
+    .eq('household_id', householdId)
+  if (logsErr) throw logsErr
+
+  type LogRow = { id: string; animal_id: string; animals: { id: string; name: string } | null }
+  const orphaned = ((logs as unknown) as LogRow[] ?? []).filter((l) => l.animal_id && !activeIds.has(l.animal_id))
+
+  const fixable = orphaned.filter((l) => {
+    const name = l.animals?.name
+    return name && (activeAnimals ?? []).some((a) => a.name.toLowerCase() === name.toLowerCase())
+  })
+
+  return { orphanedCount: orphaned.length, fixableCount: fixable.length, fixable, activeAnimals: activeAnimals ?? [] }
+}
+
+export async function repairOrphanedFeedingLogs(householdId: string): Promise<{ fixed: number }> {
+  const { fixable, activeAnimals } = await detectOrphanedFeedingLogs(householdId)
+  let fixed = 0
+  for (const log of fixable) {
+    const name = log.animals?.name
+    const correct = activeAnimals.find((a) => a.name.toLowerCase() === name?.toLowerCase())
+    if (!correct) continue
+    const { error } = await supabase.from('feeding_logs').update({ animal_id: correct.id }).eq('id', log.id)
+    if (!error) fixed++
+  }
+  return { fixed }
+}
+
 export async function batchInsertSheddingLogs(logs: Record<string, unknown>[]) {
   const chunks = []
   for (let i = 0; i < logs.length; i += 50) chunks.push(logs.slice(i, i + 50))
