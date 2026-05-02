@@ -20,10 +20,8 @@ import { Animals } from '@/pages/Animals'
 import { AnimalDetail } from '@/pages/AnimalDetail'
 import { FeedingLog } from '@/pages/FeedingLog'
 import { Expenses } from '@/pages/Expenses'
-import { Import } from '@/pages/Import'
 import { Settings } from '@/pages/Settings'
 import { Stats } from '@/pages/Stats'
-import { FeedingCalendar } from '@/pages/FeedingCalendar'
 import { Terms } from '@/pages/Terms'
 import { Privacy } from '@/pages/Privacy'
 
@@ -72,11 +70,11 @@ function AppShell() {
             <Route path="/animals" element={<ErrorBoundary><Animals /></ErrorBoundary>} />
             <Route path="/animals/:id" element={<ErrorBoundary><AnimalDetail /></ErrorBoundary>} />
             <Route path="/feeding" element={<ErrorBoundary><FeedingLog /></ErrorBoundary>} />
+            <Route path="/calendar" element={<Navigate to="/feeding" replace />} />
             <Route path="/feeders" element={<Navigate to="/expenses" replace />} />
             <Route path="/expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
-            <Route path="/import" element={<ErrorBoundary><Import /></ErrorBoundary>} />
+            <Route path="/import" element={<Navigate to="/settings" replace />} />
             <Route path="/stats" element={<ErrorBoundary><Stats /></ErrorBoundary>} />
-            <Route path="/calendar" element={<ErrorBoundary><FeedingCalendar /></ErrorBoundary>} />
           </Route>
           <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           <Route path="/terms" element={<Terms />} />

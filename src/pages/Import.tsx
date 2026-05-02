@@ -44,7 +44,7 @@ interface MatchCandidate {
   existing: { id: string; name: string; species: string }
 }
 
-export function Import() {
+export function Import({ embedded }: { embedded?: boolean }) {
   const navigate = useNavigate()
   const { user } = useAuth()
   const { householdId } = useHousehold()
@@ -308,9 +308,9 @@ export function Import() {
     }
   }
 
-  return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-2xl mx-auto w-full">
-      <Header title="Import Data" />
+  const inner = (
+    <div>
+      {!embedded && <Header title="Import Data" />}
 
       {/* Step indicator */}
       <div className="flex items-center gap-2 mb-8">
@@ -606,6 +606,13 @@ export function Import() {
           )}
         </div>
       )}
+    </div>
+  )
+
+  if (embedded) return inner
+  return (
+    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-2xl mx-auto w-full">
+      {inner}
     </div>
   )
 }
