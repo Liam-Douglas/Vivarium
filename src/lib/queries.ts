@@ -722,6 +722,66 @@ export async function repairOrphanedFeedingLogs(householdId: string): Promise<{ 
   return { fixed }
 }
 
+export async function detectDuplicateRecords(householdId: string) {
+  const [feedRes, shedRes, weightRes] = await Promise.all([
+    supabase.from('feeding_logs').select('id, animal_id, fed_at, prey_type, refused, animals(name)').eq('household_id', householdId).order('fed_at'),
+    supabase.from('shedding_logs').select('id, animal_id, shed_at, animals(name)').eq('household_id', householdId).order('shed_at'),
+    supabase.from('weight_logs').select('id, animal_id, logged_at, weight_grams, animals(name)').eq('household_id', householdId).order('logged_at'),
+  ])
+
+  function groupDuplicates<T extends { id: string }>(rows: T[], key: (r: T) => string) {
+    const map = new Map<string, T[]>()
+    for (const r of (rows ?? [])) {
+      const k = key(r)
+      const list = map.get(k) ?? []
+      list.push(r)
+      map.set(k, list)
+    }
+    return [...map.values()].filter((g) => g.length > 1)
+  }
+
+  type FeedRow = { id: string; animal_id: string; fed_at: string; prey_type: string; refused: boolean; animals: { name: string } | null }
+  type ShedRow = { id: string; animal_id: string; shed_at: string; animals: { name: string } | null }
+  type WeightRow = { id: string; animal_id: string; logged_at: string; weight_grams: number; animals: { name: string } | null }
+
+  const feeding = groupDuplicates((feedRes.data as unknown as FeedRow[]) ?? [], (r) => `${r.animal_id}|${r.fed_at.slice(0, 10)}|${r.prey_type}|${r.refused}`)
+  const shedding = groupDuplicates((shedRes.data as unknown as ShedRow[]) ?? [], (r) => `${r.animal_id}|${r.shed_at.slice(0, 10)}`)
+  const weight = groupDuplicates((weightRes.data as unknown as WeightRow[]) ?? [], (r) => `${r.animal_id}|${r.logged_at.slice(0, 10)}`)
+
+  const extraCount = [...feeding, ...shedding, ...weight].reduce((s, g) => s + g.length - 1, 0)
+
+  return { feeding, shedding, weight, groupCount: feeding.length + shedding.length + weight.length, extraCount }
+}
+
+export async function removeDuplicateRecords(householdId: string): Promise<{ removed: number }> {
+  const { feeding, shedding, weight } = await detectDuplicateRecords(householdId)
+  let removed = 0
+
+  for (const group of feeding) {
+    const [, ...extras] = group
+    for (const r of extras) {
+      const { error } = await supabase.from('feeding_logs').delete().eq('id', r.id)
+      if (!error) removed++
+    }
+  }
+  for (const group of shedding) {
+    const [, ...extras] = group
+    for (const r of extras) {
+      const { error } = await supabase.from('shedding_logs').delete().eq('id', r.id)
+      if (!error) removed++
+    }
+  }
+  for (const group of weight) {
+    const [, ...extras] = group
+    for (const r of extras) {
+      const { error } = await supabase.from('weight_logs').delete().eq('id', r.id)
+      if (!error) removed++
+    }
+  }
+
+  return { removed }
+}
+
 export async function batchInsertSheddingLogs(logs: Record<string, unknown>[]) {
   const chunks = []
   for (let i = 0; i < logs.length; i += 50) chunks.push(logs.slice(i, i + 50))
