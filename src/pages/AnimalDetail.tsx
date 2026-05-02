@@ -42,7 +42,7 @@ import {
   createExpense,
 } from '@/lib/queries'
 
-type Tab = 'overview' | 'feeding' | 'weight' | 'shedding' | 'health' | 'acquisition' | 'exit' | 'breeding' | 'timeline'
+type Tab = 'overview' | 'timeline' | 'feeding' | 'vitals' | 'health' | 'records'
 
 function RecordActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   return (
@@ -69,6 +69,9 @@ export function AnimalDetail() {
   const [tab, setTab] = useState<Tab>('overview')
   const [editOpen, setEditOpen] = useState(false)
   const [feedOpen, setFeedOpen] = useState(false)
+  const [vitalsSubTab, setVitalsSubTab] = useState<'weight' | 'shedding'>('weight')
+  const [timelineFilter, setTimelineFilter] = useState<'all' | 'feeding' | 'shed' | 'weight' | 'health'>('all')
+  const [timelineShowAll, setTimelineShowAll] = useState(false)
 
   const { data: feedingLogs, refresh: refreshFeeding } = useFeedingLogs(id)
   const { data: sheddingLogs, refresh: refreshShedding } = useSheddingLogs(id)
@@ -522,16 +525,22 @@ export function AnimalDetail() {
   const salePrice = exitRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
   const financials = { acqCost, salePrice, vetCost: totalHealthCost, totalCost: acqCost + totalHealthCost, net: salePrice - acqCost - totalHealthCost }
 
+  const daysSinceFed = animal.last_fed_at ? differenceInDays(new Date(), new Date(animal.last_fed_at)) : null
+  const weightTrend = weightLogs.length >= 2 ? weightLogs[0].weight_grams - weightLogs[1].weight_grams : null
+  const feedingStatusColor = (() => {
+    if (daysSinceFed === null || !animal.feeding_frequency_days) return '#f0ece0'
+    if (daysSinceFed > animal.feeding_frequency_days) return '#c45a5a'
+    if (daysSinceFed >= animal.feeding_frequency_days - 2) return '#d4924a'
+    return '#8fbe5a'
+  })()
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'timeline', label: 'Timeline' },
     { id: 'feeding', label: 'Feeding' },
-    { id: 'weight', label: 'Weight' },
-    { id: 'shedding', label: 'Shedding' },
+    { id: 'vitals', label: 'Vitals' },
     { id: 'health', label: 'Health' },
-    { id: 'acquisition', label: 'Acquisition' },
-    { id: 'exit', label: 'Exit' },
-    { id: 'breeding', label: 'Breeding' },
+    { id: 'records', label: 'Records' },
   ]
 
   return (
@@ -561,7 +570,24 @@ export function AnimalDetail() {
           <p className="text-sm mt-1" style={{ color: '#a8a090' }}>
             {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex.charAt(0).toUpperCase() + animal.sex.slice(1)}` : ''}{age ? ` · ${age}` : ''}
           </p>
-          {animal.weight_grams && <p className="text-sm mt-0.5" style={{ color: '#8fbe5a' }}>{animal.weight_grams}g</p>}
+          <div className="flex gap-2 flex-wrap mt-1.5">
+            {daysSinceFed !== null && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${feedingStatusColor}22`, color: feedingStatusColor }}>
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: feedingStatusColor }} />
+                {daysSinceFed === 0 ? 'Fed today' : `Fed ${daysSinceFed}d ago`}
+              </span>
+            )}
+            {animal.weight_grams && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#a8a090' }}>
+                ⚖️ {animal.weight_grams}g{weightTrend !== null ? ` (${weightTrend >= 0 ? '+' : ''}${weightTrend}g)` : ''}
+              </span>
+            )}
+            {sheddingLogs[0] && (
+              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#a8a090' }}>
+                🐍 Shed {format(new Date(sheddingLogs[0].shed_at), 'MMM d')}
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Tabs */}
@@ -577,10 +603,92 @@ export function AnimalDetail() {
         {/* Overview */}
         {tab === 'overview' && (
           <div className="flex flex-col gap-4 pb-24 md:pb-8">
+            {/* Quick log actions */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'Feed', icon: '🍖', action: () => setFeedOpen(true) },
+                { label: 'Weigh', icon: '⚖️', action: openAddWeight },
+                { label: 'Shed', icon: '🐍', action: openAddShed },
+              ].map(({ label, icon, action }) => (
+                <button key={label} onClick={action}
+                  className="py-3 rounded-xl flex flex-col items-center gap-1.5 transition-colors active:scale-95"
+                  style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <span className="text-xl">{icon}</span>
+                  <span className="text-xs font-medium" style={{ color: '#a8a090' }}>{label}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Stats grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs" style={{ color: '#6a6458' }}>Last fed</p>
+                <p className="text-base font-semibold mt-0.5" style={{ color: feedingStatusColor }}>
+                  {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'MMM d') : '—'}
+                </p>
+                {daysSinceFed !== null && (
+                  <p className="text-xs mt-0.5" style={{ color: feedingStatusColor }}>
+                    {daysSinceFed === 0 ? 'Today' : `${daysSinceFed}d ago`}
+                  </p>
+                )}
+              </div>
+              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs" style={{ color: '#6a6458' }}>Feed every</p>
+                <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
+                  {animal.feeding_frequency_days ? `${animal.feeding_frequency_days} days` : '—'}
+                </p>
+              </div>
+              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs" style={{ color: '#6a6458' }}>Current weight</p>
+                <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
+                  {animal.weight_grams ? `${animal.weight_grams}g` : '—'}
+                </p>
+                {weightTrend !== null && (
+                  <p className="text-xs mt-0.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#c45a5a' }}>
+                    {weightTrend >= 0 ? `↑ +${weightTrend}g` : `↓ ${weightTrend}g`}
+                  </p>
+                )}
+              </div>
+              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs" style={{ color: '#6a6458' }}>Last shed</p>
+                <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
+                  {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—'}
+                </p>
+                {predictedNextShed && (
+                  <p className="text-xs mt-0.5" style={{ color: predictedNextShed < new Date() ? '#d4924a' : '#6a6458' }}>
+                    Next ~{format(predictedNextShed, 'MMM d')}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Recent feedings */}
+            {feedingLogs.length > 0 && (
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-xs font-medium" style={{ color: '#a8a090' }}>RECENT FEEDINGS</p>
+                  <button onClick={() => setTab('feeding')} className="text-xs" style={{ color: '#8fbe5a' }}>See all</button>
+                </div>
+                {feedingLogs.slice(0, 3).map((log) => (
+                  <div key={log.id} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : '#5a9e6a' }} />
+                    <p className="flex-1 text-sm" style={{ color: log.refused ? '#a8a090' : '#f0ece0' }}>
+                      {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
+                    </p>
+                    <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Mini weight chart */}
             {chartData.length > 1 && (
               <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>WEIGHT TREND</p>
-                <ResponsiveContainer width="100%" height={120}>
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs font-medium" style={{ color: '#a8a090' }}>WEIGHT TREND</p>
+                  <button onClick={() => setTab('vitals')} className="text-xs" style={{ color: '#8fbe5a' }}>See full</button>
+                </div>
+                <ResponsiveContainer width="100%" height={100}>
                   <LineChart data={chartData}>
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
                     <YAxis hide domain={['auto', 'auto']} />
@@ -590,21 +698,8 @@ export function AnimalDetail() {
                 </ResponsiveContainer>
               </div>
             )}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'Last fed', value: animal.last_fed_at ? format(new Date(animal.last_fed_at), 'MMM d') : '—' },
-                { label: 'Feed every', value: animal.feeding_frequency_days ? `${animal.feeding_frequency_days} days` : '—' },
-                { label: 'Last shed', value: sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—' },
-                { label: 'Current weight', value: animal.weight_grams ? `${animal.weight_grams}g` : '—' },
-                ...(predictedNextShed ? [{ label: 'Next shed ~', value: format(predictedNextShed, 'MMM d'), color: predictedNextShed < new Date() ? '#d4924a' : '#a8a090' }] : []),
-              ].map((stat) => (
-                <div key={stat.label} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-xs" style={{ color: '#6a6458' }}>{stat.label}</p>
-                  <p className="text-base font-semibold mt-0.5" style={{ color: ('color' in stat && stat.color) ? stat.color : '#f0ece0' }}>{stat.value}</p>
-                </div>
-              ))}
-            </div>
-            {/* Financials / ROI */}
+
+            {/* Financials */}
             {(financials.acqCost > 0 || financials.salePrice > 0 || financials.vetCost > 0) && (
               <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>FINANCIALS</p>
@@ -643,33 +738,93 @@ export function AnimalDetail() {
                 <p className="text-sm" style={{ color: '#f0ece0', whiteSpace: 'pre-wrap' }}>{animal.notes}</p>
               </div>
             )}
-            <Button variant="danger" size="sm" onClick={handleDeactivate}>Remove from collection</Button>
           </div>
         )}
 
         {/* Timeline */}
         {tab === 'timeline' && (
           <div className="pb-24 md:pb-8">
-            {timelineEvents.length === 0 ? (
-              <EmptyState icon="📋" title="No records yet" description="Start logging feedings, sheds, weights or health events to see the timeline." />
-            ) : (
-              <div className="flex flex-col">
-                {timelineEvents.map((ev, i) => (
-                  <div key={ev.id} className="flex gap-3 pb-4" style={{ borderLeft: i < timelineEvents.length - 1 ? `2px solid rgba(255,255,255,0.06)` : '2px solid transparent', marginLeft: 11 }}>
-                    <div className="flex-shrink-0 -ml-3.5 w-6 h-6 rounded-full flex items-center justify-center text-sm" style={{ backgroundColor: '#1a1a18', border: `2px solid ${ev.color}` }}>
-                      <span style={{ fontSize: 11 }}>{ev.icon}</span>
-                    </div>
-                    <div className="flex-1 min-w-0 -mt-0.5">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.label}</p>
-                        <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{format(ev.date, 'MMM d, yy')}</p>
+            {/* Filter pills */}
+            <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4" style={{ scrollbarWidth: 'none' }}>
+              {([
+                { id: 'all', label: 'All' },
+                { id: 'feeding', label: 'Feeding' },
+                { id: 'shed', label: 'Shedding' },
+                { id: 'weight', label: 'Weight' },
+                { id: 'health', label: 'Health' },
+              ] as const).map(({ id, label }) => (
+                <button
+                  key={id}
+                  onClick={() => { setTimelineFilter(id); setTimelineShowAll(false) }}
+                  className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors"
+                  style={{
+                    backgroundColor: timelineFilter === id ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.05)',
+                    color: timelineFilter === id ? '#8fbe5a' : '#6a6458',
+                    border: `1px solid ${timelineFilter === id ? 'rgba(143,190,90,0.3)' : 'transparent'}`,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            {(() => {
+              const filtered = timelineFilter === 'all'
+                ? timelineEvents
+                : timelineEvents.filter((ev) => ev.type === timelineFilter)
+
+              if (filtered.length === 0) {
+                return <EmptyState icon="📋" title="No records" description="No events match the selected filter." />
+              }
+
+              const groups: { month: string; events: TEvent[] }[] = []
+              for (const ev of filtered) {
+                const month = format(ev.date, 'MMMM yyyy')
+                const last = groups.at(-1)
+                if (last?.month === month) last.events.push(ev)
+                else groups.push({ month, events: [ev] })
+              }
+
+              const visibleGroups = timelineShowAll ? groups : groups.slice(0, 3)
+
+              return (
+                <>
+                  {visibleGroups.map((group) => (
+                    <div key={group.month} className="mb-5">
+                      <div className="flex items-center gap-2 mb-3">
+                        <p className="text-xs font-semibold tracking-wider" style={{ color: '#6a6458' }}>{group.month.toUpperCase()}</p>
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#6a6458' }}>{group.events.length}</span>
                       </div>
-                      {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: '#6a6458' }}>{ev.detail}</p>}
+                      <div className="flex flex-col">
+                        {group.events.map((ev, i) => (
+                          <div key={ev.id} className="flex gap-3 pb-3" style={{ borderLeft: i < group.events.length - 1 ? '2px solid rgba(255,255,255,0.06)' : '2px solid transparent', marginLeft: 11 }}>
+                            <div className="flex-shrink-0 -ml-3.5 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1a1a18', border: `2px solid ${ev.color}` }}>
+                              <span style={{ fontSize: 11 }}>{ev.icon}</span>
+                            </div>
+                            <div className="flex-1 min-w-0 -mt-0.5">
+                              <div className="flex items-start justify-between gap-2">
+                                <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.label}</p>
+                                <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{format(ev.date, 'MMM d')}</p>
+                              </div>
+                              {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: '#6a6458' }}>{ev.detail}</p>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                  {!timelineShowAll && groups.length > 3 && (
+                    <button
+                      onClick={() => setTimelineShowAll(true)}
+                      className="w-full py-3 rounded-xl text-sm"
+                      style={{ backgroundColor: '#242420', color: '#a8a090', border: '1px solid rgba(255,255,255,0.06)' }}
+                    >
+                      Load {groups.length - 3} older month{groups.length - 3 !== 1 ? 's' : ''}
+                    </button>
+                  )}
+                </>
+              )
+            })()}
           </div>
         )}
 
@@ -736,158 +891,148 @@ export function AnimalDetail() {
           </div>
         )}
 
-        {/* Weight */}
-        {tab === 'weight' && (
+        {/* Vitals */}
+        {tab === 'vitals' && (
           <div className="pb-24 md:pb-8">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={openAddWeight}>Log weight</Button>
+            <div className="flex p-1 gap-1 rounded-xl mb-4" style={{ backgroundColor: '#242420' }}>
+              {(['weight', 'shedding'] as const).map((t) => (
+                <button key={t} onClick={() => setVitalsSubTab(t)}
+                  className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{ backgroundColor: vitalsSubTab === t ? 'rgba(143,190,90,0.15)' : 'transparent', color: vitalsSubTab === t ? '#8fbe5a' : '#6a6458' }}>
+                  {t === 'weight' ? '⚖️ Weight' : '🐍 Shedding'}
+                </button>
+              ))}
             </div>
-            {weightLogs.length === 0 ? (
-              <EmptyState icon="⚖️" title="No weights logged" description="Tap 'Log weight' to start tracking growth." />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {weightChartData.length > 1 && (
-                  <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>GROWTH CHART</p>
-                    <ResponsiveContainer width="100%" height={160}>
-                      <AreaChart data={weightChartData}>
-                        <defs>
-                          <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#8fbe5a" stopOpacity={0.25} />
-                            <stop offset="95%" stopColor="#8fbe5a" stopOpacity={0} />
-                          </linearGradient>
-                        </defs>
-                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                        <YAxis hide domain={['auto', 'auto']} />
-                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v}g`, 'Weight']} />
-                        <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
-                        {targetWeight && (
-                          <ReferenceLine y={targetWeight} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${targetWeight}g`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
-                        )}
-                      </AreaChart>
-                    </ResponsiveContainer>
-                    {/* Target weight setter */}
-                    <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                      <input
-                        type="number"
-                        min={1}
-                        value={targetWeightInput}
-                        onChange={(e) => setTargetWeightInput(e.target.value)}
-                        placeholder={targetWeight ? `Target: ${targetWeight}g` : 'Set target weight (g)'}
-                        className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                        style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
-                      />
-                      <button onClick={saveTargetWeight} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>
-                        Set
-                      </button>
-                      {targetWeight && (
-                        <button onClick={() => { localStorage.removeItem(`vivarium-target-weight-${id}`); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>
-                          Clear
-                        </button>
-                      )}
-                    </div>
-                    {(() => {
-                      const first = [...weightLogs].at(-1)!
-                      const last = weightLogs[0]
-                      const gain = last.weight_grams - first.weight_grams
-                      return (
-                        <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                          <div className="text-center">
-                            <p className="text-xs" style={{ color: '#6a6458' }}>Start</p>
-                            <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{first.weight_grams}g</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-xs" style={{ color: '#6a6458' }}>Total gain</p>
-                            <p className="text-sm font-semibold" style={{ color: gain >= 0 ? '#8fbe5a' : '#c45a5a' }}>{gain >= 0 ? '+' : ''}{gain}g</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="text-xs" style={{ color: '#6a6458' }}>Latest</p>
-                            <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{last.weight_grams}g</p>
-                          </div>
-                        </div>
-                      )
-                    })()}
-                  </div>
-                )}
-                <div className="flex flex-col gap-2">
-                  {weightLogs.map((log) => (
-                    <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div className="flex-1">
-                        <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{log.weight_grams}g</p>
-                        {log.notes && <p className="text-xs" style={{ color: '#6a6458' }}>{log.notes}</p>}
-                      </div>
-                      <p className="text-xs shrink-0 mr-1" style={{ color: '#6a6458' }}>{format(new Date(log.logged_at), 'MMM d, yyyy')}</p>
-                      <RecordActions onEdit={() => openEditWeight(log)} onDelete={() => handleDeleteWeight(log)} />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+            <div className="flex justify-end mb-4">
+              <Button size="sm" onClick={vitalsSubTab === 'weight' ? openAddWeight : openAddShed}>
+                Log {vitalsSubTab === 'weight' ? 'weight' : 'shed'}
+              </Button>
+            </div>
 
-        {/* Shedding */}
-        {tab === 'shedding' && (
-          <div className="pb-24 md:pb-8">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={openAddShed}>Log shed</Button>
-            </div>
-            {sheddingLogs.length === 0 ? (
-              <EmptyState icon="🐍" title="No sheds logged" description="Tap 'Log shed' to record a shedding event." />
-            ) : (
-              <div className="flex flex-col gap-4">
-                {(() => {
-                  const total = sheddingLogs.length
-                  const complete = sheddingLogs.filter((l) => l.complete).length
-                  const avgInterval = sheddingIntervalData.length > 0
-                    ? Math.round(sheddingIntervalData.reduce((s, d) => s + d.days, 0) / sheddingIntervalData.length)
-                    : null
-                  return (
-                    <div className="grid grid-cols-3 gap-3">
-                      {[
-                        { label: 'Total sheds', value: total },
-                        { label: 'Complete', value: complete, color: '#8fbe5a' },
-                        { label: 'Avg interval', value: avgInterval != null ? `${avgInterval}d` : '—' },
-                      ].map((s) => (
-                        <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                          <p className="text-xs" style={{ color: '#6a6458' }}>{s.label}</p>
-                          <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? '#f0ece0' }}>{s.value}</p>
-                        </div>
-                      ))}
-                    </div>
-                  )
-                })()}
-                {sheddingIntervalData.length > 1 && (
-                  <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>SHED INTERVALS (days)</p>
-                    <p className="text-xs mb-3" style={{ color: '#6a6458' }}>Days between consecutive sheds — green = complete, amber = incomplete</p>
-                    <ResponsiveContainer width="100%" height={130}>
-                      <BarChart data={sheddingIntervalData} barCategoryGap="25%">
-                        <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
-                        <YAxis hide />
-                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v} days`, 'Interval']} />
-                        <Bar dataKey="days" radius={[4, 4, 0, 0]}>
-                          {sheddingIntervalData.map((entry, i) => (
-                            <Cell key={i} fill={entry.complete ? '#5a9e6a' : '#d4924a'} />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                <div className="flex flex-col gap-2">
-                  {sheddingLogs.map((log) => (
-                    <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <Badge status={log.complete ? 'green' : 'amber'}>{log.complete ? 'Complete' : 'Incomplete'}</Badge>
-                      <div className="flex-1">
-                        {log.notes && <p className="text-xs" style={{ color: '#6a6458' }}>{log.notes}</p>}
+            {vitalsSubTab === 'weight' && (
+              weightLogs.length === 0 ? (
+                <EmptyState icon="⚖️" title="No weights logged" description="Tap 'Log weight' to start tracking growth." />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {weightChartData.length > 1 && (
+                    <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>GROWTH CHART</p>
+                      <ResponsiveContainer width="100%" height={160}>
+                        <AreaChart data={weightChartData}>
+                          <defs>
+                            <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="#8fbe5a" stopOpacity={0.25} />
+                              <stop offset="95%" stopColor="#8fbe5a" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                          <YAxis hide domain={['auto', 'auto']} />
+                          <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v}g`, 'Weight']} />
+                          <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
+                          {targetWeight && (
+                            <ReferenceLine y={targetWeight} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${targetWeight}g`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
+                          )}
+                        </AreaChart>
+                      </ResponsiveContainer>
+                      <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        <input
+                          type="number" min={1} value={targetWeightInput}
+                          onChange={(e) => setTargetWeightInput(e.target.value)}
+                          placeholder={targetWeight ? `Target: ${targetWeight}g` : 'Set target weight (g)'}
+                          className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+                          style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
+                        />
+                        <button onClick={saveTargetWeight} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>Set</button>
+                        {targetWeight && (
+                          <button onClick={() => { localStorage.removeItem(`vivarium-target-weight-${id}`); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>Clear</button>
+                        )}
                       </div>
-                      <p className="text-xs shrink-0 mr-1" style={{ color: '#6a6458' }}>{format(new Date(log.shed_at), 'MMM d, yyyy')}</p>
-                      <RecordActions onEdit={() => openEditShed(log)} onDelete={() => handleDeleteShed(log)} />
+                      {(() => {
+                        const first = [...weightLogs].at(-1)!
+                        const last = weightLogs[0]
+                        const gain = last.weight_grams - first.weight_grams
+                        return (
+                          <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <div className="text-center"><p className="text-xs" style={{ color: '#6a6458' }}>Start</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{first.weight_grams}g</p></div>
+                            <div className="text-center"><p className="text-xs" style={{ color: '#6a6458' }}>Total gain</p><p className="text-sm font-semibold" style={{ color: gain >= 0 ? '#8fbe5a' : '#c45a5a' }}>{gain >= 0 ? '+' : ''}{gain}g</p></div>
+                            <div className="text-center"><p className="text-xs" style={{ color: '#6a6458' }}>Latest</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{last.weight_grams}g</p></div>
+                          </div>
+                        )
+                      })()}
                     </div>
-                  ))}
+                  )}
+                  <div className="flex flex-col gap-2">
+                    {weightLogs.map((log) => (
+                      <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div className="flex-1">
+                          <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{log.weight_grams}g</p>
+                          {log.notes && <p className="text-xs" style={{ color: '#6a6458' }}>{log.notes}</p>}
+                        </div>
+                        <p className="text-xs shrink-0 mr-1" style={{ color: '#6a6458' }}>{format(new Date(log.logged_at), 'MMM d, yyyy')}</p>
+                        <RecordActions onEdit={() => openEditWeight(log)} onDelete={() => handleDeleteWeight(log)} />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )
+            )}
+
+            {vitalsSubTab === 'shedding' && (
+              sheddingLogs.length === 0 ? (
+                <EmptyState icon="🐍" title="No sheds logged" description="Tap 'Log shed' to record a shedding event." />
+              ) : (
+                <div className="flex flex-col gap-4">
+                  {(() => {
+                    const total = sheddingLogs.length
+                    const complete = sheddingLogs.filter((l) => l.complete).length
+                    const avgInterval = sheddingIntervalData.length > 0
+                      ? Math.round(sheddingIntervalData.reduce((s, d) => s + d.days, 0) / sheddingIntervalData.length)
+                      : null
+                    return (
+                      <div className="grid grid-cols-3 gap-3">
+                        {[
+                          { label: 'Total sheds', value: total },
+                          { label: 'Complete', value: complete, color: '#8fbe5a' },
+                          { label: 'Avg interval', value: avgInterval != null ? `${avgInterval}d` : '—' },
+                        ].map((s) => (
+                          <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                            <p className="text-xs" style={{ color: '#6a6458' }}>{s.label}</p>
+                            <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? '#f0ece0' }}>{s.value}</p>
+                          </div>
+                        ))}
+                      </div>
+                    )
+                  })()}
+                  {sheddingIntervalData.length > 1 && (
+                    <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>SHED INTERVALS (days)</p>
+                      <p className="text-xs mb-3" style={{ color: '#6a6458' }}>Days between consecutive sheds — green = complete, amber = incomplete</p>
+                      <ResponsiveContainer width="100%" height={130}>
+                        <BarChart data={sheddingIntervalData} barCategoryGap="25%">
+                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
+                          <YAxis hide />
+                          <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v} days`, 'Interval']} />
+                          <Bar dataKey="days" radius={[4, 4, 0, 0]}>
+                            {sheddingIntervalData.map((entry, i) => (
+                              <Cell key={i} fill={entry.complete ? '#5a9e6a' : '#d4924a'} />
+                            ))}
+                          </Bar>
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-2">
+                    {sheddingLogs.map((log) => (
+                      <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <Badge status={log.complete ? 'green' : 'amber'}>{log.complete ? 'Complete' : 'Incomplete'}</Badge>
+                        <div className="flex-1">{log.notes && <p className="text-xs" style={{ color: '#6a6458' }}>{log.notes}</p>}</div>
+                        <p className="text-xs shrink-0 mr-1" style={{ color: '#6a6458' }}>{format(new Date(log.shed_at), 'MMM d, yyyy')}</p>
+                        <RecordActions onEdit={() => openEditShed(log)} onDelete={() => handleDeleteShed(log)} />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )
             )}
           </div>
         )}
@@ -950,101 +1095,107 @@ export function AnimalDetail() {
           </div>
         )}
 
-        {/* Acquisition tab */}
-        {tab === 'acquisition' && (
-          <div className="pb-24 md:pb-8">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={openAddAcquisition}>Add record</Button>
-            </div>
-            {acquisitionRecords.length === 0 ? (
-              <EmptyState icon="🏷️" title="No acquisition records" description="Tap 'Add record' to document where this animal came from." />
-            ) : (
-              <div className="flex flex-col gap-2">
-                {acquisitionRecords.map((r) => (
-                  <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{r.source_name ?? r.source ?? 'Unknown source'}</p>
-                        {r.source && <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{r.source.replace('_', ' ')}</p>}
-                        {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
-                      </div>
-                      <div className="text-right shrink-0 mr-1">
-                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.acquired_at), 'MMM d, yyyy')}</p>
-                        {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
-                      </div>
-                      <RecordActions onEdit={() => openEditAcquisition(r)} onDelete={() => handleDeleteAcquisition(r)} />
-                    </div>
-                  </div>
-                ))}
+        {/* Records */}
+        {tab === 'records' && (
+          <div className="pb-24 md:pb-8 flex flex-col gap-6">
+            {/* Acquisition */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>🏷️ Acquisition</p>
+                <Button size="sm" onClick={openAddAcquisition}>Add</Button>
               </div>
-            )}
-          </div>
-        )}
-
-        {/* Exit tab */}
-        {tab === 'exit' && (
-          <div className="pb-24 md:pb-8">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={openAddExit}>Add record</Button>
-            </div>
-            {exitRecords.length === 0 ? (
-              <EmptyState icon="🚪" title="No exit records" description="Tap 'Add record' to log a sale, rehoming, or other exit." />
-            ) : (
-              <div className="flex flex-col gap-2">
-                {exitRecords.map((r) => (
-                  <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium capitalize" style={{ color: '#f0ece0' }}>{r.reason.replace('_', ' ')}</p>
-                        {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
-                      </div>
-                      <div className="text-right shrink-0 mr-1">
-                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.exited_at), 'MMM d, yyyy')}</p>
-                        {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
-                      </div>
-                      <RecordActions onEdit={() => openEditExit(r)} onDelete={() => handleDeleteExit(r)} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* Breeding tab */}
-        {tab === 'breeding' && (
-          <div className="pb-24 md:pb-8">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={openAddBreeding}>Add record</Button>
-            </div>
-            {breedingRecords.length === 0 ? (
-              <EmptyState icon="🥚" title="No breeding records" description="Tap 'Add record' to log a pairing or clutch." />
-            ) : (
-              <div className="flex flex-col gap-2">
-                {breedingRecords.map((r) => (
-                  <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <div className="flex items-start gap-2">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>
-                          {r.paired_with_name ? `Paired with ${r.paired_with_name}` : 'Pairing'}
-                        </p>
-                        <div className="flex flex-wrap gap-2 mt-1">
-                          {r.outcome && <Badge status={r.outcome === 'fertile' ? 'green' : r.outcome === 'infertile' ? 'red' : 'muted'}>{r.outcome}</Badge>}
-                          {r.clutch_size != null && <span className="text-xs" style={{ color: '#a8a090' }}>{r.clutch_size} eggs</span>}
-                          {r.eggs_fertile != null && <span className="text-xs" style={{ color: '#8fbe5a' }}>{r.eggs_fertile} fertile</span>}
+              {acquisitionRecords.length === 0 ? (
+                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No acquisition records yet.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {acquisitionRecords.map((r) => (
+                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{r.source_name ?? r.source ?? 'Unknown source'}</p>
+                          {r.source && <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{r.source.replace('_', ' ')}</p>}
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
                         </div>
-                        {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Hatch: {format(new Date(r.hatch_date), 'MMM d, yyyy')}</p>}
-                        {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                        <div className="text-right shrink-0 mr-1">
+                          <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.acquired_at), 'MMM d, yyyy')}</p>
+                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
+                        </div>
+                        <RecordActions onEdit={() => openEditAcquisition(r)} onDelete={() => handleDeleteAcquisition(r)} />
                       </div>
-                      <div className="text-right shrink-0 mr-1">
-                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.pairing_date), 'MMM d, yyyy')}</p>
-                      </div>
-                      <RecordActions onEdit={() => openEditBreeding(r)} onDelete={() => handleDeleteBreeding(r)} />
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+
+            {/* Exit */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>🚪 Exit</p>
+                <Button size="sm" onClick={openAddExit}>Add</Button>
               </div>
-            )}
+              {exitRecords.length === 0 ? (
+                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No exit records yet.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {exitRecords.map((r) => (
+                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium capitalize" style={{ color: '#f0ece0' }}>{r.reason.replace('_', ' ')}</p>
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                        </div>
+                        <div className="text-right shrink-0 mr-1">
+                          <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.exited_at), 'MMM d, yyyy')}</p>
+                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
+                        </div>
+                        <RecordActions onEdit={() => openEditExit(r)} onDelete={() => handleDeleteExit(r)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+
+            {/* Breeding */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>🥚 Breeding</p>
+                <Button size="sm" onClick={openAddBreeding}>Add</Button>
+              </div>
+              {breedingRecords.length === 0 ? (
+                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No breeding records yet.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {breedingRecords.map((r) => (
+                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div className="flex items-start gap-2">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+                            {r.paired_with_name ? `Paired with ${r.paired_with_name}` : 'Pairing'}
+                          </p>
+                          <div className="flex flex-wrap gap-2 mt-1">
+                            {r.outcome && <Badge status={r.outcome === 'fertile' ? 'green' : r.outcome === 'infertile' ? 'red' : 'muted'}>{r.outcome}</Badge>}
+                            {r.clutch_size != null && <span className="text-xs" style={{ color: '#a8a090' }}>{r.clutch_size} eggs</span>}
+                            {r.eggs_fertile != null && <span className="text-xs" style={{ color: '#8fbe5a' }}>{r.eggs_fertile} fertile</span>}
+                          </div>
+                          {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Hatch: {format(new Date(r.hatch_date), 'MMM d, yyyy')}</p>}
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                        </div>
+                        <div className="text-right shrink-0 mr-1">
+                          <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.pairing_date), 'MMM d, yyyy')}</p>
+                        </div>
+                        <RecordActions onEdit={() => openEditBreeding(r)} onDelete={() => handleDeleteBreeding(r)} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -1118,6 +1269,9 @@ export function AnimalDetail() {
       {/* Edit animal modal */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit animal">
         <AnimalForm animal={animal} onSuccess={(updated) => { setEditOpen(false); if (updated) setAnimal((prev) => prev ? { ...prev, ...updated } : prev) }} onCancel={() => setEditOpen(false)} />
+        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <Button variant="danger" fullWidth size="sm" onClick={() => { setEditOpen(false); handleDeactivate() }}>Remove from collection</Button>
+        </div>
       </Modal>
 
       {/* Log feeding modal */}

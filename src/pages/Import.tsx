@@ -61,7 +61,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
   // manual links for unmatched animals: key = lowercased import name, value = existing animal id or '' (import as new)
   const [manualLinks, setManualLinks] = useState<Record<string, string>>({})
   const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number } | null>(null)
+  const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number; duplicates: number } | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
@@ -228,6 +228,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
     setProgress(0)
 
     let skipped = 0
+    let duplicates = 0
     let animalsInserted = 0
     let feedingsInserted = 0
     let shedsInserted = 0
@@ -268,7 +269,21 @@ export function Import({ embedded }: { embedded?: boolean }) {
       const { data: dbAnimals } = await supabase.from('animals').select('id, name').eq('household_id', householdId)
       dbAnimals?.forEach((a) => animalMap.set(a.name.trim().toLowerCase(), a.id))
 
-      // Insert feedings
+      // Fetch existing feeding and shedding keys to avoid duplicates
+      const [existingFeedingsRes, existingShedsRes] = await Promise.all([
+        supabase.from('feeding_logs').select('animal_id, fed_at, prey_type, refused').eq('household_id', householdId),
+        supabase.from('shedding_logs').select('animal_id, shed_at').eq('household_id', householdId),
+      ])
+      const existingFeedingKeys = new Set(
+        (existingFeedingsRes.data ?? []).map(
+          (r) => `${r.animal_id}|${r.fed_at.slice(0, 10)}|${r.prey_type}|${r.refused}`
+        )
+      )
+      const existingShedKeys = new Set(
+        (existingShedsRes.data ?? []).map((r) => `${r.animal_id}|${r.shed_at.slice(0, 10)}`)
+      )
+
+      // Insert feedings (skip unknown animals and existing duplicates)
       const feedingsToInsert = importData.feedingLogs
         .map((log) => {
           const name = (log.animal_name as string).trim().toLowerCase()
@@ -277,14 +292,20 @@ export function Import({ embedded }: { embedded?: boolean }) {
           const { animal_name: _, ...rest } = log
           return { ...rest, animal_id }
         })
-        .filter(Boolean) as Record<string, unknown>[]
+        .filter(Boolean)
+        .filter((log) => {
+          const r = log as Record<string, unknown>
+          const key = `${r.animal_id}|${(r.fed_at as string).slice(0, 10)}|${r.prey_type}|${r.refused}`
+          if (existingFeedingKeys.has(key)) { duplicates++; return false }
+          return true
+        }) as Record<string, unknown>[]
 
       if (feedingsToInsert.length > 0) {
         feedingsInserted = await batchInsertFeedingLogs(feedingsToInsert)
         setProgress(66)
       }
 
-      // Insert sheds
+      // Insert sheds (skip unknown animals and existing duplicates)
       const shedsToInsert = importData.sheddingLogs
         .map((log) => {
           const name = (log.animal_name as string).trim().toLowerCase()
@@ -293,14 +314,20 @@ export function Import({ embedded }: { embedded?: boolean }) {
           const { animal_name: _, ...rest } = log
           return { ...rest, animal_id }
         })
-        .filter(Boolean) as Record<string, unknown>[]
+        .filter(Boolean)
+        .filter((log) => {
+          const r = log as Record<string, unknown>
+          const key = `${r.animal_id}|${(r.shed_at as string).slice(0, 10)}`
+          if (existingShedKeys.has(key)) { duplicates++; return false }
+          return true
+        }) as Record<string, unknown>[]
 
       if (shedsToInsert.length > 0) {
         shedsInserted = await batchInsertSheddingLogs(shedsToInsert)
       }
 
       setProgress(100)
-      setResult({ animals: animalsInserted, feedings: feedingsInserted, sheds: shedsInserted, skipped })
+      setResult({ animals: animalsInserted, feedings: feedingsInserted, sheds: shedsInserted, skipped, duplicates })
     } catch (e) {
       const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed'
       setImportError(msg)
@@ -522,7 +549,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
             <p className="text-sm font-semibold mb-1" style={{ color: '#f0ece0' }}>
               {importData.animals.length} animals, {importData.feedingLogs.length} feeding logs, {importData.sheddingLogs.length} shed records ready to import
             </p>
-            <p className="text-xs" style={{ color: '#a8a090' }}>Feeding/shedding logs will be linked to animals by name (case-insensitive). Unmatched entries will be skipped.</p>
+            <p className="text-xs" style={{ color: '#a8a090' }}>Feeding/shedding logs will be linked to animals by name (case-insensitive). Unmatched entries will be skipped. Records that already exist will be detected and skipped automatically.</p>
           </div>
           {importData.animals.length > 0 && (
             <div className="mb-4 overflow-x-auto rounded-xl" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -585,10 +612,20 @@ export function Import({ embedded }: { embedded?: boolean }) {
                   <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Animals added</span><span style={{ color: '#f0ece0' }}>{result.animals}</span></div>
                   <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Feeding logs</span><span style={{ color: '#f0ece0' }}>{result.feedings}</span></div>
                   <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Shed records</span><span style={{ color: '#f0ece0' }}>{result.sheds}</span></div>
-                  {result.skipped > 0 && (
-                    <div className="flex justify-between text-sm pt-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                      <span style={{ color: '#c45a5a' }}>Skipped (no matching animal)</span>
-                      <span style={{ color: '#c45a5a' }}>{result.skipped}</span>
+                  {(result.duplicates > 0 || result.skipped > 0) && (
+                    <div className="pt-2 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      {result.duplicates > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span style={{ color: '#d4924a' }}>Already existed (skipped)</span>
+                          <span style={{ color: '#d4924a' }}>{result.duplicates}</span>
+                        </div>
+                      )}
+                      {result.skipped > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span style={{ color: '#c45a5a' }}>Skipped (no matching animal)</span>
+                          <span style={{ color: '#c45a5a' }}>{result.skipped}</span>
+                        </div>
+                      )}
                     </div>
                   )}
                 </div>
