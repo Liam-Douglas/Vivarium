@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses, detectOrphanedFeedingLogs, repairOrphanedFeedingLogs } from '@/lib/queries'
+import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses, detectOrphanedFeedingLogs, repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -25,8 +25,9 @@ export function Settings() {
   const [copied, setCopied] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [scanning, setScanning] = useState(false)
-  const [scanResult, setScanResult] = useState<{ orphanedCount: number; fixableCount: number } | null>(null)
+  const [scanResult, setScanResult] = useState<{ orphanedCount: number; fixableCount: number; dupGroups: number; dupExtra: number } | null>(null)
   const [repairing, setRepairing] = useState(false)
+  const [removingDups, setRemovingDups] = useState(false)
 
   async function handleExport() {
     if (!householdId) return
@@ -155,8 +156,11 @@ export function Settings() {
     setScanning(true)
     setScanResult(null)
     try {
-      const result = await detectOrphanedFeedingLogs(householdId)
-      setScanResult({ orphanedCount: result.orphanedCount, fixableCount: result.fixableCount })
+      const [orphans, dups] = await Promise.all([
+        detectOrphanedFeedingLogs(householdId),
+        detectDuplicateRecords(householdId),
+      ])
+      setScanResult({ orphanedCount: orphans.orphanedCount, fixableCount: orphans.fixableCount, dupGroups: dups.groupCount, dupExtra: dups.extraCount })
     } catch {
       showToast('Scan failed', 'error')
     } finally {
@@ -169,12 +173,26 @@ export function Settings() {
     setRepairing(true)
     try {
       const { fixed } = await repairOrphanedFeedingLogs(householdId)
-      setScanResult(null)
+      setScanResult((r) => r ? { ...r, fixableCount: 0, orphanedCount: r.orphanedCount - fixed } : null)
       showToast(`Fixed ${fixed} feeding record${fixed !== 1 ? 's' : ''}`, 'success')
     } catch {
       showToast('Repair failed', 'error')
     } finally {
       setRepairing(false)
+    }
+  }
+
+  async function handleRemoveDups() {
+    if (!householdId) return
+    setRemovingDups(true)
+    try {
+      const { removed } = await removeDuplicateRecords(householdId)
+      setScanResult((r) => r ? { ...r, dupGroups: 0, dupExtra: 0 } : null)
+      showToast(`Removed ${removed} duplicate record${removed !== 1 ? 's' : ''}`, 'success')
+    } catch {
+      showToast('Failed to remove duplicates', 'error')
+    } finally {
+      setRemovingDups(false)
     }
   }
 
@@ -330,27 +348,37 @@ export function Settings() {
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
             <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>DATA REPAIR</p>
             <p className="text-xs mb-3" style={{ color: '#6a6458' }}>
-              If feeding records appear in the global log but not on an animal's profile, run a scan to detect and fix broken links.
+              Detects broken animal links (records missing from profiles) and duplicate entries (same animal, same day, same type).
             </p>
-            {scanResult ? (
-              <div className="rounded-xl p-3 mb-3" style={{ backgroundColor: scanResult.fixableCount > 0 ? 'rgba(212,146,74,0.08)' : 'rgba(90,158,106,0.08)', border: `1px solid ${scanResult.fixableCount > 0 ? 'rgba(212,146,74,0.2)' : 'rgba(90,158,106,0.2)'}` }}>
-                {scanResult.fixableCount > 0 ? (
-                  <p className="text-sm" style={{ color: '#d4924a' }}>
-                    Found {scanResult.fixableCount} fixable record{scanResult.fixableCount !== 1 ? 's' : ''} ({scanResult.orphanedCount} total orphaned)
-                  </p>
-                ) : (
-                  <p className="text-sm" style={{ color: '#5a9e6a' }}>
-                    {scanResult.orphanedCount === 0 ? 'No issues found — all records are linked correctly.' : `${scanResult.orphanedCount} orphaned records found but none can be auto-repaired (animal names don't match).`}
-                  </p>
-                )}
+            {scanResult && (
+              <div className="flex flex-col gap-2 mb-3">
+                {/* Orphaned links */}
+                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.fixableCount > 0 ? 'rgba(212,146,74,0.08)' : 'rgba(90,158,106,0.08)', border: `1px solid ${scanResult.fixableCount > 0 ? 'rgba(212,146,74,0.2)' : 'rgba(90,158,106,0.2)'}` }}>
+                  <p className="text-xs font-medium mb-0.5" style={{ color: '#a8a090' }}>BROKEN LINKS</p>
+                  {scanResult.fixableCount > 0 ? (
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm" style={{ color: '#d4924a' }}>{scanResult.fixableCount} record{scanResult.fixableCount !== 1 ? 's' : ''} can be re-linked</p>
+                      <Button size="sm" onClick={handleRepair} loading={repairing}>Fix</Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm" style={{ color: '#5a9e6a' }}>{scanResult.orphanedCount === 0 ? 'All clear' : `${scanResult.orphanedCount} orphaned (names don't match any active animal)`}</p>
+                  )}
+                </div>
+                {/* Duplicates */}
+                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.dupExtra > 0 ? 'rgba(196,90,90,0.08)' : 'rgba(90,158,106,0.08)', border: `1px solid ${scanResult.dupExtra > 0 ? 'rgba(196,90,90,0.2)' : 'rgba(90,158,106,0.2)'}` }}>
+                  <p className="text-xs font-medium mb-0.5" style={{ color: '#a8a090' }}>DUPLICATES</p>
+                  {scanResult.dupExtra > 0 ? (
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-sm" style={{ color: '#c45a5a' }}>{scanResult.dupExtra} extra record{scanResult.dupExtra !== 1 ? 's' : ''} across {scanResult.dupGroups} group{scanResult.dupGroups !== 1 ? 's' : ''}</p>
+                      <Button size="sm" onClick={handleRemoveDups} loading={removingDups}>Remove</Button>
+                    </div>
+                  ) : (
+                    <p className="text-sm" style={{ color: '#5a9e6a' }}>No duplicates found</p>
+                  )}
+                </div>
               </div>
-            ) : null}
-            <div className="flex gap-2">
-              <Button variant="secondary" size="sm" onClick={handleScan} loading={scanning}>Scan for issues</Button>
-              {scanResult && scanResult.fixableCount > 0 && (
-                <Button size="sm" onClick={handleRepair} loading={repairing}>Fix {scanResult.fixableCount} record{scanResult.fixableCount !== 1 ? 's' : ''}</Button>
-              )}
-            </div>
+            )}
+            <Button variant="secondary" size="sm" onClick={handleScan} loading={scanning}>Scan for issues</Button>
           </div>
         </div>
       </Section>
