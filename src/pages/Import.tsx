@@ -22,9 +22,14 @@ interface ImportData {
   sheddingLogs: Record<string, unknown>[]
 }
 
-function parseDate(raw: string): string | null {
+function parseDate(raw: unknown): string | null {
   if (!raw) return null
-  const formats = ['yyyy-MM-dd', 'dd/MM/yyyy', 'MM/dd/yyyy', 'd/M/yyyy']
+  if (raw instanceof Date) {
+    const d = raw
+    return isValid(d) ? d.toISOString() : null
+  }
+  if (typeof raw !== 'string') return null
+  const formats = ['yyyy-MM-dd', 'dd/MM/yyyy', 'MM/dd/yyyy', 'd/M/yyyy', 'dd-MM-yyyy', 'MM-dd-yyyy']
   const trimmed = raw.trim()
   try {
     const iso = parseISO(trimmed)
@@ -147,6 +152,15 @@ export function Import({ embedded }: { embedded?: boolean }) {
     reader.readAsArrayBuffer(file)
   }
 
+  function detectSheetType(rows: ParsedRow[]): 'animals' | 'feeding' | 'shedding' | null {
+    if (rows.length === 0) return null
+    const keys = Object.keys(rows[0]).map((k) => k.toLowerCase())
+    if (keys.some((k) => k.includes('prey') || k === 'refused' || k === 'fed_at')) return 'feeding'
+    if (keys.some((k) => k.includes('shed') || k === 'complete' || k === 'ecdysis')) return 'shedding'
+    if (keys.some((k) => k === 'species' || k.includes('morph') || k === 'feeding frequency')) return 'animals'
+    return null
+  }
+
   function autoMap(parsedSheets: { name: string; rows: ParsedRow[] }[]) {
     if (!user || !householdId) return
 
@@ -156,7 +170,12 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
     for (const sheet of parsedSheets) {
       const lc = sheet.name.toLowerCase()
-      if (lc.includes('animal')) {
+      const sheetType = lc.includes('animal') ? 'animals'
+        : lc.includes('feed') ? 'feeding'
+        : lc.includes('shed') || lc.includes('moult') || lc.includes('ecdysis') ? 'shedding'
+        : detectSheetType(sheet.rows)
+
+      if (sheetType === 'animals') {
         sheet.rows.forEach((row) => {
           const name = row['Name *'] || row['Name'] || row['name']
           const species = row['Species *'] || row['Species'] || row['species']
@@ -174,11 +193,11 @@ export function Import({ embedded }: { embedded?: boolean }) {
             is_active: true,
           })
         })
-      } else if (lc.includes('feed')) {
+      } else if (sheetType === 'feeding') {
         sheet.rows.forEach((row) => {
-          const animalName = row['Animal name *'] || row['Animal'] || row['animal']
-          const dateRaw = row['Date *'] || row['Date'] || row['date']
-          const preyType = row['Prey type *'] || row['Prey type'] || row['prey_type']
+          const animalName = row['Animal name *'] || row['Animal name'] || row['Animal'] || row['animal'] || row['Name'] || row['name']
+          const dateRaw = (row['Date *'] || row['Date'] || row['Fed date'] || row['date'] || row['fed_at']) as unknown
+          const preyType = row['Prey type *'] || row['Prey type'] || row['prey_type'] || row['Food'] || row['food'] || row['Prey']
           if (!animalName || !dateRaw || !preyType) return
           const fed_at = parseDate(dateRaw)
           if (!fed_at) return
@@ -194,10 +213,10 @@ export function Import({ embedded }: { embedded?: boolean }) {
             notes: row['Notes'] || row['notes'] || null,
           })
         })
-      } else if (lc.includes('shed')) {
+      } else if (sheetType === 'shedding') {
         sheet.rows.forEach((row) => {
-          const animalName = row['Animal name *'] || row['Animal'] || row['animal']
-          const dateRaw = row['Date *'] || row['Date'] || row['date']
+          const animalName = row['Animal name *'] || row['Animal name'] || row['Animal'] || row['animal'] || row['Name'] || row['name']
+          const dateRaw = (row['Date *'] || row['Date'] || row['Shed date'] || row['Shed Date'] || row['date'] || row['shed_at']) as unknown
           if (!animalName || !dateRaw) return
           const shed_at = parseDate(dateRaw)
           if (!shed_at) return
