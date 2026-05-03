@@ -7,6 +7,7 @@ import { useToast } from '@/components/ui/Toast'
 import { createAnimal, updateAnimal, uploadAnimalPhoto } from '@/lib/queries'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { useEnclosures } from '@/hooks/useEnclosures'
 import { useRef, useState } from 'react'
 import type { Animal } from '@/hooks/useAnimals'
 
@@ -53,6 +54,10 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
   const [askingPrice, setAskingPrice] = useState(
     animal?.asking_price_cents != null ? String(animal.asking_price_cents / 100) : ''
   )
+
+  // Enclosure
+  const { data: enclosures } = useEnclosures()
+  const [enclosureId, setEnclosureId] = useState<string>(animal?.enclosure_id ?? '')
 
   // Custom fields
   const [customFields, setCustomFields] = useState<{ key: string; value: string }[]>(
@@ -121,6 +126,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
         is_for_sale: isForSale,
         asking_price_cents: isForSale && askingPrice ? Math.round(Number(askingPrice) * 100) : null,
         custom_fields,
+        enclosure_id: enclosureId || null,
       }
 
       if (animal) {
@@ -187,6 +193,20 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
       </Select>
       <Input label="Date of birth" type="date" {...register('date_of_birth')} />
       <Input label="Feeding frequency (days)" type="number" min={1} {...register('feeding_frequency_days')} placeholder="e.g. 7" />
+      {enclosures.length > 0 && (
+        <Select
+          label="Enclosure"
+          value={enclosureId}
+          onChange={(e) => setEnclosureId((e.target as HTMLSelectElement).value)}
+        >
+          <option value="">No enclosure</option>
+          {enclosures.map((enc) => (
+            <option key={enc.id} value={enc.id}>
+              {enc.name}{enc.enclosure_type ? ` (${enc.enclosure_type})` : ''}
+            </option>
+          ))}
+        </Select>
+      )}
       <Textarea label="Notes" {...register('notes')} placeholder="Any notes..." rows={3} />
 
       {/* Tags */}

@@ -799,3 +799,41 @@ export async function batchInsertSheddingLogs(logs: Record<string, unknown>[]) {
   }
   return inserted
 }
+
+// ─── Enclosures ──────────────────────────────────────────────────────────────
+
+export async function getEnclosures(householdId: string) {
+  const { data, error } = await supabase
+    .from('enclosures')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('name')
+  if (error) throw error
+  return data
+}
+
+export async function createEnclosure(enclosure: {
+  household_id: string
+  user_id: string
+  name: string
+  enclosure_type?: string | null
+  notes?: string | null
+}) {
+  const { data, error } = await supabase
+    .from('enclosures')
+    .insert(enclosure)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateEnclosure(id: string, updates: Record<string, unknown>) {
+  const { error } = await supabase.from('enclosures').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteEnclosure(id: string) {
+  const { error } = await supabase.from('enclosures').delete().eq('id', id)
+  if (error) throw error
+}
