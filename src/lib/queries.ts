@@ -38,14 +38,15 @@ export async function createAnimal(animal: {
   user_id: string
   name: string
   species: string
-  morph?: string
-  sex?: string
-  date_of_birth?: string
-  photo_url?: string
-  notes?: string
+  morph?: string | null
+  sex?: string | null
+  date_of_birth?: string | null
+  photo_url?: string | null
+  notes?: string | null
   feeding_frequency_days?: number
   tags?: string[]
   quarantine_started_at?: string | null
+  quarantine_ended_at?: string | null
   is_for_sale?: boolean
   asking_price_cents?: number | null
   custom_fields?: Record<string, string>
