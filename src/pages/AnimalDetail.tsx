@@ -603,6 +603,31 @@ export function AnimalDetail() {
         {/* Overview */}
         {tab === 'overview' && (
           <div className="flex flex-col gap-4 pb-24 md:pb-8">
+            {/* Quarantine banner */}
+            {animal.quarantine_started_at && !animal.quarantine_ended_at && (
+              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.3)' }}>
+                <span className="text-lg">🔬</span>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: '#d4924a' }}>In quarantine</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Since {format(new Date(animal.quarantine_started_at), 'MMM d, yyyy')}</p>
+                </div>
+                <button onClick={() => setEditOpen(true)} className="ml-auto text-xs px-2 py-1 rounded-lg" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a' }}>End</button>
+              </div>
+            )}
+
+            {/* For sale banner */}
+            {animal.is_for_sale && (
+              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'rgba(143,190,90,0.08)', border: '1px solid rgba(143,190,90,0.25)' }}>
+                <span className="text-lg">🏷️</span>
+                <div>
+                  <p className="text-sm font-medium" style={{ color: '#8fbe5a' }}>Listed for sale</p>
+                  {animal.asking_price_cents != null && (
+                    <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Asking ${(animal.asking_price_cents / 100).toFixed(2)} AUD</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Quick log actions */}
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -736,6 +761,35 @@ export function AnimalDetail() {
               <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>NOTES</p>
                 <p className="text-sm" style={{ color: '#f0ece0', whiteSpace: 'pre-wrap' }}>{animal.notes}</p>
+              </div>
+            )}
+
+            {/* Tags */}
+            {(animal.tags ?? []).length > 0 && (
+              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>TAGS</p>
+                <div className="flex flex-wrap gap-2">
+                  {animal.tags.map((t) => (
+                    <span key={t} className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}>
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Custom fields */}
+            {Object.keys(animal.custom_fields ?? {}).length > 0 && (
+              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>CUSTOM FIELDS</p>
+                <div className="flex flex-col gap-2">
+                  {Object.entries(animal.custom_fields).map(([key, value]) => (
+                    <div key={key} className="flex justify-between text-sm">
+                      <span style={{ color: '#a8a090' }}>{key}</span>
+                      <span style={{ color: '#f0ece0' }}>{value}</span>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>

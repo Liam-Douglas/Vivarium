@@ -46,6 +46,18 @@ export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
             🔥 {streak}
           </div>
         )}
+        {/* Quarantine badge */}
+        {animal.quarantine_started_at && !animal.quarantine_ended_at && (
+          <div className="absolute top-2.5 left-2.5 px-1.5 py-0.5 rounded-md text-xs font-semibold" style={{ backgroundColor: 'rgba(212,146,74,0.85)', color: '#1a1a18' }}>
+            🔬 Q
+          </div>
+        )}
+        {/* For sale badge */}
+        {animal.is_for_sale && (
+          <div className="absolute bottom-2 right-2 px-1.5 py-0.5 rounded-md text-xs font-semibold" style={{ backgroundColor: 'rgba(143,190,90,0.85)', color: '#1a1a18' }}>
+            For Sale
+          </div>
+        )}
       </div>
 
       {/* Info */}
@@ -61,6 +73,15 @@ export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
             ? `Fed ${formatDistanceToNow(new Date(animal.last_fed_at), { addSuffix: true })}`
             : 'Never fed'}
         </p>
+        {(animal.tags ?? []).length > 0 && (
+          <div className="flex gap-1 flex-wrap mt-2">
+            {animal.tags.slice(0, 3).map((t) => (
+              <span key={t} className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a' }}>
+                #{t}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </Link>
   )

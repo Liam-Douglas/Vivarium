@@ -19,6 +19,13 @@ export interface Animal {
   is_active: boolean
   created_at: string
   updated_at: string
+  tags: string[]
+  quarantine_started_at: string | null
+  quarantine_ended_at: string | null
+  is_for_sale: boolean
+  asking_price_cents: number | null
+  custom_fields: Record<string, string>
+  enclosure_id: string | null
 }
 
 export function useAnimals() {

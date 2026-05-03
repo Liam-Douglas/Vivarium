@@ -44,6 +44,12 @@ export async function createAnimal(animal: {
   photo_url?: string
   notes?: string
   feeding_frequency_days?: number
+  tags?: string[]
+  quarantine_started_at?: string | null
+  is_for_sale?: boolean
+  asking_price_cents?: number | null
+  custom_fields?: Record<string, string>
+  enclosure_id?: string | null
 }) {
   const { data, error } = await supabase
     .from('animals')
