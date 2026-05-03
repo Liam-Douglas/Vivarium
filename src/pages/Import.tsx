@@ -22,9 +22,14 @@ interface ImportData {
   sheddingLogs: Record<string, unknown>[]
 }
 
-function parseDate(raw: string): string | null {
+function parseDate(raw: unknown): string | null {
   if (!raw) return null
-  const formats = ['yyyy-MM-dd', 'dd/MM/yyyy', 'MM/dd/yyyy', 'd/M/yyyy']
+  if (raw instanceof Date) {
+    const d = raw
+    return isValid(d) ? d.toISOString() : null
+  }
+  if (typeof raw !== 'string') return null
+  const formats = ['yyyy-MM-dd', 'dd/MM/yyyy', 'MM/dd/yyyy', 'd/M/yyyy', 'dd-MM-yyyy', 'MM-dd-yyyy']
   const trimmed = raw.trim()
   try {
     const iso = parseISO(trimmed)
@@ -61,7 +66,17 @@ export function Import({ embedded }: { embedded?: boolean }) {
   // manual links for unmatched animals: key = lowercased import name, value = existing animal id or '' (import as new)
   const [manualLinks, setManualLinks] = useState<Record<string, string>>({})
   const [progress, setProgress] = useState(0)
-  const [result, setResult] = useState<{ animals: number; feedings: number; sheds: number; skipped: number; duplicates: number } | null>(null)
+  const [result, setResult] = useState<{
+    animals: number
+    feedings: number
+    sheds: number
+    shedsDetected: number
+    feedingsDetected: number
+    skippedFeedings: number
+    skippedSheds: number
+    duplicateFeedings: number
+    duplicateSheds: number
+  } | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
@@ -147,6 +162,15 @@ export function Import({ embedded }: { embedded?: boolean }) {
     reader.readAsArrayBuffer(file)
   }
 
+  function detectSheetType(rows: ParsedRow[]): 'animals' | 'feeding' | 'shedding' | null {
+    if (rows.length === 0) return null
+    const keys = Object.keys(rows[0]).map((k) => k.toLowerCase())
+    if (keys.some((k) => k.includes('prey') || k === 'refused' || k === 'fed_at')) return 'feeding'
+    if (keys.some((k) => k.includes('shed') || k === 'complete' || k === 'ecdysis')) return 'shedding'
+    if (keys.some((k) => k === 'species' || k.includes('morph') || k === 'feeding frequency')) return 'animals'
+    return null
+  }
+
   function autoMap(parsedSheets: { name: string; rows: ParsedRow[] }[]) {
     if (!user || !householdId) return
 
@@ -156,7 +180,12 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
     for (const sheet of parsedSheets) {
       const lc = sheet.name.toLowerCase()
-      if (lc.includes('animal')) {
+      const sheetType = lc.includes('animal') ? 'animals'
+        : lc.includes('feed') ? 'feeding'
+        : lc.includes('shed') || lc.includes('moult') || lc.includes('ecdysis') ? 'shedding'
+        : detectSheetType(sheet.rows)
+
+      if (sheetType === 'animals') {
         sheet.rows.forEach((row) => {
           const name = row['Name *'] || row['Name'] || row['name']
           const species = row['Species *'] || row['Species'] || row['species']
@@ -174,11 +203,11 @@ export function Import({ embedded }: { embedded?: boolean }) {
             is_active: true,
           })
         })
-      } else if (lc.includes('feed')) {
+      } else if (sheetType === 'feeding') {
         sheet.rows.forEach((row) => {
-          const animalName = row['Animal name *'] || row['Animal'] || row['animal']
-          const dateRaw = row['Date *'] || row['Date'] || row['date']
-          const preyType = row['Prey type *'] || row['Prey type'] || row['prey_type']
+          const animalName = row['Animal name *'] || row['Animal name'] || row['Animal'] || row['animal'] || row['Name'] || row['name']
+          const dateRaw = (row['Date *'] || row['Date'] || row['Fed date'] || row['date'] || row['fed_at']) as unknown
+          const preyType = row['Prey type *'] || row['Prey type'] || row['prey_type'] || row['Food'] || row['food'] || row['Prey']
           if (!animalName || !dateRaw || !preyType) return
           const fed_at = parseDate(dateRaw)
           if (!fed_at) return
@@ -194,10 +223,10 @@ export function Import({ embedded }: { embedded?: boolean }) {
             notes: row['Notes'] || row['notes'] || null,
           })
         })
-      } else if (lc.includes('shed')) {
+      } else if (sheetType === 'shedding') {
         sheet.rows.forEach((row) => {
-          const animalName = row['Animal name *'] || row['Animal'] || row['animal']
-          const dateRaw = row['Date *'] || row['Date'] || row['date']
+          const animalName = row['Animal name *'] || row['Animal name'] || row['Animal'] || row['animal'] || row['Name'] || row['name']
+          const dateRaw = (row['Date *'] || row['Date'] || row['Shed date'] || row['Shed Date'] || row['date'] || row['shed_at']) as unknown
           if (!animalName || !dateRaw) return
           const shed_at = parseDate(dateRaw)
           if (!shed_at) return
@@ -227,8 +256,10 @@ export function Import({ embedded }: { embedded?: boolean }) {
     setStep(4)
     setProgress(0)
 
-    let skipped = 0
-    let duplicates = 0
+    let skippedFeedings = 0
+    let skippedSheds = 0
+    let duplicateFeedings = 0
+    let duplicateSheds = 0
     let animalsInserted = 0
     let feedingsInserted = 0
     let shedsInserted = 0
@@ -288,7 +319,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
         .map((log) => {
           const name = (log.animal_name as string).trim().toLowerCase()
           const animal_id = animalMap.get(name)
-          if (!animal_id) { skipped++; return null }
+          if (!animal_id) { skippedFeedings++; return null }
           const { animal_name: _, ...rest } = log
           return { ...rest, animal_id }
         })
@@ -296,7 +327,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
         .filter((log) => {
           const r = log as Record<string, unknown>
           const key = `${r.animal_id}|${(r.fed_at as string).slice(0, 10)}|${r.prey_type}|${r.refused}`
-          if (existingFeedingKeys.has(key)) { duplicates++; return false }
+          if (existingFeedingKeys.has(key)) { duplicateFeedings++; return false }
           return true
         }) as Record<string, unknown>[]
 
@@ -310,7 +341,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
         .map((log) => {
           const name = (log.animal_name as string).trim().toLowerCase()
           const animal_id = animalMap.get(name)
-          if (!animal_id) { skipped++; return null }
+          if (!animal_id) { skippedSheds++; return null }
           const { animal_name: _, ...rest } = log
           return { ...rest, animal_id }
         })
@@ -318,7 +349,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
         .filter((log) => {
           const r = log as Record<string, unknown>
           const key = `${r.animal_id}|${(r.shed_at as string).slice(0, 10)}`
-          if (existingShedKeys.has(key)) { duplicates++; return false }
+          if (existingShedKeys.has(key)) { duplicateSheds++; return false }
           return true
         }) as Record<string, unknown>[]
 
@@ -327,7 +358,17 @@ export function Import({ embedded }: { embedded?: boolean }) {
       }
 
       setProgress(100)
-      setResult({ animals: animalsInserted, feedings: feedingsInserted, sheds: shedsInserted, skipped, duplicates })
+      setResult({
+        animals: animalsInserted,
+        feedings: feedingsInserted,
+        sheds: shedsInserted,
+        shedsDetected: importData.sheddingLogs.length,
+        feedingsDetected: importData.feedingLogs.length,
+        skippedFeedings,
+        skippedSheds,
+        duplicateFeedings,
+        duplicateSheds,
+      })
     } catch (e) {
       const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed'
       setImportError(msg)
@@ -605,38 +646,66 @@ export function Import({ embedded }: { embedded?: boolean }) {
             </div>
           ) : (
             <div className="text-center">
-              <div className="text-4xl mb-4">{result.skipped > 0 ? '⚠️' : '✅'}</div>
+              <div className="text-4xl mb-4">{(result.skippedFeedings + result.skippedSheds) > 0 ? '⚠️' : '✅'}</div>
               <p className="text-lg font-semibold mb-4" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Import complete</p>
               <div className="rounded-xl p-4 mb-4 text-left" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Animals added</span><span style={{ color: '#f0ece0' }}>{result.animals}</span></div>
-                  <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Feeding logs</span><span style={{ color: '#f0ece0' }}>{result.feedings}</span></div>
-                  <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Shed records</span><span style={{ color: '#f0ece0' }}>{result.sheds}</span></div>
-                  {(result.duplicates > 0 || result.skipped > 0) && (
+                  <div className="flex justify-between text-sm">
+                    <span style={{ color: '#a8a090' }}>Feeding logs added</span>
+                    <span style={{ color: '#f0ece0' }}>{result.feedings} / {result.feedingsDetected}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span style={{ color: '#a8a090' }}>Shed records added</span>
+                    <span style={{ color: result.shedsDetected > 0 && result.sheds === 0 ? '#c45a5a' : '#f0ece0' }}>{result.sheds} / {result.shedsDetected}</span>
+                  </div>
+                  {(result.duplicateFeedings + result.duplicateSheds + result.skippedFeedings + result.skippedSheds) > 0 && (
                     <div className="pt-2 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                      {result.duplicates > 0 && (
+                      {result.duplicateFeedings > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span style={{ color: '#d4924a' }}>Already existed (skipped)</span>
-                          <span style={{ color: '#d4924a' }}>{result.duplicates}</span>
+                          <span style={{ color: '#d4924a' }}>Feeding duplicates skipped</span>
+                          <span style={{ color: '#d4924a' }}>{result.duplicateFeedings}</span>
                         </div>
                       )}
-                      {result.skipped > 0 && (
+                      {result.duplicateSheds > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span style={{ color: '#c45a5a' }}>Skipped (no matching animal)</span>
-                          <span style={{ color: '#c45a5a' }}>{result.skipped}</span>
+                          <span style={{ color: '#d4924a' }}>Shed duplicates skipped</span>
+                          <span style={{ color: '#d4924a' }}>{result.duplicateSheds}</span>
+                        </div>
+                      )}
+                      {result.skippedFeedings > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span style={{ color: '#c45a5a' }}>Feedings — no matching animal</span>
+                          <span style={{ color: '#c45a5a' }}>{result.skippedFeedings}</span>
+                        </div>
+                      )}
+                      {result.skippedSheds > 0 && (
+                        <div className="flex justify-between text-sm">
+                          <span style={{ color: '#c45a5a' }}>Sheds — no matching animal</span>
+                          <span style={{ color: '#c45a5a' }}>{result.skippedSheds}</span>
                         </div>
                       )}
                     </div>
                   )}
                 </div>
               </div>
-              {result.skipped > 0 && (
+              {result.shedsDetected > 0 && result.sheds === 0 && result.duplicateSheds === 0 && result.skippedSheds === 0 && (
+                <p className="text-xs mb-4 px-2" style={{ color: '#c45a5a' }}>
+                  Shed records were detected but none were imported. This usually means the date column couldn't be parsed. Make sure dates are formatted as YYYY-MM-DD in your file.
+                </p>
+              )}
+              {result.skippedSheds > 0 && (
                 <p className="text-xs mb-4 px-2" style={{ color: '#a8a090' }}>
-                  Some logs couldn't be linked because the animal name in the file didn't match any animal in your collection. Go back and use manual linking to fix this.
+                  {result.skippedSheds} shed record{result.skippedSheds !== 1 ? 's' : ''} couldn't be linked — the animal name in the shed sheet didn't match any animal in your collection. Go back and use manual linking.
+                </p>
+              )}
+              {result.skippedFeedings > 0 && (
+                <p className="text-xs mb-4 px-2" style={{ color: '#a8a090' }}>
+                  {result.skippedFeedings} feeding record{result.skippedFeedings !== 1 ? 's' : ''} couldn't be linked — the animal name in the feeding sheet didn't match any animal in your collection.
                 </p>
               )}
               <div className="flex gap-2">
-                {result.skipped > 0 && <Button variant="secondary" fullWidth onClick={() => { setStep(2); setResult(null) }}>Go back</Button>}
+                {(result.skippedFeedings + result.skippedSheds) > 0 && <Button variant="secondary" fullWidth onClick={() => { setStep(2); setResult(null) }}>Go back</Button>}
                 <Button fullWidth onClick={() => navigate('/animals')}>View your animals</Button>
               </div>
             </div>
