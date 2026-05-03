@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays } from 'date-fns'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
@@ -8,6 +8,9 @@ import {
   createSheddingLog, updateSheddingLog, deleteSheddingLog,
   createHealthEvent, updateHealthEvent, deleteHealthEvent,
   updateFeedingLog, deleteFeedingLog,
+  uploadAdditionalPhoto, createAnimalPhotoRecord, deleteAnimalPhotoRecord,
+  createMedicationSchedule, updateMedicationSchedule, deleteMedicationSchedule,
+  getMedicationLogs, createMedicationLog,
 } from '@/lib/queries'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
@@ -35,6 +38,9 @@ import { useExitRecords } from '@/hooks/useExitRecords'
 import type { ExitRecord } from '@/hooks/useExitRecords'
 import { useBreedingRecords } from '@/hooks/useBreedingRecords'
 import type { BreedingRecord } from '@/hooks/useBreedingRecords'
+import { useAnimalPhotos } from '@/hooks/useAnimalPhotos'
+import { useMedicationSchedules } from '@/hooks/useMedicationSchedules'
+import type { MedicationSchedule } from '@/hooks/useMedicationSchedules'
 import {
   createAcquisitionRecord, updateAcquisitionRecord, deleteAcquisitionRecord,
   createExitRecord, updateExitRecord, deleteExitRecord,
@@ -80,6 +86,8 @@ export function AnimalDetail() {
   const { data: acquisitionRecords, refresh: refreshAcquisition } = useAcquisitionRecords(id)
   const { data: exitRecords, refresh: refreshExit } = useExitRecords(id)
   const { data: breedingRecords, refresh: refreshBreeding } = useBreedingRecords(id)
+  const { data: animalPhotos, refresh: refreshPhotos } = useAnimalPhotos(id)
+  const { data: medicationSchedules, refresh: refreshMedications } = useMedicationSchedules(id)
 
   // ── Weight state ──────────────────────────────────────────────────────────
   const [weightOpen, setWeightOpen] = useState(false)
@@ -162,6 +170,27 @@ export function AnimalDetail() {
   const [breedNotes, setBreedNotes] = useState('')
   const [savingBreed, setSavingBreed] = useState(false)
 
+  // ── Photos ────────────────────────────────────────────────────────────────
+  const photoInputRef = useRef<HTMLInputElement>(null)
+  const [photoUploading, setPhotoUploading] = useState(false)
+  const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null)
+
+  // ── Medications ───────────────────────────────────────────────────────────
+  const [medOpen, setMedOpen] = useState(false)
+  const [editingMed, setEditingMed] = useState<MedicationSchedule | null>(null)
+  const [medName, setMedName] = useState('')
+  const [medDosage, setMedDosage] = useState('')
+  const [medFreqDays, setMedFreqDays] = useState('')
+  const [medStartDate, setMedStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [medEndDate, setMedEndDate] = useState('')
+  const [medNotes, setMedNotes] = useState('')
+  const [savingMed, setSavingMed] = useState(false)
+  const [logDoseSchedule, setLogDoseSchedule] = useState<MedicationSchedule | null>(null)
+  const [logDoseNotes, setLogDoseNotes] = useState('')
+  const [logDoseOpen, setLogDoseOpen] = useState(false)
+  const [logDoseLoading, setLogDoseLoading] = useState(false)
+  const [medLastDoses, setMedLastDoses] = useState<Record<string, string>>({})
+
   // ── QR code ───────────────────────────────────────────────────────────────
   const [qrOpen, setQrOpen] = useState(false)
   const [qrDataUrl, setQrDataUrl] = useState('')
@@ -184,6 +213,93 @@ export function AnimalDetail() {
     if (!id) return
     getAnimal(id).then((a) => { setAnimal(a as Animal); setLoading(false) }).catch(() => setLoading(false))
   }, [id])
+
+  useEffect(() => {
+    if (!householdId || !id || medicationSchedules.length === 0) return
+    getMedicationLogs(householdId, id).then((logs) => {
+      const lastDoses: Record<string, string> = {}
+      for (const log of logs) {
+        const scheduleId = (log as { schedule_id: string }).schedule_id
+        if (!lastDoses[scheduleId]) lastDoses[scheduleId] = (log as { given_at: string }).given_at
+      }
+      setMedLastDoses(lastDoses)
+    }).catch(() => {})
+  }, [householdId, id, medicationSchedules])
+
+  // ── Photo handlers ────────────────────────────────────────────────────────
+  async function handleAddPhoto(file: File) {
+    if (!user || !householdId || !id) return
+    setPhotoUploading(true)
+    try {
+      const url = await uploadAdditionalPhoto(householdId, id, file)
+      await createAnimalPhotoRecord({ household_id: householdId, animal_id: id, user_id: user.id, url })
+      refreshPhotos()
+      showToast('Photo added', 'success')
+    } catch (e) { showToast(e instanceof Error ? e.message : 'Upload failed', 'error') }
+    finally { setPhotoUploading(false) }
+  }
+  function handleDeletePhoto(photoId: string) {
+    requestConfirm('Delete photo', 'This photo will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteAnimalPhotoRecord(photoId); refreshPhotos(); showToast('Photo deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    })
+  }
+
+  // ── Medication handlers ───────────────────────────────────────────────────
+  function openAddMed() {
+    setEditingMed(null); setMedName(''); setMedDosage(''); setMedFreqDays('')
+    setMedStartDate(new Date().toISOString().split('T')[0]); setMedEndDate(''); setMedNotes('')
+    setMedOpen(true)
+  }
+  function openEditMed(med: MedicationSchedule) {
+    setEditingMed(med); setMedName(med.name); setMedDosage(med.dosage ?? '')
+    setMedFreqDays(med.frequency_days != null ? String(med.frequency_days) : '')
+    setMedStartDate(med.start_date ?? new Date().toISOString().split('T')[0])
+    setMedEndDate(med.end_date ?? ''); setMedNotes(med.notes ?? '')
+    setMedOpen(true)
+  }
+  async function handleSaveMed() {
+    if (!user || !householdId || !id || !medName.trim()) return
+    setSavingMed(true)
+    try {
+      const payload = {
+        name: medName.trim(),
+        dosage: medDosage || null,
+        frequency_days: medFreqDays ? Number(medFreqDays) : null,
+        start_date: medStartDate || null,
+        end_date: medEndDate || null,
+        notes: medNotes || null,
+      }
+      if (editingMed) {
+        await updateMedicationSchedule(editingMed.id, payload)
+        showToast('Medication updated', 'success')
+      } else {
+        await createMedicationSchedule({ household_id: householdId, animal_id: id, user_id: user.id, ...payload })
+        showToast('Medication added', 'success')
+      }
+      setMedOpen(false); refreshMedications()
+    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    finally { setSavingMed(false) }
+  }
+  function handleDeleteMed(med: MedicationSchedule) {
+    requestConfirm('Delete medication', 'This medication schedule will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteMedicationSchedule(med.id); refreshMedications(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    })
+  }
+  async function handleLogDose() {
+    if (!user || !householdId || !id || !logDoseSchedule) return
+    setLogDoseLoading(true)
+    try {
+      const givenAt = new Date().toISOString()
+      await createMedicationLog({ household_id: householdId, schedule_id: logDoseSchedule.id, animal_id: id, user_id: user.id, given_at: givenAt, notes: logDoseNotes || null })
+      setMedLastDoses(prev => ({ ...prev, [logDoseSchedule.id]: givenAt }))
+      showToast('Dose logged', 'success'); setLogDoseOpen(false)
+    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    finally { setLogDoseLoading(false) }
+  }
 
   // ── Weight handlers ───────────────────────────────────────────────────────
   function openAddWeight() {
@@ -644,6 +760,29 @@ export function AnimalDetail() {
               ))}
             </div>
 
+            {/* Photo gallery */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs font-medium" style={{ color: '#a8a090' }}>PHOTOS{animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}</p>
+                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? '#6a6458' : '#8fbe5a' }} disabled={photoUploading}>
+                  {photoUploading ? 'Uploading…' : '+ Add'}
+                </button>
+                <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddPhoto(f); e.target.value = '' }} />
+              </div>
+              {animalPhotos.length === 0 ? (
+                <p className="px-4 py-3 text-xs" style={{ color: '#6a6458' }}>No additional photos yet. Tap "+ Add" to upload.</p>
+              ) : (
+                <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                  {animalPhotos.map((photo) => (
+                    <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
+                      <img src={photo.url} alt="" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
+                      <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#f0ece0' }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1093,10 +1232,57 @@ export function AnimalDetail() {
 
         {/* Health */}
         {tab === 'health' && (
-          <div className="pb-24 md:pb-8">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={openAddHealth}>Add event</Button>
+          <div className="pb-24 md:pb-8 flex flex-col gap-6">
+            {/* Medications */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>💊 Medications</p>
+                <Button size="sm" onClick={openAddMed}>Add</Button>
+              </div>
+              {medicationSchedules.length === 0 ? (
+                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No medication schedules yet.</p>
+              ) : (
+                <div className="flex flex-col gap-2">
+                  {medicationSchedules.map((med) => {
+                    const lastDose = medLastDoses[med.id]
+                    return (
+                      <div key={med.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: `1px solid ${med.is_active ? 'rgba(143,190,90,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                        <div className="flex items-start gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{med.name}</p>
+                              {!med.is_active && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#6a6458' }}>Archived</span>}
+                            </div>
+                            {med.dosage && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{med.dosage}</p>}
+                            <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                              {lastDose ? `Last: ${format(new Date(lastDose), 'MMM d')}` : 'No doses logged'}
+                              {med.frequency_days ? ` · every ${med.frequency_days}d` : ''}
+                              {med.end_date ? ` · ends ${format(new Date(med.end_date), 'MMM d')}` : ''}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {med.is_active && (
+                              <button onClick={() => { setLogDoseSchedule(med); setLogDoseNotes(''); setLogDoseOpen(true) }} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>
+                                Log dose
+                              </button>
+                            )}
+                            <RecordActions onEdit={() => openEditMed(med)} onDelete={() => handleDeleteMed(med)} />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
             </div>
+
+            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+
+            {/* Health events */}
+            <div>
+              <div className="flex justify-end mb-3">
+                <Button size="sm" onClick={openAddHealth}>Add event</Button>
+              </div>
             {healthEvents.length === 0 ? (
               <EmptyState icon="🏥" title="No health events" description="Tap 'Add event' to log an observation or vet visit." />
             ) : (
@@ -1146,6 +1332,7 @@ export function AnimalDetail() {
                 </div>
               </div>
             )}
+            </div>{/* end health events section */}
           </div>
         )}
 
@@ -1316,6 +1503,53 @@ export function AnimalDetail() {
           <div className="flex gap-2">
             <Button variant="secondary" fullWidth onClick={() => setBreedingOpen(false)}>Cancel</Button>
             <Button fullWidth onClick={handleSaveBreeding} loading={savingBreed}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Photo lightbox */}
+      <Modal open={!!lightboxPhoto} onClose={() => setLightboxPhoto(null)} title="">
+        {lightboxPhoto && (
+          <img src={lightboxPhoto} alt="" className="w-full rounded-xl max-h-[65vh] object-contain" style={{ backgroundColor: '#1a1a18' }} />
+        )}
+      </Modal>
+
+      {/* Medication schedule modal */}
+      <Modal open={medOpen} onClose={() => setMedOpen(false)} title={editingMed ? 'Edit medication' : 'Add medication'}>
+        <div className="flex flex-col gap-4">
+          <Input label="Name *" value={medName} onChange={(e) => setMedName(e.target.value)} placeholder="e.g. Panacur, Baytril" />
+          <Input label="Dosage" value={medDosage} onChange={(e) => setMedDosage(e.target.value)} placeholder="e.g. 0.1 ml, 1 tablet" />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Start date" type="date" value={medStartDate} onChange={(e) => setMedStartDate(e.target.value)} />
+            <Input label="End date" type="date" value={medEndDate} onChange={(e) => setMedEndDate(e.target.value)} />
+          </div>
+          <Input label="Frequency (days)" type="number" min={1} value={medFreqDays} onChange={(e) => setMedFreqDays(e.target.value)} placeholder="e.g. 1 for daily, 7 for weekly" />
+          <Textarea label="Notes" value={medNotes} onChange={(e) => setMedNotes(e.target.value)} rows={2} placeholder="Instructions, side effects…" />
+          {editingMed && (
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input type="checkbox" checked={!editingMed.is_active} onChange={(e) => { updateMedicationSchedule(editingMed.id, { is_active: !e.target.checked }).then(refreshMedications) }} className="w-4 h-4 accent-[#c45a5a]" />
+              <span className="text-sm" style={{ color: '#a8a090' }}>Archive this medication</span>
+            </label>
+          )}
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setMedOpen(false)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveMed} loading={savingMed} disabled={!medName.trim()}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Log dose modal */}
+      <Modal open={logDoseOpen} onClose={() => setLogDoseOpen(false)} title={`Log dose — ${logDoseSchedule?.name ?? ''}`}>
+        <div className="flex flex-col gap-4">
+          {logDoseSchedule?.dosage && (
+            <p className="text-sm rounded-xl px-3 py-2" style={{ backgroundColor: 'rgba(143,190,90,0.08)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>
+              Dose: {logDoseSchedule.dosage}
+            </p>
+          )}
+          <Textarea label="Notes (optional)" value={logDoseNotes} onChange={(e) => setLogDoseNotes(e.target.value)} rows={2} placeholder="Any observations…" />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setLogDoseOpen(false)}>Cancel</Button>
+            <Button fullWidth onClick={handleLogDose} loading={logDoseLoading}>Log dose</Button>
           </div>
         </div>
       </Modal>

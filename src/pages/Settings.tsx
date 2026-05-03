@@ -1,17 +1,19 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Import } from '@/pages/Import'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses, detectOrphanedFeedingLogs, repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords } from '@/lib/queries'
+import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses, detectOrphanedFeedingLogs, repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords, createVetContact, updateVetContact, deleteVetContact } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { Input, Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
-import { Link } from 'react-router-dom'
+import { Modal } from '@/components/ui/Modal'
+import { useVetContacts } from '@/hooks/useVetContacts'
+import type { VetContact } from '@/hooks/useVetContacts'
 
 export function Settings() {
   const navigate = useNavigate()
@@ -28,6 +30,47 @@ export function Settings() {
   const [scanResult, setScanResult] = useState<{ orphanedCount: number; fixableCount: number; dupGroups: number; dupExtra: number } | null>(null)
   const [repairing, setRepairing] = useState(false)
   const [removingDups, setRemovingDups] = useState(false)
+
+  // Vet contacts
+  const { data: vetContacts, refresh: refreshVets } = useVetContacts()
+  const [vetFormOpen, setVetFormOpen] = useState(false)
+  const [editingVet, setEditingVet] = useState<VetContact | null>(null)
+  const [vetName, setVetName] = useState('')
+  const [vetClinic, setVetClinic] = useState('')
+  const [vetPhone, setVetPhone] = useState('')
+  const [vetEmail, setVetEmail] = useState('')
+  const [vetAddress, setVetAddress] = useState('')
+  const [vetNotes, setVetNotes] = useState('')
+  const [savingVet, setSavingVet] = useState(false)
+
+  function openAddVet() {
+    setEditingVet(null); setVetName(''); setVetClinic(''); setVetPhone(''); setVetEmail(''); setVetAddress(''); setVetNotes('')
+    setVetFormOpen(true)
+  }
+  function openEditVet(vet: VetContact) {
+    setEditingVet(vet); setVetName(vet.name); setVetClinic(vet.clinic_name ?? ''); setVetPhone(vet.phone ?? ''); setVetEmail(vet.email ?? ''); setVetAddress(vet.address ?? ''); setVetNotes(vet.notes ?? '')
+    setVetFormOpen(true)
+  }
+  async function handleSaveVet() {
+    if (!user || !householdId || !vetName.trim()) return
+    setSavingVet(true)
+    try {
+      const payload = { name: vetName.trim(), clinic_name: vetClinic || null, phone: vetPhone || null, email: vetEmail || null, address: vetAddress || null, notes: vetNotes || null }
+      if (editingVet) {
+        await updateVetContact(editingVet.id, payload)
+        showToast('Contact updated', 'success')
+      } else {
+        await createVetContact({ household_id: householdId, user_id: user.id, ...payload })
+        showToast('Contact added', 'success')
+      }
+      setVetFormOpen(false); refreshVets()
+    } catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+    finally { setSavingVet(false) }
+  }
+  async function handleDeleteVet(vet: VetContact) {
+    try { await deleteVetContact(vet.id); refreshVets(); showToast('Contact deleted', 'success') }
+    catch (e) { showToast(e instanceof Error ? e.message : 'Error', 'error') }
+  }
 
   async function handleExport() {
     if (!householdId) return
@@ -391,12 +434,66 @@ export function Settings() {
         </div>
       </Section>
 
+      {/* Vet Contacts */}
+      <Section title="Vet Contacts">
+        <div className="flex flex-col gap-3">
+          {vetContacts.length === 0 ? (
+            <p className="text-sm" style={{ color: '#6a6458' }}>No vet contacts saved yet.</p>
+          ) : (
+            vetContacts.map((vet) => (
+              <div key={vet.id} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{vet.name}</p>
+                  {vet.clinic_name && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{vet.clinic_name}</p>}
+                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
+                    {vet.phone && (
+                      <a href={`tel:${vet.phone}`} className="text-xs" style={{ color: '#8fbe5a' }}>{vet.phone}</a>
+                    )}
+                    {vet.email && (
+                      <a href={`mailto:${vet.email}`} className="text-xs" style={{ color: '#8fbe5a' }}>{vet.email}</a>
+                    )}
+                  </div>
+                  {vet.address && <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>{vet.address}</p>}
+                </div>
+                <div className="flex gap-1 shrink-0">
+                  <button onClick={() => openEditVet(vet)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a' }}>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                  </button>
+                  <button onClick={() => handleDeleteVet(vet)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>
+                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
+          <Button variant="secondary" size="sm" onClick={openAddVet}>+ Add contact</Button>
+        </div>
+      </Section>
+
       {/* Sign out */}
       <div className="mt-6">
         <Button variant="ghost" onClick={handleSignOut} fullWidth>Sign out</Button>
       </div>
 
       </>}
+
+      {/* Vet contact form modal */}
+      <Modal open={vetFormOpen} onClose={() => setVetFormOpen(false)} title={editingVet ? 'Edit vet contact' : 'Add vet contact'}>
+        <div className="flex flex-col gap-4">
+          <Input label="Name *" value={vetName} onChange={(e) => setVetName(e.target.value)} placeholder="Dr. Jane Smith" />
+          <Input label="Clinic / Practice" value={vetClinic} onChange={(e) => setVetClinic(e.target.value)} placeholder="City Exotic Vet" />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Phone" type="tel" value={vetPhone} onChange={(e) => setVetPhone(e.target.value)} placeholder="+61 2 1234 5678" />
+            <Input label="Email" type="email" value={vetEmail} onChange={(e) => setVetEmail(e.target.value)} placeholder="vet@clinic.com" />
+          </div>
+          <Input label="Address" value={vetAddress} onChange={(e) => setVetAddress(e.target.value)} placeholder="123 Main St, Sydney NSW" />
+          <Textarea label="Notes" value={vetNotes} onChange={(e) => setVetNotes(e.target.value)} rows={2} placeholder="Specialisations, hours, etc." />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setVetFormOpen(false)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveVet} loading={savingVet} disabled={!vetName.trim()}>Save</Button>
+          </div>
+        </div>
+      </Modal>
 
       <ConfirmDialog
         open={!!confirmDialog}
