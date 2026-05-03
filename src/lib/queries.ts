@@ -44,6 +44,12 @@ export async function createAnimal(animal: {
   photo_url?: string
   notes?: string
   feeding_frequency_days?: number
+  tags?: string[]
+  quarantine_started_at?: string | null
+  is_for_sale?: boolean
+  asking_price_cents?: number | null
+  custom_fields?: Record<string, string>
+  enclosure_id?: string | null
 }) {
   const { data, error } = await supabase
     .from('animals')
@@ -792,4 +798,181 @@ export async function batchInsertSheddingLogs(logs: Record<string, unknown>[]) {
     inserted += chunk.length
   }
   return inserted
+}
+
+// ─── Enclosures ──────────────────────────────────────────────────────────────
+
+export async function getEnclosures(householdId: string) {
+  const { data, error } = await supabase
+    .from('enclosures')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('name')
+  if (error) throw error
+  return data
+}
+
+export async function createEnclosure(enclosure: {
+  household_id: string
+  user_id: string
+  name: string
+  enclosure_type?: string | null
+  notes?: string | null
+}) {
+  const { data, error } = await supabase
+    .from('enclosures')
+    .insert(enclosure)
+    .select()
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateEnclosure(id: string, updates: Record<string, unknown>) {
+  const { error } = await supabase.from('enclosures').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteEnclosure(id: string) {
+  const { error } = await supabase.from('enclosures').delete().eq('id', id)
+  if (error) throw error
+}
+
+// ─── Animal photos ────────────────────────────────────────────────────────────
+
+export async function getAnimalPhotos(householdId: string, animalId: string) {
+  const { data, error } = await supabase
+    .from('animal_photos')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('animal_id', animalId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function createAnimalPhotoRecord(photo: {
+  household_id: string
+  animal_id: string
+  user_id: string
+  url: string
+  caption?: string | null
+}) {
+  const { data, error } = await supabase.from('animal_photos').insert(photo).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteAnimalPhotoRecord(id: string) {
+  const { error } = await supabase.from('animal_photos').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function uploadAdditionalPhoto(householdId: string, animalId: string, file: File): Promise<string> {
+  const ext = file.name.split('.').pop()
+  const path = `${householdId}/${animalId}/gallery/${Date.now()}.${ext}`
+  const { error } = await supabase.storage.from('animal-photos').upload(path, file, { upsert: false })
+  if (error) throw error
+  const { data } = supabase.storage.from('animal-photos').getPublicUrl(path)
+  return data.publicUrl
+}
+
+// ─── Medication schedules ─────────────────────────────────────────────────────
+
+export async function getMedicationSchedules(householdId: string, animalId: string) {
+  const { data, error } = await supabase
+    .from('medication_schedules')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('animal_id', animalId)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function createMedicationSchedule(schedule: {
+  household_id: string
+  animal_id: string
+  user_id: string
+  name: string
+  dosage?: string | null
+  frequency_days?: number | null
+  start_date?: string | null
+  end_date?: string | null
+  notes?: string | null
+}) {
+  const { data, error } = await supabase.from('medication_schedules').insert(schedule).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateMedicationSchedule(id: string, updates: Record<string, unknown>) {
+  const { error } = await supabase.from('medication_schedules').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteMedicationSchedule(id: string) {
+  const { error } = await supabase.from('medication_schedules').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function getMedicationLogs(householdId: string, animalId: string) {
+  const { data, error } = await supabase
+    .from('medication_logs')
+    .select('*')
+    .eq('household_id', householdId)
+    .eq('animal_id', animalId)
+    .order('given_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+export async function createMedicationLog(log: {
+  household_id: string
+  schedule_id: string
+  animal_id: string
+  user_id: string
+  given_at: string
+  notes?: string | null
+}) {
+  const { data, error } = await supabase.from('medication_logs').insert(log).select().single()
+  if (error) throw error
+  return data
+}
+
+// ─── Vet contacts ─────────────────────────────────────────────────────────────
+
+export async function getVetContacts(householdId: string) {
+  const { data, error } = await supabase
+    .from('vet_contacts')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('name')
+  if (error) throw error
+  return data
+}
+
+export async function createVetContact(contact: {
+  household_id: string
+  user_id: string
+  name: string
+  clinic_name?: string | null
+  phone?: string | null
+  email?: string | null
+  address?: string | null
+  notes?: string | null
+}) {
+  const { data, error } = await supabase.from('vet_contacts').insert(contact).select().single()
+  if (error) throw error
+  return data
+}
+
+export async function updateVetContact(id: string, updates: Record<string, unknown>) {
+  const { error } = await supabase.from('vet_contacts').update(updates).eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteVetContact(id: string) {
+  const { error } = await supabase.from('vet_contacts').delete().eq('id', id)
+  if (error) throw error
 }
