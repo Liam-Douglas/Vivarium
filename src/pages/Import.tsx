@@ -78,6 +78,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
     duplicateSheds: number
     shedsInDbBefore: number
     shedsInDbAfter: number
+    duplicateAnimalNames: string[]
   } | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -261,6 +262,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
     let skippedFeedings = 0
     let skippedSheds = 0
     let duplicateFeedings = 0
+    let duplicateAnimalNames: string[] = []
     let duplicateSheds = 0
     let animalsInserted = 0
     let feedingsInserted = 0
@@ -298,9 +300,20 @@ export function Import({ embedded }: { embedded?: boolean }) {
         setProgress(33)
       }
 
-      // Fetch all animals from DB and add to map (catches newly inserted + any name variants)
+      // Fetch all animals from DB — only fill in gaps (newly inserted animals).
+      // Never overwrite entries already set from matchCandidates/manualLinks, because
+      // the DB may contain stale duplicate animals from previous failed imports, and
+      // blindly overwriting would cause logs to be linked to the wrong animal ID.
       const { data: dbAnimals } = await supabase.from('animals').select('id, name').eq('household_id', householdId)
-      dbAnimals?.forEach((a) => animalMap.set(a.name.trim().toLowerCase(), a.id))
+      const dbNameCounts: Record<string, number> = {}
+      dbAnimals?.forEach((a) => {
+        const key = a.name.trim().toLowerCase()
+        dbNameCounts[key] = (dbNameCounts[key] ?? 0) + 1
+        if (!animalMap.has(key)) animalMap.set(key, a.id)
+      })
+      duplicateAnimalNames = Object.entries(dbNameCounts)
+        .filter(([, count]) => count > 1)
+        .map(([name]) => name)
 
       // Fetch existing feeding and shedding keys to avoid duplicates
       const [existingFeedingsRes, existingShedsRes] = await Promise.all([
@@ -380,6 +393,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
         duplicateSheds,
         shedsInDbBefore,
         shedsInDbAfter,
+        duplicateAnimalNames,
       })
     } catch (e) {
       const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed'
@@ -725,6 +739,15 @@ export function Import({ embedded }: { embedded?: boolean }) {
                 <p className="text-xs mb-4 px-2" style={{ color: '#a8a090' }}>
                   {result.skippedFeedings} feeding record{result.skippedFeedings !== 1 ? 's' : ''} couldn't be linked — the animal name in the feeding sheet didn't match any animal in your collection.
                 </p>
+              )}
+              {result.duplicateAnimalNames.length > 0 && (
+                <div className="rounded-xl p-3 mb-4 text-left" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
+                  <p className="text-xs font-medium mb-1" style={{ color: '#c45a5a' }}>Duplicate animals detected in your collection</p>
+                  <p className="text-xs mb-2" style={{ color: '#a8a090' }}>
+                    These animal names appear more than once in your database, probably from a previous import. Logs may be attached to the wrong record. Delete the duplicates from your Animals list, then re-import to fix this.
+                  </p>
+                  <p className="text-xs" style={{ color: '#c45a5a' }}>{result.duplicateAnimalNames.join(', ')}</p>
+                </div>
               )}
               <div className="flex gap-2">
                 {(result.skippedFeedings + result.skippedSheds) > 0 && <Button variant="secondary" fullWidth onClick={() => { setStep(2); setResult(null) }}>Go back</Button>}
