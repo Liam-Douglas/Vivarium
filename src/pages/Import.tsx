@@ -361,10 +361,11 @@ export function Import({ embedded }: { embedded?: boolean }) {
       }
 
       // Count sheds in DB after import to verify what's actually stored
-      const { count: shedsInDbAfter = 0 } = await supabase
+      const { count: shedsAfterCount } = await supabase
         .from('shedding_logs')
         .select('*', { count: 'exact', head: true })
         .eq('household_id', householdId)
+      const shedsInDbAfter = shedsAfterCount ?? 0
 
       setProgress(100)
       setResult({
