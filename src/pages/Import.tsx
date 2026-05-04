@@ -76,6 +76,8 @@ export function Import({ embedded }: { embedded?: boolean }) {
     skippedSheds: number
     duplicateFeedings: number
     duplicateSheds: number
+    shedsInDbBefore: number
+    shedsInDbAfter: number
   } | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -310,6 +312,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
           (r) => `${r.animal_id}|${r.fed_at.slice(0, 10)}|${r.prey_type}|${r.refused}`
         )
       )
+      const shedsInDbBefore = existingShedsRes.data?.length ?? 0
       const existingShedKeys = new Set(
         (existingShedsRes.data ?? []).map((r) => `${r.animal_id}|${r.shed_at.slice(0, 10)}`)
       )
@@ -357,6 +360,12 @@ export function Import({ embedded }: { embedded?: boolean }) {
         shedsInserted = await batchInsertSheddingLogs(shedsToInsert)
       }
 
+      // Count sheds in DB after import to verify what's actually stored
+      const { count: shedsInDbAfter = 0 } = await supabase
+        .from('shedding_logs')
+        .select('*', { count: 'exact', head: true })
+        .eq('household_id', householdId)
+
       setProgress(100)
       setResult({
         animals: animalsInserted,
@@ -368,6 +377,8 @@ export function Import({ embedded }: { embedded?: boolean }) {
         skippedSheds,
         duplicateFeedings,
         duplicateSheds,
+        shedsInDbBefore,
+        shedsInDbAfter,
       })
     } catch (e) {
       const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed'
@@ -687,6 +698,16 @@ export function Import({ embedded }: { embedded?: boolean }) {
                       )}
                     </div>
                   )}
+                  <div className="pt-2 flex flex-col gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div className="flex justify-between text-xs">
+                      <span style={{ color: '#6a6458' }}>Shed records in DB before import</span>
+                      <span style={{ color: '#6a6458' }}>{result.shedsInDbBefore}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span style={{ color: '#6a6458' }}>Shed records in DB after import</span>
+                      <span style={{ color: '#6a6458' }}>{result.shedsInDbAfter}</span>
+                    </div>
+                  </div>
                 </div>
               </div>
               {result.shedsDetected > 0 && result.sheds === 0 && result.duplicateSheds === 0 && result.skippedSheds === 0 && (
