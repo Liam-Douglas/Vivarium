@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { format, differenceInMonths, differenceInDays } from 'date-fns'
+import { format, differenceInMonths, differenceInDays, addDays } from 'date-fns'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
 import {
   getAnimal, deactivateAnimal,
@@ -650,6 +650,17 @@ export function AnimalDetail() {
     return '#8fbe5a'
   })()
 
+  const nextFeedingDue = animal.last_fed_at && animal.feeding_frequency_days
+    ? addDays(new Date(animal.last_fed_at), animal.feeding_frequency_days)
+    : null
+  const daysUntilFeed = nextFeedingDue ? differenceInDays(nextFeedingDue, new Date()) : null
+  const nextFeedColor = (() => {
+    if (daysUntilFeed === null) return '#f0ece0'
+    if (daysUntilFeed < 0) return '#c45a5a'
+    if (daysUntilFeed <= 1) return '#d4924a'
+    return '#8fbe5a'
+  })()
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'timeline', label: 'Timeline' },
@@ -744,6 +755,36 @@ export function AnimalDetail() {
               </div>
             )}
 
+            {/* Feeding notification */}
+            {daysUntilFeed !== null && daysUntilFeed <= 1 && (
+              <div
+                className="rounded-xl px-4 py-3 flex items-center gap-3"
+                style={{
+                  backgroundColor: daysUntilFeed < 0 ? 'rgba(196,90,90,0.08)' : 'rgba(212,146,74,0.08)',
+                  border: `1px solid ${daysUntilFeed < 0 ? 'rgba(196,90,90,0.3)' : 'rgba(212,146,74,0.3)'}`,
+                }}
+              >
+                <span className="text-lg">🍖</span>
+                <div className="flex-1">
+                  <p className="text-sm font-medium" style={{ color: daysUntilFeed < 0 ? '#c45a5a' : '#d4924a' }}>
+                    {daysUntilFeed < 0 ? 'Feeding overdue' : 'Feeding due soon'}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
+                    {daysUntilFeed < 0
+                      ? `${Math.abs(daysUntilFeed)} day${Math.abs(daysUntilFeed) !== 1 ? 's' : ''} overdue — was due ${format(nextFeedingDue!, 'MMM d')}`
+                      : `Due ${daysUntilFeed === 0 ? 'today' : 'tomorrow'}, ${format(nextFeedingDue!, 'MMM d')}`}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setFeedOpen(true)}
+                  className="text-xs font-medium px-2.5 py-1 rounded-lg shrink-0"
+                  style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
+                >
+                  Feed
+                </button>
+              </div>
+            )}
+
             {/* Quick log actions */}
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -797,10 +838,21 @@ export function AnimalDetail() {
                 )}
               </div>
               <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Feed every</p>
-                <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
-                  {animal.feeding_frequency_days ? `${animal.feeding_frequency_days} days` : '—'}
+                <p className="text-xs" style={{ color: '#6a6458' }}>Next feeding</p>
+                <p className="text-base font-semibold mt-0.5" style={{ color: nextFeedColor }}>
+                  {nextFeedingDue ? format(nextFeedingDue, 'MMM d') : '—'}
                 </p>
+                {daysUntilFeed !== null && (
+                  <p className="text-xs mt-0.5" style={{ color: nextFeedColor }}>
+                    {daysUntilFeed < 0
+                      ? `${Math.abs(daysUntilFeed)}d overdue`
+                      : daysUntilFeed === 0 ? 'Today'
+                      : `In ${daysUntilFeed}d`}
+                  </p>
+                )}
+                {!nextFeedingDue && animal.feeding_frequency_days && (
+                  <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>every {animal.feeding_frequency_days}d</p>
+                )}
               </div>
               <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs" style={{ color: '#6a6458' }}>Current weight</p>

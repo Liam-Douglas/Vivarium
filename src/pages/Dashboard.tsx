@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { format, differenceInDays } from 'date-fns'
+import { format, differenceInDays, addDays } from 'date-fns'
 import { useAnimals } from '@/hooks/useAnimals'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
@@ -347,6 +347,63 @@ export function Dashboard() {
                       className="w-2.5 h-2.5 rounded-full shrink-0"
                       style={{ backgroundColor: dotColor }}
                     />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{animal.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{subtitle}</p>
+                    </div>
+                    <button
+                      onClick={() => { setQuickFeedAnimalId(animal.id); setActiveModal('feeding') }}
+                      className="text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 transition-opacity active:opacity-70"
+                      style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
+                    >
+                      Feed
+                    </button>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
+      {/* Due soon */}
+      {(() => {
+        const dueSoonAnimals = animals
+          .filter((a) => {
+            if (!a.last_fed_at || !a.feeding_frequency_days) return false
+            if (getStatusForAnimal(a) !== 'green') return false
+            const nextDue = addDays(new Date(a.last_fed_at), a.feeding_frequency_days)
+            return differenceInDays(nextDue, new Date()) <= 3
+          })
+          .sort((a, b) => {
+            const nextA = addDays(new Date(a.last_fed_at!), a.feeding_frequency_days!)
+            const nextB = addDays(new Date(b.last_fed_at!), b.feeding_frequency_days!)
+            return nextA.getTime() - nextB.getTime()
+          })
+        if (dueSoonAnimals.length === 0) return null
+        return (
+          <div className="mb-6">
+            <div className="flex items-center gap-2 mb-3">
+              <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Due soon</h2>
+              <span
+                className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+                style={{ backgroundColor: 'rgba(212,146,74,0.18)', color: '#d4924a' }}
+              >
+                {dueSoonAnimals.length}
+              </span>
+            </div>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              {dueSoonAnimals.map((animal, i) => {
+                const nextDue = addDays(new Date(animal.last_fed_at!), animal.feeding_frequency_days!)
+                const daysUntil = differenceInDays(nextDue, new Date())
+                const subtitle = daysUntil === 0 ? `Due today · ${format(nextDue, 'MMM d')}` : daysUntil === 1 ? `Due tomorrow · ${format(nextDue, 'MMM d')}` : `Due in ${daysUntil} days · ${format(nextDue, 'MMM d')}`
+                return (
+                  <div
+                    key={animal.id}
+                    className="flex items-center gap-3 px-4 py-3"
+                    style={{ borderBottom: i < dueSoonAnimals.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                  >
+                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: '#d4924a' }} />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{animal.name}</p>
                       <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{subtitle}</p>
