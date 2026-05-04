@@ -5,7 +5,7 @@ import { parseISO, parse, isValid } from 'date-fns'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching } from '@/lib/queries'
+import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching, reactivateAnimal } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -46,7 +46,7 @@ function parseDate(raw: unknown): string | null {
 
 interface MatchCandidate {
   importName: string
-  existing: { id: string; name: string; species: string }
+  existing: { id: string; name: string; species: string; is_active: boolean }
 }
 
 export function Import({ embedded }: { embedded?: boolean }) {
@@ -57,7 +57,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [step, setStep] = useState<Step>(1)
-  const [allAnimals, setAllAnimals] = useState<{ id: string; name: string; species: string }[]>([])
+  const [allAnimals, setAllAnimals] = useState<{ id: string; name: string; species: string; is_active: boolean }[]>([])
   const [fileName, setFileName] = useState('')
   const [sheets, setSheets] = useState<{ name: string; rows: ParsedRow[] }[]>([])
   const [importData, setImportData] = useState<ImportData>({ animals: [], feedingLogs: [], sheddingLogs: [] })
@@ -79,6 +79,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
     shedsInDbBefore: number
     shedsInDbAfter: number
     duplicateAnimalNames: string[]
+    reactivated: number
   } | null>(null)
   const [importing, setImporting] = useState(false)
   const [importError, setImportError] = useState<string | null>(null)
@@ -292,6 +293,12 @@ export function Import({ embedded }: { embedded?: boolean }) {
         ...Object.entries(manualLinks).filter(([, v]) => v).map(([k]) => k),
       ])
 
+      // Reactivate any merged animals that are currently inactive
+      const inactiveMerged = matchCandidates.filter(
+        (m) => getDecision(m.importName) === 'merge' && !m.existing.is_active
+      )
+      await Promise.all(inactiveMerged.map((m) => reactivateAnimal(m.existing.id)))
+
       const animalsToInsert = importData.animals.filter(
         (a) => !skipInsertNames.has((a.name as string).trim().toLowerCase())
       )
@@ -395,6 +402,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
         shedsInDbBefore,
         shedsInDbAfter,
         duplicateAnimalNames,
+        reactivated: inactiveMerged.length,
       })
     } catch (e) {
       const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed'
@@ -593,6 +601,9 @@ export function Import({ embedded }: { embedded?: boolean }) {
                       <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{m.importName}</span>
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                       <span className="text-sm" style={{ color: '#a8a090' }}>{m.existing.name} <span style={{ color: '#6a6458' }}>({m.existing.species})</span></span>
+                      {!m.existing.is_active && (
+                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a' }}>inactive — will reactivate</span>
+                      )}
                     </div>
                     <div className="flex gap-2">
                       <button
@@ -755,6 +766,9 @@ export function Import({ embedded }: { embedded?: boolean }) {
               <div className="rounded-xl p-4 mb-4 text-left" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between text-sm"><span style={{ color: '#a8a090' }}>Animals added</span><span style={{ color: '#f0ece0' }}>{result.animals}</span></div>
+                  {result.reactivated > 0 && (
+                    <div className="flex justify-between text-sm"><span style={{ color: '#8fbe5a' }}>Animals reactivated</span><span style={{ color: '#8fbe5a' }}>{result.reactivated}</span></div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#a8a090' }}>Feeding logs added</span>
                     <span style={{ color: '#f0ece0' }}>{result.feedings} / {result.feedingsDetected}</span>

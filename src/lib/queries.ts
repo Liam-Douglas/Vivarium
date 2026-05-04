@@ -16,7 +16,7 @@ export async function getAnimals(householdId: string) {
 export async function getAllAnimalsForMatching(householdId: string) {
   const { data, error } = await supabase
     .from('animals')
-    .select('id, name, species')
+    .select('id, name, species, is_active')
     .eq('household_id', householdId)
     .order('name')
     .order('created_at', { ascending: true })
@@ -79,7 +79,14 @@ export async function deactivateAnimal(id: string) {
   if (error) throw error
 }
 
-// ─── Feeding logs ────────────────────────────────────────────────────────────
+export async function reactivateAnimal(id: string) {
+  const { error } = await supabase
+    .from('animals')
+    .update({ is_active: true })
+    .eq('id', id)
+  if (error) throw error
+}
+
 
 export async function getFeedingLogs(householdId: string, animalId?: string) {
   let query = supabase
