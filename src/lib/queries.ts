@@ -19,6 +19,7 @@ export async function getAllAnimalsForMatching(householdId: string) {
     .select('id, name, species')
     .eq('household_id', householdId)
     .order('name')
+    .order('created_at', { ascending: true })
   if (error) throw error
   return data ?? []
 }

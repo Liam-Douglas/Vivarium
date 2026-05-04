@@ -84,6 +84,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
   const [importError, setImportError] = useState<string | null>(null)
   const [processing, setProcessing] = useState(false)
   const [dragOver, setDragOver] = useState(false)
+  const [fixingDuplicates, setFixingDuplicates] = useState(false)
 
   // Load all animals (active + inactive) once for matching
   useEffect(() => {
@@ -399,6 +400,83 @@ export function Import({ embedded }: { embedded?: boolean }) {
       const msg = e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Import failed'
       setImportError(msg)
       setImporting(false)
+    }
+  }
+
+  async function handleFixDuplicates() {
+    if (!householdId || !result || result.duplicateAnimalNames.length === 0) return
+    setFixingDuplicates(true)
+    try {
+      // Fetch all animals sorted by name then created_at so first = oldest = canonical
+      const { data: allDbAnimals } = await supabase
+        .from('animals')
+        .select('id, name, created_at')
+        .eq('household_id', householdId)
+        .order('name')
+        .order('created_at', { ascending: true })
+
+      if (!allDbAnimals) return
+
+      for (const lcName of result.duplicateAnimalNames) {
+        const group = allDbAnimals.filter(
+          (a) => a.name.trim().toLowerCase() === lcName.toLowerCase()
+        )
+        if (group.length < 2) continue
+
+        const canonicalId = group[0].id
+        const dupeIds = group.slice(1).map((a) => a.id)
+
+        // Build set of dates already on the canonical animal
+        const { data: canonicalSheds } = await supabase
+          .from('shedding_logs').select('id, shed_at').eq('animal_id', canonicalId)
+        const canonicalShedDates = new Set((canonicalSheds ?? []).map((s) => s.shed_at.slice(0, 10)))
+
+        // For each duplicate animal, move unique sheds → canonical, delete true dupes
+        for (const dupeId of dupeIds) {
+          const { data: dupeSheds } = await supabase
+            .from('shedding_logs').select('id, shed_at').eq('animal_id', dupeId)
+
+          const toMove = (dupeSheds ?? []).filter((s) => !canonicalShedDates.has(s.shed_at.slice(0, 10)))
+          const toDelete = (dupeSheds ?? []).filter((s) => canonicalShedDates.has(s.shed_at.slice(0, 10)))
+
+          if (toMove.length > 0) {
+            await supabase.from('shedding_logs')
+              .update({ animal_id: canonicalId })
+              .in('id', toMove.map((s) => s.id))
+            toMove.forEach((s) => canonicalShedDates.add(s.shed_at.slice(0, 10)))
+          }
+          if (toDelete.length > 0) {
+            await supabase.from('shedding_logs').delete().in('id', toDelete.map((s) => s.id))
+          }
+        }
+
+        // Move feeding logs (keep all — slight dupes are better than data loss)
+        await supabase.from('feeding_logs')
+          .update({ animal_id: canonicalId })
+          .in('animal_id', dupeIds)
+          .eq('household_id', householdId)
+
+        // Move weight / health logs
+        await supabase.from('weight_logs')
+          .update({ animal_id: canonicalId })
+          .in('animal_id', dupeIds)
+          .eq('household_id', householdId)
+
+        await supabase.from('health_events')
+          .update({ animal_id: canonicalId })
+          .in('animal_id', dupeIds)
+          .eq('household_id', householdId)
+
+        // Delete the ghost animals (no cascade needed — logs already moved)
+        await supabase.from('animals').delete().in('id', dupeIds).eq('household_id', householdId)
+      }
+
+      setResult((r) => r ? { ...r, duplicateAnimalNames: [] } : r)
+      showToast('Duplicate animals merged. Your shed data is now visible.', 'success')
+    } catch {
+      showToast('Failed to fix duplicates — please try again', 'error')
+    } finally {
+      setFixingDuplicates(false)
     }
   }
 
@@ -744,9 +822,17 @@ export function Import({ embedded }: { embedded?: boolean }) {
                 <div className="rounded-xl p-3 mb-4 text-left" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
                   <p className="text-xs font-medium mb-1" style={{ color: '#c45a5a' }}>Duplicate animals detected in your collection</p>
                   <p className="text-xs mb-2" style={{ color: '#a8a090' }}>
-                    These animal names appear more than once in your database, probably from a previous import. Logs may be attached to the wrong record. Delete the duplicates from your Animals list, then re-import to fix this.
+                    Previous imports created ghost copies of these animals and attached logs to the wrong records. Tap below to automatically merge them — logs will be consolidated onto the original animal and the ghosts deleted.
                   </p>
-                  <p className="text-xs" style={{ color: '#c45a5a' }}>{result.duplicateAnimalNames.join(', ')}</p>
+                  <p className="text-xs mb-3" style={{ color: '#c45a5a' }}>{result.duplicateAnimalNames.join(', ')}</p>
+                  <Button
+                    size="sm"
+                    loading={fixingDuplicates}
+                    onClick={handleFixDuplicates}
+                    style={{ backgroundColor: '#c45a5a', color: '#fff', border: 'none' }}
+                  >
+                    Fix duplicate animals
+                  </Button>
                 </div>
               )}
               <div className="flex gap-2">
