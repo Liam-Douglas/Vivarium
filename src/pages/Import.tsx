@@ -358,6 +358,26 @@ export function Import({ embedded }: { embedded?: boolean }) {
       if (feedingsToInsert.length > 0) {
         feedingsInserted = await batchInsertFeedingLogs(feedingsToInsert)
         setProgress(66)
+
+        // Recalculate last_fed_at for every animal that received new feedings.
+        // Without this, the DB trigger overwrites last_fed_at with the import
+        // record's date even if a more recent feeding already existed.
+        const affectedAnimalIds = [...new Set(
+          feedingsToInsert.map((f) => (f as Record<string, unknown>).animal_id as string)
+        )]
+        await Promise.all(affectedAnimalIds.map(async (animalId) => {
+          const { data: latest } = await supabase
+            .from('feeding_logs')
+            .select('fed_at')
+            .eq('animal_id', animalId)
+            .eq('household_id', householdId)
+            .order('fed_at', { ascending: false })
+            .limit(1)
+            .single()
+          if (latest?.fed_at) {
+            await supabase.from('animals').update({ last_fed_at: latest.fed_at }).eq('id', animalId)
+          }
+        }))
       }
 
       // Insert sheds (skip unknown animals and existing duplicates)
