@@ -28,10 +28,10 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
-        className="w-full rounded-2xl shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0"
-        style={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', maxWidth }}
+        className="w-full rounded-2xl shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 flex flex-col"
+        style={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', maxWidth, maxHeight: 'calc(100dvh - 2rem)' }}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
           <h2 className="text-lg font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
             {title}
           </h2>
@@ -41,7 +41,7 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
             </svg>
           </Button>
         </div>
-        <div className="p-6">{children}</div>
+        <div className="p-6 overflow-y-auto">{children}</div>
       </div>
     </div>
   )

@@ -801,29 +801,6 @@ export function AnimalDetail() {
               ))}
             </div>
 
-            {/* Photo gallery */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs font-medium" style={{ color: '#a8a090' }}>PHOTOS{animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}</p>
-                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? '#6a6458' : '#8fbe5a' }} disabled={photoUploading}>
-                  {photoUploading ? 'Uploading…' : '+ Add'}
-                </button>
-                <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddPhoto(f); e.target.value = '' }} />
-              </div>
-              {animalPhotos.length === 0 ? (
-                <p className="px-4 py-3 text-xs" style={{ color: '#6a6458' }}>No additional photos yet. Tap "+ Add" to upload.</p>
-              ) : (
-                <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-                  {animalPhotos.map((photo) => (
-                    <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
-                      <img src={photo.url} alt="" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
-                      <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#f0ece0' }}>×</button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
             {/* Stats grid */}
             <div className="grid grid-cols-2 gap-3">
               <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -983,6 +960,29 @@ export function AnimalDetail() {
                 </div>
               </div>
             )}
+
+            {/* Photo gallery */}
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs font-medium" style={{ color: '#a8a090' }}>PHOTOS{animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}</p>
+                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? '#6a6458' : '#8fbe5a' }} disabled={photoUploading}>
+                  {photoUploading ? 'Uploading…' : '+ Add'}
+                </button>
+                <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddPhoto(f); e.target.value = '' }} />
+              </div>
+              {animalPhotos.length === 0 ? (
+                <p className="px-4 py-3 text-xs" style={{ color: '#6a6458' }}>No additional photos yet. Tap "+ Add" to upload.</p>
+              ) : (
+                <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+                  {animalPhotos.map((photo) => (
+                    <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
+                      <img src={photo.url} alt="" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
+                      <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#f0ece0' }}>×</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
