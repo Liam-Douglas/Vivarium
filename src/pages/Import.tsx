@@ -5,7 +5,7 @@ import { parseISO, parse, isValid } from 'date-fns'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching, reactivateAnimal } from '@/lib/queries'
+import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching, reactivateAnimal, recalculateLastFedAt } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -358,26 +358,6 @@ export function Import({ embedded }: { embedded?: boolean }) {
       if (feedingsToInsert.length > 0) {
         feedingsInserted = await batchInsertFeedingLogs(feedingsToInsert)
         setProgress(66)
-
-        // Recalculate last_fed_at for every animal that received new feedings.
-        // Without this, the DB trigger overwrites last_fed_at with the import
-        // record's date even if a more recent feeding already existed.
-        const affectedAnimalIds = [...new Set(
-          feedingsToInsert.map((f) => (f as Record<string, unknown>).animal_id as string)
-        )]
-        await Promise.all(affectedAnimalIds.map(async (animalId) => {
-          const { data: latest } = await supabase
-            .from('feeding_logs')
-            .select('fed_at')
-            .eq('animal_id', animalId)
-            .eq('household_id', householdId)
-            .order('fed_at', { ascending: false })
-            .limit(1)
-            .single()
-          if (latest?.fed_at) {
-            await supabase.from('animals').update({ last_fed_at: latest.fed_at }).eq('id', animalId)
-          }
-        }))
       }
 
       // Insert sheds (skip unknown animals and existing duplicates)
@@ -400,6 +380,10 @@ export function Import({ embedded }: { embedded?: boolean }) {
       if (shedsToInsert.length > 0) {
         shedsInserted = await batchInsertSheddingLogs(shedsToInsert)
       }
+
+      // Always recalculate last_fed_at — the DB trigger overwrites it on every
+      // insert without checking if the new date is actually more recent.
+      await recalculateLastFedAt(householdId)
 
       // Count sheds in DB after import to verify what's actually stored
       const { count: shedsAfterCount } = await supabase

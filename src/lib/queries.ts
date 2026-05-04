@@ -87,6 +87,28 @@ export async function reactivateAnimal(id: string) {
   if (error) throw error
 }
 
+export async function recalculateLastFedAt(householdId: string) {
+  const { data: animals } = await supabase
+    .from('animals')
+    .select('id')
+    .eq('household_id', householdId)
+  if (!animals?.length) return
+
+  await Promise.all(animals.map(async (animal) => {
+    const { data: latest } = await supabase
+      .from('feeding_logs')
+      .select('fed_at')
+      .eq('animal_id', animal.id)
+      .order('fed_at', { ascending: false })
+      .limit(1)
+      .single()
+    await supabase
+      .from('animals')
+      .update({ last_fed_at: latest?.fed_at ?? null })
+      .eq('id', animal.id)
+  }))
+}
+
 
 export async function getFeedingLogs(householdId: string, animalId?: string) {
   let query = supabase
