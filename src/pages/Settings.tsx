@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses, detectOrphanedFeedingLogs, repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords, createVetContact, updateVetContact, deleteVetContact } from '@/lib/queries'
+import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses, detectOrphanedFeedingLogs, repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords, createVetContact, updateVetContact, deleteVetContact, recalculateLastFedAt } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -30,6 +30,7 @@ export function Settings() {
   const [scanResult, setScanResult] = useState<{ orphanedCount: number; fixableCount: number; dupGroups: number; dupExtra: number } | null>(null)
   const [repairing, setRepairing] = useState(false)
   const [removingDups, setRemovingDups] = useState(false)
+  const [recalculating, setRecalculating] = useState(false)
 
   // Vet contacts
   const { data: vetContacts, refresh: refreshVets } = useVetContacts()
@@ -222,6 +223,19 @@ export function Settings() {
       showToast('Repair failed', 'error')
     } finally {
       setRepairing(false)
+    }
+  }
+
+  async function handleRecalculateLastFed() {
+    if (!householdId) return
+    setRecalculating(true)
+    try {
+      await recalculateLastFedAt(householdId)
+      showToast('Feeding dates recalculated', 'success')
+    } catch {
+      showToast('Recalculation failed', 'error')
+    } finally {
+      setRecalculating(false)
     }
   }
 
@@ -421,7 +435,10 @@ export function Settings() {
                 </div>
               </div>
             )}
-            <Button variant="secondary" size="sm" onClick={handleScan} loading={scanning}>Scan for issues</Button>
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="secondary" size="sm" onClick={handleScan} loading={scanning}>Scan for issues</Button>
+              <Button variant="secondary" size="sm" onClick={handleRecalculateLastFed} loading={recalculating}>Fix feeding dates</Button>
+            </div>
           </div>
         </div>
       </Section>
