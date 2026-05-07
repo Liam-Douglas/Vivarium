@@ -87,6 +87,7 @@ export function FeederInventory() {
   const [editName, setEditName] = useState('')
   const [editUnitLabel, setEditUnitLabel] = useState('')
   const [editThreshold, setEditThreshold] = useState('')
+  const [editCurrentStock, setEditCurrentStock] = useState('')
   const [savingEdit, setSavingEdit] = useState(false)
 
   // Add stock form
@@ -140,14 +141,29 @@ export function FeederInventory() {
     setEditName(f.name)
     setEditUnitLabel(f.unit_label)
     setEditThreshold(String(f.low_stock_threshold))
+    setEditCurrentStock(String(f.currentStock))
     setEditFeeder(f)
   }
 
   async function handleSaveEdit() {
-    if (!editFeeder) return
+    if (!editFeeder || !user || !householdId) return
     setSavingEdit(true)
     try {
       await updateFeederItem(editFeeder.id, { name: editName, unit_label: editUnitLabel, low_stock_threshold: Number(editThreshold) })
+
+      const targetStock = Number(editCurrentStock)
+      if (!isNaN(targetStock) && targetStock !== editFeeder.currentStock) {
+        const delta = targetStock - editFeeder.currentStock
+        await createFeederStockEvent({
+          household_id: householdId,
+          feeder_item_id: editFeeder.id,
+          user_id: user.id,
+          event_type: 'adjustment',
+          quantity_delta: delta,
+          notes: 'Manual stock correction',
+        })
+      }
+
       refresh()
       setEditFeeder(null)
       showToast('Feeder updated', 'success')
@@ -435,6 +451,16 @@ export function FeederInventory() {
         <div className="flex flex-col gap-4">
           <Input label="Name" value={editName} onChange={(e) => setEditName(e.target.value)} />
           <Input label="Unit label" value={editUnitLabel} onChange={(e) => setEditUnitLabel(e.target.value)} placeholder="e.g. insects, mice" />
+          <div>
+            <Input
+              label="Current stock"
+              type="number"
+              min={0}
+              value={editCurrentStock}
+              onChange={(e) => setEditCurrentStock(e.target.value)}
+            />
+            <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Set the actual count — saves an adjustment to history</p>
+          </div>
           <Input label="Low stock threshold" type="number" min={0} value={editThreshold} onChange={(e) => setEditThreshold(e.target.value)} />
           <div className="flex gap-2">
             <Button variant="secondary" fullWidth onClick={() => setEditFeeder(null)}>Cancel</Button>
