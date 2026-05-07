@@ -204,7 +204,7 @@ export function Animals() {
       setEnclosureFormOpen(false)
       refreshEnclosures()
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Something went wrong', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Something went wrong', 'error')
     } finally {
       setEnclosureSaving(false)
     }
@@ -217,7 +217,7 @@ export function Animals() {
       refreshEnclosures()
       refresh()
     } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Failed to delete', 'error')
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to delete', 'error')
     }
   }
 
