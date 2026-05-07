@@ -43,10 +43,27 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
   const preyWeightMin = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.10) : null
   const preyWeightMax = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.15) : null
 
-  // Find matching feeder for this prey type
+  // Find matching feeder for this prey type + optional size
   function findMatchingFeeder() {
-    const lc = preyType.toLowerCase()
-    return feeders.find((f) => f.name.toLowerCase().includes(lc) || lc.includes(f.name.toLowerCase()))
+    const typeLc = preyType.toLowerCase()
+    const fullLc = [preyType, preySize].filter(Boolean).join(' ').toLowerCase()
+
+    // Prefer an exact name match (type+size first, then type alone)
+    const exact = feeders.find((f) => {
+      const n = f.name.toLowerCase()
+      return n === fullLc || n === typeLc
+    })
+    if (exact) return exact
+
+    // Fall back to substring match — try full name first, then type only
+    return feeders.find((f) => {
+      const n = f.name.toLowerCase()
+      return (
+        (fullLc !== typeLc && (n.includes(fullLc) || fullLc.includes(n))) ||
+        n.includes(typeLc) ||
+        typeLc.includes(n)
+      )
+    })
   }
 
   async function handleSubmit() {
@@ -65,7 +82,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
         notes: notes || undefined,
       })
 
-      // Try to deduct from inventory silently
+      // Deduct from inventory
       if (!refused) {
         const feeder = findMatchingFeeder()
         if (feeder) {
@@ -80,7 +97,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
             })
             refreshFeeders()
           } catch {
-            // Silent failure — inventory deduction is secondary
+            showToast(`Feeding saved but stock not updated — check feeder inventory`, 'error')
           }
         } else {
           showToast(
