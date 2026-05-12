@@ -847,7 +847,6 @@ export async function createEnclosure(enclosure: {
   household_id: string
   user_id: string
   name: string
-  enclosure_type?: string | null
   notes?: string | null
 }) {
   const { data, error } = await supabase

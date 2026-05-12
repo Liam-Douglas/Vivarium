@@ -58,7 +58,6 @@ function getAnimalFeedingColor(animal: Animal): string {
   return '#5a9e6a'
 }
 
-const ENCLOSURE_TYPES = ['Vivarium', 'Terrarium', 'Tank', 'Rack', 'Tub', 'Cage', 'Other']
 
 export function Animals() {
   const { data: animals, loading, error, refresh } = useAnimals()
@@ -84,7 +83,6 @@ export function Animals() {
   const [enclosureFormOpen, setEnclosureFormOpen] = useState(false)
   const [editingEnclosure, setEditingEnclosure] = useState<Enclosure | null>(null)
   const [enclosureName, setEnclosureName] = useState('')
-  const [enclosureType, setEnclosureType] = useState('')
   const [enclosureNotes, setEnclosureNotes] = useState('')
   const [enclosureSaving, setEnclosureSaving] = useState(false)
 
@@ -167,7 +165,6 @@ export function Animals() {
   function openAddEnclosure() {
     setEditingEnclosure(null)
     setEnclosureName('')
-    setEnclosureType('')
     setEnclosureNotes('')
     setEnclosureFormOpen(true)
   }
@@ -175,7 +172,6 @@ export function Animals() {
   function openEditEnclosure(enc: Enclosure) {
     setEditingEnclosure(enc)
     setEnclosureName(enc.name)
-    setEnclosureType(enc.enclosure_type ?? '')
     setEnclosureNotes(enc.notes ?? '')
     setEnclosureFormOpen(true)
   }
@@ -187,7 +183,6 @@ export function Animals() {
       if (editingEnclosure) {
         await updateEnclosure(editingEnclosure.id, {
           name: enclosureName.trim(),
-          enclosure_type: enclosureType || null,
           notes: enclosureNotes || null,
         })
         showToast('Enclosure updated', 'success')
@@ -196,7 +191,6 @@ export function Animals() {
           household_id: householdId,
           user_id: user.id,
           name: enclosureName.trim(),
-          enclosure_type: enclosureType || null,
           notes: enclosureNotes || null,
         })
         showToast('Enclosure added', 'success')
@@ -436,9 +430,6 @@ export function Animals() {
                       <h3 className="font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
                         {enc.name}
                       </h3>
-                      {enc.enclosure_type && (
-                        <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{enc.enclosure_type}</p>
-                      )}
                     </div>
                     <div className="flex gap-2 shrink-0 ml-3">
                       <button
@@ -530,16 +521,6 @@ export function Animals() {
             onChange={(e) => setEnclosureName(e.target.value)}
             placeholder="e.g. Python Tank 1"
           />
-          <Select
-            label="Type"
-            value={enclosureType}
-            onChange={(e) => setEnclosureType((e.target as HTMLSelectElement).value)}
-          >
-            <option value="">Select type…</option>
-            {ENCLOSURE_TYPES.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </Select>
           <Textarea
             label="Notes"
             value={enclosureNotes}

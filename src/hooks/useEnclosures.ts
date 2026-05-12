@@ -7,7 +7,6 @@ export interface Enclosure {
   household_id: string
   user_id: string
   name: string
-  enclosure_type: string | null
   notes: string | null
   created_at: string
   updated_at: string
