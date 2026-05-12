@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
@@ -87,7 +88,23 @@ function AppShell() {
   )
 }
 
+// Reload the page when a new service worker takes control (ensures fresh JS is loaded)
+function useSWUpdateReload() {
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return
+    let refreshing = false
+    const handler = () => {
+      if (refreshing) return
+      refreshing = true
+      window.location.reload()
+    }
+    navigator.serviceWorker.addEventListener('controllerchange', handler)
+    return () => navigator.serviceWorker.removeEventListener('controllerchange', handler)
+  }, [])
+}
+
 export default function App() {
+  useSWUpdateReload()
   return (
     <BrowserRouter>
       <AuthProvider>
