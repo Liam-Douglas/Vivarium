@@ -202,7 +202,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
           <option value="">No enclosure</option>
           {enclosures.map((enc) => (
             <option key={enc.id} value={enc.id}>
-              {enc.name}{enc.enclosure_type ? ` (${enc.enclosure_type})` : ''}
+              {enc.name}
             </option>
           ))}
         </Select>
