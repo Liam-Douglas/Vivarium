@@ -95,6 +95,8 @@ export function FeederInventory() {
   const [stockCost, setStockCost] = useState('')
   const [stockNotes, setStockNotes] = useState('')
   const [savingStock, setSavingStock] = useState(false)
+  const [stockMode, setStockMode] = useState<'add' | 'set'>('add')
+  const [stockFeederCurrentStock, setStockFeederCurrentStock] = useState(0)
 
   // Receipt scanner
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -123,13 +125,28 @@ export function FeederInventory() {
     if (!user || !householdId || !stockQty) return
     setSavingStock(true)
     try {
-      await createFeederStockEvent({ household_id: householdId, feeder_item_id: feederId, user_id: user.id, event_type: 'purchase', quantity_delta: Number(stockQty), unit_cost: stockCost ? Number(stockCost) * 100 : undefined, notes: stockNotes || undefined })
+      if (stockMode === 'set') {
+        const target = Number(stockQty)
+        const delta = target - stockFeederCurrentStock
+        await createFeederStockEvent({
+          household_id: householdId, feeder_item_id: feederId, user_id: user.id,
+          event_type: 'adjustment', quantity_delta: delta,
+          notes: stockNotes || 'Manual stock correction',
+        })
+      } else {
+        await createFeederStockEvent({
+          household_id: householdId, feeder_item_id: feederId, user_id: user.id,
+          event_type: 'purchase', quantity_delta: Number(stockQty),
+          unit_cost: stockCost ? Number(stockCost) * 100 : undefined,
+          notes: stockNotes || undefined,
+        })
+      }
       refresh()
       setAddStockOpen(null)
       setStockQty('')
       setStockCost('')
       setStockNotes('')
-      showToast('Stock added', 'success')
+      showToast(stockMode === 'set' ? 'Stock updated' : 'Stock added', 'success')
     } catch (e) {
       showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
     } finally {
@@ -341,7 +358,7 @@ export function FeederInventory() {
                 {/* Actions */}
                 <div className="flex items-center gap-1 shrink-0">
                   <button
-                    onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes('') }}
+                    onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes(''); setStockMode('add'); setStockFeederCurrentStock(f.currentStock) }}
                     className="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
                     style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}
                   >
@@ -417,14 +434,46 @@ export function FeederInventory() {
       </Modal>
 
       {/* Add stock modal */}
-      <Modal open={!!addStockOpen} onClose={() => setAddStockOpen(null)} title="Add stock">
+      <Modal open={!!addStockOpen} onClose={() => setAddStockOpen(null)} title="Stock">
         <div className="flex flex-col gap-4">
-          <Input label="Quantity" type="number" min={1} value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder="How many?" />
-          <Input label="Unit cost (AUD)" type="number" min={0} step={0.01} value={stockCost} onChange={(e) => setStockCost(e.target.value)} placeholder="0.00" />
-          <Textarea label="Notes" value={stockNotes} onChange={(e) => setStockNotes(e.target.value)} rows={2} placeholder="Where purchased, etc." />
+          {/* Mode toggle */}
+          <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
+            <button
+              type="button"
+              onClick={() => setStockMode('add')}
+              className="flex-1 py-2 text-sm font-medium transition-colors"
+              style={{ backgroundColor: stockMode === 'add' ? 'rgba(143,190,90,0.2)' : 'transparent', color: stockMode === 'add' ? '#8fbe5a' : '#6a6458' }}
+            >
+              Add quantity
+            </button>
+            <button
+              type="button"
+              onClick={() => setStockMode('set')}
+              className="flex-1 py-2 text-sm font-medium transition-colors"
+              style={{ backgroundColor: stockMode === 'set' ? 'rgba(212,146,74,0.2)' : 'transparent', color: stockMode === 'set' ? '#d4924a' : '#6a6458', borderLeft: '1px solid rgba(255,255,255,0.08)' }}
+            >
+              Set exact amount
+            </button>
+          </div>
+
+          {stockMode === 'add' ? (
+            <>
+              <Input label="Quantity to add" type="number" min={1} value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder="How many?" />
+              <Input label="Unit cost (AUD)" type="number" min={0} step={0.01} value={stockCost} onChange={(e) => setStockCost(e.target.value)} placeholder="0.00" />
+            </>
+          ) : (
+            <div>
+              <Input label="Set stock to" type="number" min={0} value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder={`Currently ${stockFeederCurrentStock}`} />
+              <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Current: {stockFeederCurrentStock} — saves a correction event to history</p>
+            </div>
+          )}
+
+          <Textarea label="Notes" value={stockNotes} onChange={(e) => setStockNotes(e.target.value)} rows={2} placeholder={stockMode === 'set' ? 'Reason for correction (optional)' : 'Where purchased, etc.'} />
           <div className="flex gap-2">
             <Button variant="secondary" fullWidth onClick={() => setAddStockOpen(null)}>Cancel</Button>
-            <Button fullWidth onClick={() => addStockOpen && handleAddStock(addStockOpen)} loading={savingStock}>Add stock</Button>
+            <Button fullWidth onClick={() => addStockOpen && handleAddStock(addStockOpen)} loading={savingStock}>
+              {stockMode === 'set' ? 'Set amount' : 'Add stock'}
+            </Button>
           </div>
         </div>
       </Modal>
