@@ -75,6 +75,8 @@ export function FeederInventory() {
   const [history, setHistory] = useState<any[]>([])
   const [editFeeder, setEditFeeder] = useState<typeof feeders[number] | null>(null)
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
+  const [inlineEditId, setInlineEditId] = useState<string | null>(null)
+  const [inlineEditValue, setInlineEditValue] = useState('')
 
   // Add feeder form
   const [feederName, setFeederName] = useState('')
@@ -151,6 +153,25 @@ export function FeederInventory() {
       showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
     } finally {
       setSavingStock(false)
+    }
+  }
+
+  async function handleInlineStockSave(feeder: typeof feeders[number]) {
+    const target = Number(inlineEditValue)
+    if (isNaN(target) || target === feeder.currentStock) { setInlineEditId(null); return }
+    if (!user || !householdId) return
+    try {
+      await createFeederStockEvent({
+        household_id: householdId, feeder_item_id: feeder.id, user_id: user.id,
+        event_type: 'adjustment', quantity_delta: target - feeder.currentStock,
+        notes: 'Manual stock correction',
+      })
+      refresh()
+      showToast('Stock updated', 'success')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error')
+    } finally {
+      setInlineEditId(null)
     }
   }
 
@@ -338,10 +359,31 @@ export function FeederInventory() {
             const color = f.currentStock <= 0 ? '#c45a5a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
             return (
               <div key={f.id} className="rounded-xl px-4 py-3 flex items-center gap-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                {/* Stock count */}
-                <div className="text-center shrink-0 w-12">
-                  <p className="text-2xl font-bold leading-tight" style={{ color, fontFamily: 'Playfair Display, serif' }}>{f.currentStock}</p>
-                  <p className="text-xs truncate" style={{ color: '#6a6458' }}>{f.unit_label}</p>
+                {/* Stock count — tap to edit inline */}
+                <div className="text-center shrink-0 w-14">
+                  {inlineEditId === f.id ? (
+                    <input
+                      type="number"
+                      min={0}
+                      value={inlineEditValue}
+                      autoFocus
+                      onChange={(e) => setInlineEditValue(e.target.value)}
+                      onBlur={() => handleInlineStockSave(f)}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleInlineStockSave(f); if (e.key === 'Escape') setInlineEditId(null) }}
+                      className="w-full text-center text-xl font-bold rounded-lg px-1 py-0.5 focus:outline-none"
+                      style={{ backgroundColor: 'rgba(255,255,255,0.08)', color, fontFamily: 'Playfair Display, serif', border: `1px solid ${color}` }}
+                    />
+                  ) : (
+                    <button
+                      type="button"
+                      title="Tap to set stock amount"
+                      onClick={() => { setInlineEditId(f.id); setInlineEditValue(String(f.currentStock)) }}
+                      className="w-full rounded-lg py-0.5 transition-colors hover:bg-white/5 active:bg-white/10"
+                    >
+                      <p className="text-2xl font-bold leading-tight" style={{ color, fontFamily: 'Playfair Display, serif' }}>{f.currentStock}</p>
+                    </button>
+                  )}
+                  <p className="text-xs truncate mt-0.5" style={{ color: '#6a6458' }}>{f.unit_label}</p>
                 </div>
 
                 {/* Name + progress bar */}
