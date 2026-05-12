@@ -998,27 +998,40 @@ export function AnimalDetail() {
               const thisWeekMon = addDays(now, -daysFromMon)
               const heatStart = addDays(thisWeekMon, -52 * 7)
 
-              const activityMap = new Map<string, number>()
+              const TYPE_PRIORITY = ['health', 'feeding', 'shed', 'weight', 'acquisition', 'exit', 'breeding']
+              const TYPE_RGB: Record<string, string> = {
+                feeding: '143,190,90', shed: '212,146,74', weight: '90,158,220',
+                health: '196,90,90', acquisition: '143,190,90', exit: '196,90,90', breeding: '168,122,196',
+              }
+
+              const activityMap = new Map<string, { count: number; dominant: string }>()
               timelineEvents.forEach((ev) => {
                 const key = format(ev.date, 'yyyy-MM-dd')
-                activityMap.set(key, (activityMap.get(key) ?? 0) + 1)
+                const existing = activityMap.get(key)
+                if (!existing) {
+                  activityMap.set(key, { count: 1, dominant: ev.type })
+                } else {
+                  const dominantNew = TYPE_PRIORITY.indexOf(ev.type) < TYPE_PRIORITY.indexOf(existing.dominant) ? ev.type : existing.dominant
+                  activityMap.set(key, { count: existing.count + 1, dominant: dominantNew })
+                }
               })
 
               const weeks = Array.from({ length: 53 }, (_, wi) =>
                 Array.from({ length: 7 }, (_, di) => addDays(heatStart, wi * 7 + di))
               )
 
-              const maxCount = Math.max(...activityMap.values(), 1)
+              const maxCount = Math.max(...[...activityMap.values()].map((v) => v.count), 1)
 
               function cellBg(date: Date) {
                 if (date > now) return 'transparent'
-                const count = activityMap.get(format(date, 'yyyy-MM-dd')) ?? 0
-                if (count === 0) return 'rgba(255,255,255,0.06)'
-                const t = Math.min(count / Math.max(maxCount * 0.5, 3), 1)
-                return `rgba(143,190,90,${(0.25 + t * 0.75).toFixed(2)})`
+                const entry = activityMap.get(format(date, 'yyyy-MM-dd'))
+                if (!entry) return 'rgba(255,255,255,0.06)'
+                const t = Math.min(entry.count / Math.max(maxCount * 0.5, 3), 1)
+                const rgb = TYPE_RGB[entry.dominant] ?? '143,190,90'
+                return `rgba(${rgb},${(0.25 + t * 0.75).toFixed(2)})`
               }
 
-              const yearTotal = [...activityMap.values()].reduce((s, v) => s + v, 0)
+              const yearTotal = [...activityMap.values()].reduce((s, v) => s + v.count, 0)
               const dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', '']
 
               return (
@@ -1063,7 +1076,8 @@ export function AnimalDetail() {
                           {weeks.map((week, wi) => (
                             <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                               {week.map((date) => {
-                                const count = activityMap.get(format(date, 'yyyy-MM-dd')) ?? 0
+                                const entry = activityMap.get(format(date, 'yyyy-MM-dd'))
+                                const count = entry?.count ?? 0
                                 return (
                                   <div
                                     key={date.toISOString()}
@@ -1079,12 +1093,18 @@ export function AnimalDetail() {
                     </div>
                   </div>
                   {/* Legend */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 10, justifyContent: 'flex-end' }}>
-                    <span style={{ fontSize: 10, color: '#6a6458' }}>Less</span>
-                    {[0, 1, 2, 3, 4].map((lvl) => (
-                      <div key={lvl} style={{ width: 11, height: 11, borderRadius: 2, backgroundColor: lvl === 0 ? 'rgba(255,255,255,0.06)' : `rgba(143,190,90,${(0.25 + (lvl / 4) * 0.75).toFixed(2)})` }} />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
+                    {[
+                      { label: 'Feeding', color: 'rgba(143,190,90,0.85)' },
+                      { label: 'Shedding', color: 'rgba(212,146,74,0.85)' },
+                      { label: 'Weight', color: 'rgba(90,158,220,0.85)' },
+                      { label: 'Health', color: 'rgba(196,90,90,0.85)' },
+                    ].map(({ label, color }) => (
+                      <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: color }} />
+                        <span style={{ fontSize: 10, color: '#6a6458' }}>{label}</span>
+                      </div>
                     ))}
-                    <span style={{ fontSize: 10, color: '#6a6458' }}>More</span>
                   </div>
                 </div>
               )
