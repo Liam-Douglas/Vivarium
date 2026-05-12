@@ -989,6 +989,107 @@ export function AnimalDetail() {
         {/* Timeline */}
         {tab === 'timeline' && (
           <div className="pb-24 md:pb-8">
+            {/* Activity heatmap */}
+            {(() => {
+              const now = new Date()
+              now.setHours(0, 0, 0, 0)
+              const dow = now.getDay()
+              const daysFromMon = dow === 0 ? 6 : dow - 1
+              const thisWeekMon = addDays(now, -daysFromMon)
+              const heatStart = addDays(thisWeekMon, -52 * 7)
+
+              const activityMap = new Map<string, number>()
+              timelineEvents.forEach((ev) => {
+                const key = format(ev.date, 'yyyy-MM-dd')
+                activityMap.set(key, (activityMap.get(key) ?? 0) + 1)
+              })
+
+              const weeks = Array.from({ length: 53 }, (_, wi) =>
+                Array.from({ length: 7 }, (_, di) => addDays(heatStart, wi * 7 + di))
+              )
+
+              const maxCount = Math.max(...activityMap.values(), 1)
+
+              function cellBg(date: Date) {
+                if (date > now) return 'transparent'
+                const count = activityMap.get(format(date, 'yyyy-MM-dd')) ?? 0
+                if (count === 0) return 'rgba(255,255,255,0.06)'
+                const t = Math.min(count / Math.max(maxCount * 0.5, 3), 1)
+                return `rgba(143,190,90,${(0.25 + t * 0.75).toFixed(2)})`
+              }
+
+              const yearTotal = [...activityMap.values()].reduce((s, v) => s + v, 0)
+              const dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', '']
+
+              return (
+                <div className="rounded-xl p-4 mb-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {/* Header with event count */}
+                  <div className="flex items-baseline justify-between mb-3">
+                    <p className="text-xs font-medium" style={{ color: '#a8a090' }}>ACTIVITY</p>
+                    <p className="text-xs" style={{ color: '#6a6458' }}>
+                      {yearTotal} event{yearTotal !== 1 ? 's' : ''} in the past year
+                    </p>
+                  </div>
+                  {/* Day labels + scrollable grid side by side */}
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    {/* Day labels column — offset by month-label row height */}
+                    <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 18, gap: 2, flexShrink: 0 }}>
+                      {dayLabels.map((label, i) => (
+                        <div key={i} style={{ height: 11, display: 'flex', alignItems: 'center' }}>
+                          <span style={{ fontSize: 9, color: '#6a6458', lineHeight: 1, whiteSpace: 'nowrap' }}>{label}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {/* Scrollable heatmap */}
+                    <div style={{ overflowX: 'auto', scrollbarWidth: 'none', flex: 1 }}>
+                      <div style={{ display: 'inline-block', minWidth: 'max-content' }}>
+                        {/* Month labels */}
+                        <div style={{ display: 'flex', gap: 2, marginBottom: 4, height: 14 }}>
+                          {weeks.map((week, wi) => {
+                            const showLabel = wi === 0 || week[0].getMonth() !== weeks[wi - 1][0].getMonth()
+                            return (
+                              <div key={wi} style={{ width: 11, position: 'relative', flexShrink: 0 }}>
+                                {showLabel && (
+                                  <span style={{ position: 'absolute', left: 0, top: 0, fontSize: 9, color: '#6a6458', whiteSpace: 'nowrap', lineHeight: '14px' }}>
+                                    {format(week[0], 'MMM')}
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                        {/* Week columns × day rows */}
+                        <div style={{ display: 'flex', gap: 2 }}>
+                          {weeks.map((week, wi) => (
+                            <div key={wi} style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                              {week.map((date) => {
+                                const count = activityMap.get(format(date, 'yyyy-MM-dd')) ?? 0
+                                return (
+                                  <div
+                                    key={date.toISOString()}
+                                    style={{ width: 11, height: 11, borderRadius: 2, backgroundColor: cellBg(date), flexShrink: 0 }}
+                                    title={`${format(date, 'MMM d, yyyy')}: ${count} event${count !== 1 ? 's' : ''}`}
+                                  />
+                                )
+                              })}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {/* Legend */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, marginTop: 10, justifyContent: 'flex-end' }}>
+                    <span style={{ fontSize: 10, color: '#6a6458' }}>Less</span>
+                    {[0, 1, 2, 3, 4].map((lvl) => (
+                      <div key={lvl} style={{ width: 11, height: 11, borderRadius: 2, backgroundColor: lvl === 0 ? 'rgba(255,255,255,0.06)' : `rgba(143,190,90,${(0.25 + (lvl / 4) * 0.75).toFixed(2)})` }} />
+                    ))}
+                    <span style={{ fontSize: 10, color: '#6a6458' }}>More</span>
+                  </div>
+                </div>
+              )
+            })()}
+
             {/* Filter pills */}
             <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4" style={{ scrollbarWidth: 'none' }}>
               {([
