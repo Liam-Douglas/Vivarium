@@ -108,7 +108,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
               user_id: user.id,
               event_type: 'adjustment',
               quantity_delta: -Number(quantity),
-              notes: `Fed to ${preyType}${preySize ? ` (${preySize})` : ''}`,
+              notes: `Fed to ${animals.find((a) => a.id === animalId)?.name ?? 'animal'}`,
             })
             refreshFeeders()
           } catch (stockErr) {
