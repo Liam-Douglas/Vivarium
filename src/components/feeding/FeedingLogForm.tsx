@@ -70,7 +70,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
     if (!user || !householdId || !animalId || !preyType) return
     setSaving(true)
     try {
-      const log = await createFeedingLog({
+      await createFeedingLog({
         household_id: householdId,
         animal_id: animalId,
         user_id: user.id,
