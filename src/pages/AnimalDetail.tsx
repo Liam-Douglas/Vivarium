@@ -7,7 +7,7 @@ import {
   createWeightLog, updateWeightLog, deleteWeightLog,
   createSheddingLog, updateSheddingLog, deleteSheddingLog,
   createHealthEvent, updateHealthEvent, deleteHealthEvent,
-  updateFeedingLog, deleteFeedingLog,
+  updateFeedingLog, deleteFeedingLog, recalculateAnimalLastFedAt,
   uploadAdditionalPhoto, createAnimalPhotoRecord, deleteAnimalPhotoRecord,
   createMedicationSchedule, updateMedicationSchedule, deleteMedicationSchedule,
   getMedicationLogs, createMedicationLog,
@@ -442,6 +442,7 @@ export function AnimalDetail() {
     setSavingFeedEdit(true)
     try {
       await updateFeedingLog(editingFeed.id, { prey_type: feedEditPreyType, prey_size: feedEditPreySize || null, quantity: Number(feedEditQty), refused: feedEditRefused, notes: feedEditNotes || null, fed_at: new Date(feedEditDate).toISOString() })
+      await recalculateAnimalLastFedAt(editingFeed.animal_id)
       refreshFeeding()
       setEditingFeed(null)
       showToast('Feeding updated', 'success')
@@ -451,7 +452,7 @@ export function AnimalDetail() {
   function handleDeleteFeed(log: FeedingLog) {
     requestConfirm('Delete feeding record', 'This feeding record will be permanently deleted.', async () => {
       setConfirmDialog(null)
-      try { await deleteFeedingLog(log.id); refreshFeeding(); showToast('Deleted', 'success') }
+      try { await deleteFeedingLog(log.id); await recalculateAnimalLastFedAt(log.animal_id); refreshFeeding(); showToast('Deleted', 'success') }
       catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
     })
   }

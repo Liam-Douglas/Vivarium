@@ -4,7 +4,7 @@ import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { createFeedingLog, createFeederStockEvent } from '@/lib/queries'
+import { createFeedingLog, createFeederStockEvent, recalculateAnimalLastFedAt } from '@/lib/queries'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { PREY_TYPES, getPreySizes } from '@/lib/preyTypes'
@@ -95,6 +95,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
         refused,
         notes: notes || undefined,
       })
+      await recalculateAnimalLastFedAt(animalId)
 
       // Deduct from inventory
       if (!refused) {
