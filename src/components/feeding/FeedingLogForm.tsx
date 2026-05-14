@@ -91,13 +91,14 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
               household_id: householdId,
               feeder_item_id: feeder.id,
               user_id: user.id,
-              event_type: 'feeding_deduction',
+              event_type: 'feeding',
               quantity_delta: -Number(quantity),
-              source_ref_id: log.id,
+              notes: `Fed to ${preyType}${preySize ? ` (${preySize})` : ''}`,
             })
             refreshFeeders()
-          } catch {
-            showToast(`Feeding saved but stock not updated — check feeder inventory`, 'error')
+          } catch (stockErr) {
+            const msg = stockErr instanceof Error ? stockErr.message : (stockErr as { message?: string })?.message ?? 'unknown error'
+            showToast(`Feeding saved but stock not updated — ${msg}`, 'error')
           }
         } else {
           showToast(
