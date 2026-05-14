@@ -148,6 +148,20 @@ export async function deleteFeedingLog(id: string) {
   if (error) throw error
 }
 
+export async function recalculateAnimalLastFedAt(animalId: string) {
+  const { data: latest } = await supabase
+    .from('feeding_logs')
+    .select('fed_at')
+    .eq('animal_id', animalId)
+    .order('fed_at', { ascending: false })
+    .limit(1)
+    .single()
+  await supabase
+    .from('animals')
+    .update({ last_fed_at: latest?.fed_at ?? null })
+    .eq('id', animalId)
+}
+
 // ─── Shedding logs ───────────────────────────────────────────────────────────
 
 export async function getSheddingLogs(householdId: string, animalId?: string) {

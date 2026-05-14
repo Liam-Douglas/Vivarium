@@ -4,7 +4,7 @@ import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { createFeedingLog, createFeederStockEvent } from '@/lib/queries'
+import { createFeedingLog, createFeederStockEvent, recalculateAnimalLastFedAt } from '@/lib/queries'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { PREY_TYPES, getPreySizes } from '@/lib/preyTypes'
@@ -43,27 +43,41 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
   const preyWeightMin = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.10) : null
   const preyWeightMax = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.15) : null
 
-  // Find matching feeder for this prey type + optional size
+  // Find matching feeder for this prey type + optional size.
+  // Feeder names follow the pattern "Rats (Large)" — parse base + modifier separately
+  // so "Rat" + size "Large" matches "Rats (Large)" and not "Rats (Fuzzie)".
   function findMatchingFeeder() {
     const typeLc = preyType.toLowerCase()
-    const fullLc = [preyType, preySize].filter(Boolean).join(' ').toLowerCase()
+    const sizeLc = preySize?.toLowerCase() ?? ''
 
-    // Prefer an exact name match (type+size first, then type alone)
-    const exact = feeders.find((f) => {
-      const n = f.name.toLowerCase()
-      return n === fullLc || n === typeLc
-    })
-    if (exact) return exact
+    function parse(name: string) {
+      const m = name.toLowerCase().match(/^(.+?)\s*\((.+)\)$/)
+      return m ? { base: m[1].trim(), modifier: m[2].trim() } : { base: name.toLowerCase(), modifier: '' }
+    }
 
-    // Fall back to substring match — try full name first, then type only
-    return feeders.find((f) => {
-      const n = f.name.toLowerCase()
-      return (
-        (fullLc !== typeLc && (n.includes(fullLc) || fullLc.includes(n))) ||
-        n.includes(typeLc) ||
-        typeLc.includes(n)
-      )
+    function typeMatches(base: string) {
+      const singular = base.replace(/s$/, '')
+      return base.includes(typeLc) || typeLc.includes(base) ||
+        singular.includes(typeLc) || typeLc.includes(singular)
+    }
+
+    function sizeMatches(modifier: string) {
+      if (!sizeLc) return true
+      return modifier.includes(sizeLc) || sizeLc.includes(modifier)
+    }
+
+    // 1. Type + size both match
+    const withBoth = feeders.filter((f) => {
+      const { base, modifier } = parse(f.name)
+      return typeMatches(base) && sizeMatches(modifier)
     })
+    if (withBoth.length === 1) return withBoth[0]
+    if (withBoth.length > 1) {
+      return withBoth.find((f) => parse(f.name).modifier === sizeLc) ?? withBoth[0]
+    }
+
+    // 2. Type-only match (no size specified or no size match found)
+    return feeders.find((f) => typeMatches(parse(f.name).base)) ?? null
   }
 
   async function handleSubmit() {
@@ -81,6 +95,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
         refused,
         notes: notes || undefined,
       })
+      await recalculateAnimalLastFedAt(animalId)
 
       // Deduct from inventory
       if (!refused) {
