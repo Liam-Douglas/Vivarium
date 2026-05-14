@@ -91,7 +91,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
               household_id: householdId,
               feeder_item_id: feeder.id,
               user_id: user.id,
-              event_type: 'feeding',
+              event_type: 'adjustment',
               quantity_delta: -Number(quantity),
               notes: `Fed to ${preyType}${preySize ? ` (${preySize})` : ''}`,
             })
