@@ -8,6 +8,7 @@ import {
   getRecentActivity, approveHouseholdRequest, denyHouseholdRequest,
   createSheddingLog, createWeightLog, createExpense,
 } from '@/lib/queries'
+import { dateInputToISO } from '@/lib/dates'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
@@ -200,7 +201,7 @@ export function Dashboard() {
     if (!user || !householdId || !shedAnimalId) return
     setSavingShed(true)
     try {
-      await createSheddingLog({ household_id: householdId, animal_id: shedAnimalId, user_id: user.id, shed_at: new Date(shedDate).toISOString(), complete: shedComplete, notes: shedNotes || undefined })
+      await createSheddingLog({ household_id: householdId, animal_id: shedAnimalId, user_id: user.id, shed_at: dateInputToISO(shedDate), complete: shedComplete, notes: shedNotes || undefined })
       showToast('Shed logged', 'success')
       closeModal()
       setShedAnimalId(''); setShedNotes('')
@@ -213,7 +214,7 @@ export function Dashboard() {
     if (!user || !householdId || !weightAnimalId || !weightGrams) return
     setSavingWeight(true)
     try {
-      await createWeightLog({ household_id: householdId, animal_id: weightAnimalId, user_id: user.id, weight_grams: Number(weightGrams), logged_at: new Date(weightDate).toISOString(), notes: weightNotes || undefined })
+      await createWeightLog({ household_id: householdId, animal_id: weightAnimalId, user_id: user.id, weight_grams: Number(weightGrams), logged_at: dateInputToISO(weightDate), notes: weightNotes || undefined })
       showToast('Weight logged', 'success')
       closeModal()
       setWeightAnimalId(''); setWeightGrams(''); setWeightNotes('')
@@ -226,7 +227,7 @@ export function Dashboard() {
     if (!user || !householdId || !expAmount || !expDescription) return
     setSavingExpense(true)
     try {
-      await createExpense({ household_id: householdId, user_id: user.id, category: expCategory, amount_cents: Math.round(Number(expAmount) * 100), currency: 'AUD', description: expDescription, expense_date: new Date(expDate).toISOString() })
+      await createExpense({ household_id: householdId, user_id: user.id, category: expCategory, amount_cents: Math.round(Number(expAmount) * 100), currency: 'AUD', description: expDescription, expense_date: dateInputToISO(expDate) })
       showToast('Expense added', 'success')
       closeModal()
       setExpAmount(''); setExpDescription('')

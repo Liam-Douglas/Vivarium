@@ -19,6 +19,7 @@ import { AnimalCardSkeleton } from '@/components/ui/LoadingSkeleton'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
 import { createFeedingLog, createEnclosure, updateEnclosure, deleteEnclosure, updateAnimal } from '@/lib/queries'
+import { dateInputToISO } from '@/lib/dates'
 import type { Animal } from '@/hooks/useAnimals'
 
 type SortKey = 'name-asc' | 'name-desc' | 'overdue-first' | 'recently-fed'
@@ -231,7 +232,7 @@ export function Animals() {
     if (enclosureAnimals.length === 0) return
     setBatchFeedLoading(true)
     try {
-      const fedAt = new Date(batchFeedDate + 'T12:00:00').toISOString()
+      const fedAt = dateInputToISO(batchFeedDate)
       await Promise.all(enclosureAnimals.map(a =>
         createFeedingLog({
           household_id: householdId,

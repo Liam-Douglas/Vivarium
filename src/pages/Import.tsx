@@ -7,6 +7,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
 import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching, reactivateAnimal, recalculateLastFedAt } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
+import { importAnimalSchema, importFeedingSchema, importShedSchema, partitionValid } from '@/lib/validation'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 
@@ -247,7 +248,20 @@ export function Import({ embedded }: { embedded?: boolean }) {
       }
     }
 
-    setImportData({ animals, feedingLogs, sheddingLogs })
+    // Drop rows with out-of-range or malformed values before they reach the DB.
+    const validAnimals = partitionValid(importAnimalSchema, animals)
+    const validFeedings = partitionValid(importFeedingSchema, feedingLogs)
+    const validSheds = partitionValid(importShedSchema, sheddingLogs)
+    const skipped = validAnimals.skipped + validFeedings.skipped + validSheds.skipped
+    if (skipped > 0) {
+      showToast(`${skipped} row${skipped === 1 ? '' : 's'} skipped — invalid or out-of-range values`, 'info')
+    }
+
+    setImportData({
+      animals: validAnimals.valid as Record<string, unknown>[],
+      feedingLogs: validFeedings.valid as Record<string, unknown>[],
+      sheddingLogs: validSheds.valid as Record<string, unknown>[],
+    })
     setMatchDecisions({})
   }
 

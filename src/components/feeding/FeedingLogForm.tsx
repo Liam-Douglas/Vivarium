@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
 import { createFeedingLog, createFeederStockEvent, recalculateAnimalLastFedAt } from '@/lib/queries'
+import { feedingLogSchema } from '@/lib/validation'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { PREY_TYPES, getPreySizes } from '@/lib/preyTypes'
@@ -81,19 +82,34 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
   }
 
   async function handleSubmit() {
-    if (!user || !householdId || !animalId || !preyType) return
+    if (!user || !householdId || saving) return
+
+    const parsed = feedingLogSchema.safeParse({
+      animal_id: animalId,
+      prey_type: preyType,
+      prey_size: preySize || undefined,
+      quantity: Number(quantity),
+      fed_at: fedAt,
+      refused,
+      notes: notes || undefined,
+    })
+    if (!parsed.success) {
+      showToast(parsed.error.issues[0]?.message ?? 'Please check the form', 'error')
+      return
+    }
+
     setSaving(true)
     try {
       await createFeedingLog({
         household_id: householdId,
-        animal_id: animalId,
         user_id: user.id,
-        fed_at: new Date(fedAt).toISOString(),
-        prey_type: preyType,
-        prey_size: preySize || undefined,
-        quantity: Number(quantity),
-        refused,
-        notes: notes || undefined,
+        fed_at: new Date(parsed.data.fed_at).toISOString(),
+        animal_id: parsed.data.animal_id,
+        prey_type: parsed.data.prey_type,
+        prey_size: parsed.data.prey_size || undefined,
+        quantity: parsed.data.quantity,
+        refused: parsed.data.refused,
+        notes: parsed.data.notes || undefined,
       })
       await recalculateAnimalLastFedAt(animalId)
 
@@ -266,7 +282,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
           fullWidth
           onClick={handleSubmit}
           loading={saving}
-          disabled={!animalId || !preyType}
+          disabled={!animalId || !preyType || saving}
         >
           Save feeding
         </Button>

@@ -20,15 +20,17 @@ export function useVetContacts() {
   const { householdId } = useHousehold()
   const [data, setData] = useState<VetContact[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   const fetch = useCallback(async () => {
     if (!householdId) { setLoading(false); return }
     setLoading(true)
+    setError(null)
     try {
       const result = await getVetContacts(householdId)
       setData(result as VetContact[])
-    } catch {
-      // silently fail
+    } catch (e) {
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load vet contacts')
     } finally {
       setLoading(false)
     }
@@ -36,5 +38,5 @@ export function useVetContacts() {
 
   useEffect(() => { fetch() }, [fetch])
 
-  return { data, loading, refresh: fetch }
+  return { data, loading, error, refresh: fetch }
 }
