@@ -1,5 +1,16 @@
 import { supabase } from './supabase'
 
+// Strip ownership/identity columns from a caller-supplied update payload so a
+// tampered client can't reassign a record to another household or user, or
+// overwrite its primary key. RLS is the real boundary, but this is cheap
+// defense-in-depth on the generic update helpers.
+const OWNERSHIP_KEYS = ['id', 'household_id', 'user_id', 'created_at']
+function stripOwnershipKeys<T extends Record<string, unknown>>(updates: T): Partial<T> {
+  const clean: Record<string, unknown> = { ...updates }
+  for (const key of OWNERSHIP_KEYS) delete clean[key]
+  return clean as Partial<T>
+}
+
 // ─── Animals ─────────────────────────────────────────────────────────────────
 
 export async function getAnimals(householdId: string) {
@@ -65,7 +76,7 @@ export async function createAnimal(animal: {
 export async function updateAnimal(id: string, updates: Record<string, unknown>) {
   const { error } = await supabase
     .from('animals')
-    .update(updates)
+    .update(stripOwnershipKeys(updates))
     .eq('id', id)
   if (error) throw error
   return { id }
@@ -101,7 +112,7 @@ export async function recalculateLastFedAt(householdId: string) {
       .eq('animal_id', animal.id)
       .order('fed_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
     await supabase
       .from('animals')
       .update({ last_fed_at: latest?.fed_at ?? null })
@@ -149,17 +160,19 @@ export async function deleteFeedingLog(id: string) {
 }
 
 export async function recalculateAnimalLastFedAt(animalId: string) {
-  const { data: latest } = await supabase
+  const { data: latest, error: selectError } = await supabase
     .from('feeding_logs')
     .select('fed_at')
     .eq('animal_id', animalId)
     .order('fed_at', { ascending: false })
     .limit(1)
-    .single()
-  await supabase
+    .maybeSingle()
+  if (selectError) throw selectError
+  const { error: updateError } = await supabase
     .from('animals')
     .update({ last_fed_at: latest?.fed_at ?? null })
     .eq('id', animalId)
+  if (updateError) throw updateError
 }
 
 // ─── Shedding logs ───────────────────────────────────────────────────────────
@@ -873,7 +886,7 @@ export async function createEnclosure(enclosure: {
 }
 
 export async function updateEnclosure(id: string, updates: Record<string, unknown>) {
-  const { error } = await supabase.from('enclosures').update(updates).eq('id', id)
+  const { error } = await supabase.from('enclosures').update(stripOwnershipKeys(updates)).eq('id', id)
   if (error) throw error
 }
 
@@ -951,7 +964,7 @@ export async function createMedicationSchedule(schedule: {
 }
 
 export async function updateMedicationSchedule(id: string, updates: Record<string, unknown>) {
-  const { error } = await supabase.from('medication_schedules').update(updates).eq('id', id)
+  const { error } = await supabase.from('medication_schedules').update(stripOwnershipKeys(updates)).eq('id', id)
   if (error) throw error
 }
 
@@ -1012,7 +1025,7 @@ export async function createVetContact(contact: {
 }
 
 export async function updateVetContact(id: string, updates: Record<string, unknown>) {
-  const { error } = await supabase.from('vet_contacts').update(updates).eq('id', id)
+  const { error } = await supabase.from('vet_contacts').update(stripOwnershipKeys(updates)).eq('id', id)
   if (error) throw error
 }
 

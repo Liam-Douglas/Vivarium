@@ -30,7 +30,7 @@ export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
       {/* Photo */}
       <div className="w-full h-40 relative" style={{ backgroundColor: '#1a1a18' }}>
         {animal.photo_url ? (
-          <img src={animal.photo_url} alt={animal.name} className="w-full h-full object-cover" />
+          <img src={animal.photo_url} alt={animal.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-4xl opacity-30">🦎</div>
         )}

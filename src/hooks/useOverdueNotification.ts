@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { differenceInDays } from 'date-fns'
+import { isOverdue } from '@/lib/dates'
 import type { Animal } from '@/hooks/useAnimals'
 
 export function useOverdueNotification(animals: Animal[]) {
@@ -9,10 +9,7 @@ export function useOverdueNotification(animals: Animal[]) {
     if (fired.current || animals.length === 0) return
     if (!('Notification' in window)) return
 
-    const overdue = animals.filter((a) => {
-      if (!a.last_fed_at || !a.feeding_frequency_days) return false
-      return differenceInDays(new Date(), new Date(a.last_fed_at)) > a.feeding_frequency_days
-    })
+    const overdue = animals.filter((a) => isOverdue(a.last_fed_at, a.feeding_frequency_days))
 
     if (overdue.length === 0) return
     fired.current = true

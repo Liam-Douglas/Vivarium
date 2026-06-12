@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { createAnimal, updateAnimal, uploadAnimalPhoto } from '@/lib/queries'
+import { processImage, ImageValidationError } from '@/lib/image'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useEnclosures } from '@/hooks/useEnclosures'
@@ -77,11 +78,18 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
     },
   })
 
-  function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+  async function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) return
-    setPhotoFile(file)
-    setPhotoPreview(URL.createObjectURL(file))
+    try {
+      // Resize + re-encode, which also strips EXIF GPS metadata.
+      const processed = await processImage(file)
+      setPhotoFile(processed)
+      setPhotoPreview(URL.createObjectURL(processed))
+    } catch (err) {
+      showToast(err instanceof ImageValidationError ? err.message : 'Could not load image', 'error')
+    }
   }
 
   function addTag() {

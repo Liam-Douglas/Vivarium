@@ -22,15 +22,17 @@ export function useMedicationSchedules(animalId?: string) {
   const { householdId } = useHousehold()
   const [data, setData] = useState<MedicationSchedule[]>([])
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetch = useCallback(async () => {
     if (!householdId || !animalId) return
     setLoading(true)
+    setError(null)
     try {
       const result = await getMedicationSchedules(householdId, animalId)
       setData(result as MedicationSchedule[])
-    } catch {
-      // silently fail
+    } catch (e) {
+      setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load medication schedules')
     } finally {
       setLoading(false)
     }
@@ -38,5 +40,5 @@ export function useMedicationSchedules(animalId?: string) {
 
   useEffect(() => { fetch() }, [fetch])
 
-  return { data, loading, refresh: fetch }
+  return { data, loading, error, refresh: fetch }
 }

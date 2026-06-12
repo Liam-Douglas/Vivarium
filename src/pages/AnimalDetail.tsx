@@ -12,6 +12,8 @@ import {
   createMedicationSchedule, updateMedicationSchedule, deleteMedicationSchedule,
   getMedicationLogs, createMedicationLog,
 } from '@/lib/queries'
+import { processImage } from '@/lib/image'
+import { dateInputToISO } from '@/lib/dates'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
 import { useWeightLogs } from '@/hooks/useWeightLogs'
@@ -210,9 +212,20 @@ export function AnimalDetail() {
   }
 
   useEffect(() => {
-    if (!id) return
-    getAnimal(id).then((a) => { setAnimal(a as Animal); setLoading(false) }).catch(() => setLoading(false))
-  }, [id])
+    if (!id || !householdId) return
+    getAnimal(id)
+      .then((a) => {
+        // Defense-in-depth: never render a record outside the active household,
+        // even if RLS were to return one. The real boundary is RLS.
+        if ((a as Animal).household_id !== householdId) {
+          navigate('/animals', { replace: true })
+          return
+        }
+        setAnimal(a as Animal)
+        setLoading(false)
+      })
+      .catch(() => setLoading(false))
+  }, [id, householdId, navigate])
 
   useEffect(() => {
     if (!householdId || !id || medicationSchedules.length === 0) return
@@ -231,7 +244,9 @@ export function AnimalDetail() {
     if (!user || !householdId || !id) return
     setPhotoUploading(true)
     try {
-      const url = await uploadAdditionalPhoto(householdId, id, file)
+      // Resize + re-encode, which also strips EXIF GPS metadata.
+      const processed = await processImage(file)
+      const url = await uploadAdditionalPhoto(householdId, id, processed)
       await createAnimalPhotoRecord({ household_id: householdId, animal_id: id, user_id: user.id, url })
       refreshPhotos()
       showToast('Photo added', 'success')
@@ -321,10 +336,10 @@ export function AnimalDetail() {
     setSavingWeight(true)
     try {
       if (editingWeight) {
-        await updateWeightLog(editingWeight.id, { weight_grams: Number(weightGrams), logged_at: new Date(weightDate).toISOString(), notes: weightNotes || null })
+        await updateWeightLog(editingWeight.id, { weight_grams: Number(weightGrams), logged_at: dateInputToISO(weightDate), notes: weightNotes || null })
         showToast('Weight updated', 'success')
       } else {
-        await createWeightLog({ household_id: householdId, animal_id: id, user_id: user.id, weight_grams: Number(weightGrams), logged_at: new Date(weightDate).toISOString(), notes: weightNotes || undefined })
+        await createWeightLog({ household_id: householdId, animal_id: id, user_id: user.id, weight_grams: Number(weightGrams), logged_at: dateInputToISO(weightDate), notes: weightNotes || undefined })
         showToast('Weight logged', 'success')
       }
       refreshWeight()
@@ -360,10 +375,10 @@ export function AnimalDetail() {
     setSavingShed(true)
     try {
       if (editingShed) {
-        await updateSheddingLog(editingShed.id, { shed_at: new Date(shedDate).toISOString(), complete: shedComplete, notes: shedNotes || null })
+        await updateSheddingLog(editingShed.id, { shed_at: dateInputToISO(shedDate), complete: shedComplete, notes: shedNotes || null })
         showToast('Shed updated', 'success')
       } else {
-        await createSheddingLog({ household_id: householdId, animal_id: id, user_id: user.id, shed_at: new Date(shedDate).toISOString(), complete: shedComplete, notes: shedNotes || undefined })
+        await createSheddingLog({ household_id: householdId, animal_id: id, user_id: user.id, shed_at: dateInputToISO(shedDate), complete: shedComplete, notes: shedNotes || undefined })
         showToast('Shed logged', 'success')
       }
       refreshShedding()
@@ -405,10 +420,10 @@ export function AnimalDetail() {
     try {
       const cost = healthCost ? Math.round(Number(healthCost) * 100) : null
       if (editingHealth) {
-        await updateHealthEvent(editingHealth.id, { event_type: healthType, event_date: new Date(healthDate).toISOString(), title: healthTitle, notes: healthNotes || null, cost_cents: cost })
+        await updateHealthEvent(editingHealth.id, { event_type: healthType, event_date: dateInputToISO(healthDate), title: healthTitle, notes: healthNotes || null, cost_cents: cost })
         showToast('Health event updated', 'success')
       } else {
-        await createHealthEvent({ household_id: householdId, animal_id: id, user_id: user.id, event_type: healthType, event_date: new Date(healthDate).toISOString(), title: healthTitle, notes: healthNotes || undefined, cost_cents: cost ?? undefined })
+        await createHealthEvent({ household_id: householdId, animal_id: id, user_id: user.id, event_type: healthType, event_date: dateInputToISO(healthDate), title: healthTitle, notes: healthNotes || undefined, cost_cents: cost ?? undefined })
         if (healthAddToExpenses && cost && cost > 0) {
           await createExpense({ household_id: householdId, user_id: user.id, animal_id: id, category: 'veterinary', amount_cents: cost, currency: 'AUD', description: healthTitle, expense_date: healthDate })
         }
@@ -441,7 +456,7 @@ export function AnimalDetail() {
     if (!editingFeed) return
     setSavingFeedEdit(true)
     try {
-      await updateFeedingLog(editingFeed.id, { prey_type: feedEditPreyType, prey_size: feedEditPreySize || null, quantity: Number(feedEditQty), refused: feedEditRefused, notes: feedEditNotes || null, fed_at: new Date(feedEditDate).toISOString() })
+      await updateFeedingLog(editingFeed.id, { prey_type: feedEditPreyType, prey_size: feedEditPreySize || null, quantity: Number(feedEditQty), refused: feedEditRefused, notes: feedEditNotes || null, fed_at: dateInputToISO(feedEditDate) })
       await recalculateAnimalLastFedAt(editingFeed.animal_id)
       refreshFeeding()
       setEditingFeed(null)
@@ -977,7 +992,7 @@ export function AnimalDetail() {
                 <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {animalPhotos.map((photo) => (
                     <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
-                      <img src={photo.url} alt="" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
+                      <img src={photo.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
                       <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#f0ece0' }}>×</button>
                     </div>
                   ))}
