@@ -4,7 +4,7 @@ import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { createFeedingLog, createFeederStockEvent, recalculateAnimalLastFedAt } from '@/lib/queries'
+import { logFeeding } from '@/lib/queries'
 import { feedingLogSchema } from '@/lib/validation'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -100,7 +100,11 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
 
     setSaving(true)
     try {
-      await createFeedingLog({
+      const feeder = parsed.data.refused ? null : findMatchingFeeder()
+
+      // Single atomic write (log + last_fed_at + stock deduction) via RPC,
+      // with a legacy sequential fallback until the migration is applied.
+      const { stockError } = await logFeeding({
         household_id: householdId,
         user_id: user.id,
         fed_at: new Date(parsed.data.fed_at).toISOString(),
@@ -110,34 +114,19 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
         quantity: parsed.data.quantity,
         refused: parsed.data.refused,
         notes: parsed.data.notes || undefined,
+        feeder_item_id: feeder?.id ?? null,
+        stock_note: `Fed to ${animals.find((a) => a.id === animalId)?.name ?? 'animal'}`,
       })
-      await recalculateAnimalLastFedAt(animalId)
 
-      // Deduct from inventory
-      if (!refused) {
-        const feeder = findMatchingFeeder()
-        if (feeder) {
-          try {
-            await createFeederStockEvent({
-              household_id: householdId,
-              feeder_item_id: feeder.id,
-              user_id: user.id,
-              event_type: 'adjustment',
-              quantity_delta: -Number(quantity),
-              notes: `Fed to ${animals.find((a) => a.id === animalId)?.name ?? 'animal'}`,
-            })
-            refreshFeeders()
-          } catch (stockErr) {
-            const msg = stockErr instanceof Error ? stockErr.message : (stockErr as { message?: string })?.message ?? 'unknown error'
-            showToast(`Feeding saved but stock not updated — ${msg}`, 'error')
-          }
-        } else {
-          showToast(
-            `Track ${preyType} in feeder inventory?`,
-            'info',
-            { label: 'Add', onClick: () => { /* navigate to feeders */ } }
-          )
-        }
+      if (feeder) {
+        refreshFeeders()
+        if (stockError) showToast(`Feeding saved but stock not updated — ${stockError}`, 'error')
+      } else if (!parsed.data.refused) {
+        showToast(
+          `Track ${preyType} in feeder inventory?`,
+          'info',
+          { label: 'Add', onClick: () => { /* navigate to feeders */ } }
+        )
       }
 
       onSuccess()
