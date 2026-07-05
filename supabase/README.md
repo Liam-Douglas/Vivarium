@@ -11,9 +11,35 @@ Supabase SQL editor (or via the CLI).
 | `migrations/0002_storage_policies.sql` | Makes the `animal-photos` bucket private and restricts every object operation to the owning household by path prefix (**C2**). |
 | `migrations/0003_functions.sql` | `log_feeding` RPC (atomic feeding write, **M2**) and a `feeder_stock` aggregation view (kills the N+1, **M5**). |
 
-## How to verify RLS after applying
+## Runbook — apply & verify (do this from a machine with Supabase access)
+
+These steps can't run from the CI sandbox (its network policy blocks
+`*.supabase.co`). Run them locally or from the Supabase dashboard.
+
+**1. Baseline — confirm the current exposure first.**
+```bash
+./supabase/verify_rls.sh           # reads .env.local for URL + anon key
+```
+As **anonymous**, any table showing `VISIBLE (N rows)` means RLS is
+missing/disabled there — that's the critical finding the migrations fix.
+
+**2. Apply the migrations, in order.**
+- Dashboard: SQL Editor → paste each file → Run, in the order `0001` → `0002`
+  → `0003`. Review each against your live schema first (column names were
+  inferred from client code).
+- Or via CLI: `supabase db push` (if you manage them as tracked migrations),
+  or `psql "$DATABASE_URL" -f supabase/migrations/0001_rls_policies.sql` etc.
+
+**3. Re-verify.**
+```bash
+./supabase/verify_rls.sh           # anonymous should now be 0 rows everywhere
+```
+
+**4. Prove cross-tenant isolation (the real test).**
 With two test households H1 and H2, signed in as an H1 member:
 - `select` / `update` / `delete` an H2 row by id → expect 0 rows / error.
+  (Grab an `access_token` from the app and run
+  `USER_JWT=<token> ./supabase/verify_rls.sh` to check what your own login sees.)
 - Request an `animal-photos` object under H2's prefix → expect denied.
 - Try to `update` one of your animals setting `household_id` to H2 → blocked by `WITH CHECK`.
 
