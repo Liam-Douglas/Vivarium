@@ -6,6 +6,7 @@ import { Input, Textarea, Select } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { createAnimal, updateAnimal, uploadAnimalPhoto } from '@/lib/queries'
 import { processImage, ImageValidationError } from '@/lib/image'
+import { StoragePhoto } from '@/components/ui/StoragePhoto'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useEnclosures } from '@/hooks/useEnclosures'
@@ -178,7 +179,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
         onClick={() => fileRef.current?.click()}
       >
         {photoPreview ? (
-          <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+          <StoragePhoto stored={photoPreview} alt="Preview" className="w-full h-full object-cover" />
         ) : (
           <>
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: '#6a6458' }}>

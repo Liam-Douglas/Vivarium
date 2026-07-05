@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { formatDistanceToNow, differenceInDays } from 'date-fns'
 import type { Animal } from '@/hooks/useAnimals'
+import { StoragePhoto } from '@/components/ui/StoragePhoto'
 
 function getFeedingStatus(animal: Animal): { color: string; label: string } {
   if (!animal.last_fed_at || !animal.feeding_frequency_days) {
@@ -30,7 +31,7 @@ export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
       {/* Photo */}
       <div className="w-full h-40 relative" style={{ backgroundColor: '#1a1a18' }}>
         {animal.photo_url ? (
-          <img src={animal.photo_url} alt={animal.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+          <StoragePhoto stored={animal.photo_url} alt={animal.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-4xl opacity-30">🦎</div>
         )}

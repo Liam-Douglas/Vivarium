@@ -28,15 +28,19 @@ With two test households H1 and H2, signed in as an H1 member:
    ```
    Imports (`src/pages/Import.tsx`, `src/pages/Settings.tsx`) are unchanged.
 
-2. **Switch the photo read path to signed URLs.**
-   `0002_storage_policies.sql` makes the bucket private. Once applied, the
-   client must stop using `getPublicUrl()` and read via
-   `supabase.storage.from('animal-photos').createSignedUrl(path, ttl)` (in
-   `uploadAnimalPhoto` / `uploadAdditionalPhoto` and wherever `photo_url` is
-   rendered). Existing rows store public URLs that will 401 once the bucket is
-   private — plan a short migration to re-issue signed URLs on read. EXIF GPS
-   stripping is already handled client-side (`src/lib/image.ts`), so the
-   location-leak risk is mitigated even before this step.
+2. ~~Switch the photo read path to signed URLs.~~ **Done (client-side).**
+   All photo rendering now goes through `<StoragePhoto>`
+   (`src/components/ui/StoragePhoto.tsx`), which resolves stored values via
+   `getSignedPhotoUrl()` (`src/lib/storage.ts`) at read time. `createSignedUrl`
+   works on both public and private buckets and falls back to the stored URL on
+   error, so this is safe to ship BEFORE flipping the bucket: nothing breaks
+   while it's public, and access keeps working after `0002_storage_policies.sql`
+   makes it private — no re-migration of existing rows needed (the object path
+   is derived from each stored public URL). EXIF GPS stripping
+   (`src/lib/image.ts`) already mitigates the location-leak risk regardless.
+
+   Remaining server action: apply `0002_storage_policies.sql` to actually make
+   the bucket private.
 
 3. ~~Adopt `log_feeding` in the client.~~ **Done.** The feeding form now calls
    `logFeeding()` (`src/lib/queries.ts`), which uses the RPC when available and

@@ -14,6 +14,7 @@ import {
 } from '@/lib/queries'
 import { processImage } from '@/lib/image'
 import { dateInputToISO } from '@/lib/dates'
+import { StoragePhoto } from '@/components/ui/StoragePhoto'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
 import { useWeightLogs } from '@/hooks/useWeightLogs'
@@ -691,7 +692,7 @@ export function AnimalDetail() {
       {/* Hero */}
       <div className="relative h-52 sm:h-64" style={{ backgroundColor: '#1a1a18' }}>
         {animal.photo_url ? (
-          <img src={animal.photo_url} alt={animal.name} className="w-full h-full object-cover" />
+          <StoragePhoto stored={animal.photo_url} alt={animal.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">🦎</div>
         )}
@@ -992,7 +993,7 @@ export function AnimalDetail() {
                 <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {animalPhotos.map((photo) => (
                     <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
-                      <img src={photo.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
+                      <StoragePhoto stored={photo.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
                       <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#f0ece0' }}>×</button>
                     </div>
                   ))}
@@ -1699,7 +1700,7 @@ export function AnimalDetail() {
       {/* Photo lightbox */}
       <Modal open={!!lightboxPhoto} onClose={() => setLightboxPhoto(null)} title="">
         {lightboxPhoto && (
-          <img src={lightboxPhoto} alt="" className="w-full rounded-xl max-h-[65vh] object-contain" style={{ backgroundColor: '#1a1a18' }} />
+          <StoragePhoto stored={lightboxPhoto} alt="" className="w-full rounded-xl max-h-[65vh] object-contain" style={{ backgroundColor: '#1a1a18' }} />
         )}
       </Modal>
 
