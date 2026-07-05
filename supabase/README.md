@@ -38,11 +38,12 @@ With two test households H1 and H2, signed in as an H1 member:
    stripping is already handled client-side (`src/lib/image.ts`), so the
    location-leak risk is mitigated even before this step.
 
-3. **Adopt `log_feeding` in the client.**
-   Replace the three sequential writes in
-   `src/components/feeding/FeedingLogForm.tsx` with a single
-   `supabase.rpc('log_feeding', …)` call once the function exists.
+3. ~~Adopt `log_feeding` in the client.~~ **Done.** The feeding form now calls
+   `logFeeding()` (`src/lib/queries.ts`), which uses the RPC when available and
+   transparently falls back to the legacy sequential writes until
+   `0003_functions.sql` is applied — so the migration can be rolled out at any
+   time with no coordinated deploy.
 
-4. **Adopt the `feeder_stock` view in the client.**
-   Replace the per-item `getFeederStock()` loop in
-   `src/hooks/useFeederInventory.ts` with one query against `feeder_stock`.
+4. ~~Adopt the `feeder_stock` view in the client.~~ **Done.**
+   `src/hooks/useFeederInventory.ts` queries the `feeder_stock` view in one
+   grouped request and falls back to the per-item loop until the view exists.

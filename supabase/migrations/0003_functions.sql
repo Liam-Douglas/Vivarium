@@ -18,7 +18,8 @@ create or replace function public.log_feeding(
   p_refused        boolean,
   p_prey_size      text default null,
   p_notes          text default null,
-  p_feeder_item_id uuid default null
+  p_feeder_item_id uuid default null,
+  p_stock_note     text default null
 )
 returns public.feeding_logs
 language plpgsql
@@ -43,18 +44,20 @@ begin
    where a.id = p_animal_id;
 
   -- Optional stock deduction in the same transaction.
+  -- 'adjustment' (not 'feeding') — the existing check constraint on
+  -- feeder_stock_events.event_type only allows the former.
   if p_feeder_item_id is not null and p_refused = false then
     insert into public.feeder_stock_events
       (household_id, feeder_item_id, user_id, event_type, quantity_delta, notes)
     values
-      (p_household_id, p_feeder_item_id, auth.uid(), 'feeding', -p_quantity, p_notes);
+      (p_household_id, p_feeder_item_id, auth.uid(), 'adjustment', -p_quantity, p_stock_note);
   end if;
 
   return v_log;
 end;
 $$;
 
-grant execute on function public.log_feeding(uuid, uuid, timestamptz, text, integer, boolean, text, text, uuid) to authenticated;
+grant execute on function public.log_feeding(uuid, uuid, timestamptz, text, integer, boolean, text, text, uuid, text) to authenticated;
 
 -- ── Feeder stock aggregation ─────────────────────────────────────────────────
 -- Replaces the per-item getFeederStock() N+1 with one grouped query.

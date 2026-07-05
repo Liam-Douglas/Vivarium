@@ -159,6 +159,78 @@ export async function deleteFeedingLog(id: string) {
   if (error) throw error
 }
 
+// True when the error means the function/view from supabase/migrations hasn't
+// been applied yet (PostgREST: missing function / missing relation; Postgres
+// equivalents), so callers can fall back to the legacy code path.
+export function isMissingDbObject(error: unknown): boolean {
+  const code = (error as { code?: string })?.code ?? ''
+  return ['PGRST202', 'PGRST205', '42883', '42P01'].includes(code)
+}
+
+// Atomic feeding write via the log_feeding RPC (supabase/migrations/0003):
+// inserts the log, refreshes animals.last_fed_at, and deducts feeder stock in
+// one transaction. Falls back to the legacy sequential writes if the RPC
+// hasn't been applied yet; in that path a stock failure doesn't lose the
+// feeding log and is reported via stockError instead.
+export async function logFeeding(params: {
+  household_id: string
+  animal_id: string
+  user_id: string
+  fed_at: string
+  prey_type: string
+  prey_size?: string
+  quantity: number
+  refused: boolean
+  notes?: string
+  feeder_item_id?: string | null
+  stock_note?: string
+}): Promise<{ stockError: string | null }> {
+  const { error } = await supabase.rpc('log_feeding', {
+    p_household_id: params.household_id,
+    p_animal_id: params.animal_id,
+    p_fed_at: params.fed_at,
+    p_prey_type: params.prey_type,
+    p_quantity: params.quantity,
+    p_refused: params.refused,
+    p_prey_size: params.prey_size ?? null,
+    p_notes: params.notes ?? null,
+    p_feeder_item_id: params.feeder_item_id ?? null,
+    p_stock_note: params.stock_note ?? null,
+  })
+  if (!error) return { stockError: null }
+  if (!isMissingDbObject(error)) throw error
+
+  // Legacy fallback: three sequential writes.
+  await createFeedingLog({
+    household_id: params.household_id,
+    animal_id: params.animal_id,
+    user_id: params.user_id,
+    fed_at: params.fed_at,
+    prey_type: params.prey_type,
+    prey_size: params.prey_size,
+    quantity: params.quantity,
+    refused: params.refused,
+    notes: params.notes,
+  })
+  await recalculateAnimalLastFedAt(params.animal_id)
+  if (params.feeder_item_id && !params.refused) {
+    try {
+      await createFeederStockEvent({
+        household_id: params.household_id,
+        feeder_item_id: params.feeder_item_id,
+        user_id: params.user_id,
+        event_type: 'adjustment',
+        quantity_delta: -params.quantity,
+        notes: params.stock_note,
+      })
+    } catch (stockErr) {
+      const msg = stockErr instanceof Error ? stockErr.message : (stockErr as { message?: string })?.message ?? 'unknown error'
+      return { stockError: msg }
+    }
+  }
+  return { stockError: null }
+}
+
 export async function recalculateAnimalLastFedAt(animalId: string) {
   const { data: latest, error: selectError } = await supabase
     .from('feeding_logs')
@@ -378,6 +450,20 @@ export async function getFeederStock(feederItemId: string): Promise<number> {
     .eq('feeder_item_id', feederItemId)
   if (error) throw error
   return (data ?? []).reduce((sum, row) => sum + (row.quantity_delta as number), 0)
+}
+
+// One grouped query against the feeder_stock view (supabase/migrations/0003)
+// instead of a per-item getFeederStock call. Throws a missing-relation error
+// until the migration is applied — callers fall back via isMissingDbObject.
+export async function getFeederStockMap(householdId: string): Promise<Record<string, number>> {
+  const { data, error } = await supabase
+    .from('feeder_stock')
+    .select('feeder_item_id, current_stock')
+    .eq('household_id', householdId)
+  if (error) throw error
+  const map: Record<string, number> = {}
+  for (const row of data ?? []) map[row.feeder_item_id as string] = Number(row.current_stock)
+  return map
 }
 
 export async function createFeederStockEvent(event: {
