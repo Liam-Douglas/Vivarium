@@ -1,7 +1,14 @@
-# Design markups — Dashboard, Animals, Animal profile
+# Design markups
 
-Before/after markups covering what to cut from these three screens and what to add.
-Left column recreates the app as it is today (from `src/`); right column is the proposal.
+Before/after markups for the three core screens, plus how the same components should
+lay out on mobile versus the web. Two pages on one canvas.
+
+**Page 1 — Cut & add (mobile).** What to cut from Dashboard, Animals and Animal profile
+and what to add. Left column recreates the app as it is today (from `src/`); right
+column is the proposal.
+
+**Page 2 — Mobile vs web.** Today's dashboard at 1440px, the proposed web dashboard and
+animal profile, and the responsive spec.
 
 Published canvas: https://claude.ai/code/artifact/793ff7b3-0abb-4ce7-a58f-0f274a8bb5b4
 
@@ -15,9 +22,14 @@ Published canvas: https://claude.ai/code/artifact/793ff7b3-0abb-4ce7-a58f-0f274a
 | `AnimalsProposed.dc.html` | Animals — proposed |
 | `ProfileCurrent.dc.html` | Animal profile — today |
 | `ProfileProposed.dc.html` | Animal profile — proposed |
-| `canvas.json` | Frame positions, sizes and the margin notes |
+| `WebDashboardToday.dc.html` | Web dashboard — today, 1440px |
+| `WebDashboardProposed.dc.html` | Web dashboard — proposed |
+| `WebProfileProposed.dc.html` | Web animal profile — proposed |
+| `Breakpoints.dc.html` | Responsive rules |
+| `canvas.json` | Pages, frame positions, sizes and the margin notes |
 
-Each artboard is a standalone HTML file at 390px, using the app's own tokens from
+Each artboard is a standalone HTML file — 390px for the mobile boards, 1440px for the
+web ones — using the app's own tokens from
 `src/index.css` — Playfair Display / DM Sans, `#1a1a18` / `#242420` surfaces, and the
 `#8fbe5a` / `#d4924a` / `#c45a5a` status colours.
 
@@ -44,6 +56,28 @@ enclosure on the card.
 are Timeline with a filter chip pre-selected. Add one feeding bar carrying status, last
 meal and the only Feed button; the enclosure under the name; a "Takes food" tile; and a
 weight sparkline.
+
+**Mobile vs web.** The app's entire responsive treatment today is four things: card
+grids go 2 → 3 → 4 columns, `md:pb-8` drops the bottom padding, the FAB hides, and the
+sidebar appears. There is no desktop layout — there is a phone layout centred in a
+`max-w-5xl` column with 96px of dead gutter each side, so queue rows stretch to 1024px
+with a 10px dot at one end and a button at the other, and the `grid-cols-2` stat cards
+become two 506px tiles holding one digit each. The FAB is `md:hidden` and its desktop
+replacement is a single "Log feeding" button, so four of its five actions are
+unreachable above 768px.
+
+The proposal is one component set that knows what to do with width, not a second design:
+width buys columns, not whitespace. Queue rows unfold their status, last meal and
+location into columns above 1024px and fold them back below; the dashboard puts stock
+and activity in a 380px rail; the profile's whole mobile stack becomes a sticky rail
+beside the tab content; record lists become tables with a column per stored field.
+Invariants at every width: every action and every destination reachable on both, 44px
+targets, one token set.
+
+The parity break worth fixing first — the sidebar has six destinations and the bottom
+nav has four, so **Feeding and Stats cannot be reached on a phone at all**, on a
+mobile-first PWA. Separately, `FeederInventory.tsx` and `FeedingCalendar.tsx` are not
+imported anywhere and their routes redirect elsewhere; they look like dead code.
 
 ## Rebuilding the canvas
 

@@ -1,22 +1,33 @@
 {
+  "pages": [
+    { "id": "page-1", "name": "Cut & add — mobile" },
+    { "id": "page-2", "name": "Mobile vs web" }
+  ],
   "artboards": [
-    { "file": "DashboardCurrent.dc.html", "title": "Dashboard — today", "x": 0, "y": 0, "w": 390, "h": 1720 },
-    { "file": "Main.dc.html", "title": "Dashboard — proposed", "x": 520, "y": 0, "w": 390, "h": 1280 },
-    { "file": "AnimalsCurrent.dc.html", "title": "Animals — today", "x": 0, "y": 1880, "w": 390, "h": 1180 },
-    { "file": "AnimalsProposed.dc.html", "title": "Animals — proposed", "x": 520, "y": 1880, "w": 390, "h": 1380 },
-    { "file": "ProfileCurrent.dc.html", "title": "Animal profile — today", "x": 0, "y": 3420, "w": 390, "h": 1320 },
-    { "file": "ProfileProposed.dc.html", "title": "Animal profile — proposed", "x": 520, "y": 3420, "w": 390, "h": 1320 }
+    { "file": "DashboardCurrent.dc.html", "title": "Dashboard — today", "page": "page-1", "x": 0, "y": 0, "w": 390, "h": 1720 },
+    { "file": "Main.dc.html", "title": "Dashboard — proposed", "page": "page-1", "x": 520, "y": 0, "w": 390, "h": 1280 },
+    { "file": "AnimalsCurrent.dc.html", "title": "Animals — today", "page": "page-1", "x": 0, "y": 1880, "w": 390, "h": 1180 },
+    { "file": "AnimalsProposed.dc.html", "title": "Animals — proposed", "page": "page-1", "x": 520, "y": 1880, "w": 390, "h": 1380 },
+    { "file": "ProfileCurrent.dc.html", "title": "Animal profile — today", "page": "page-1", "x": 0, "y": 3420, "w": 390, "h": 1320 },
+    { "file": "ProfileProposed.dc.html", "title": "Animal profile — proposed", "page": "page-1", "x": 520, "y": 3420, "w": 390, "h": 1320 },
+
+    { "file": "WebDashboardToday.dc.html", "title": "Web dashboard — today, 1440px", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 1080 },
+    { "file": "WebDashboardProposed.dc.html", "title": "Web dashboard — proposed", "page": "page-2", "x": 0, "y": 1240, "w": 1440, "h": 940 },
+    { "file": "WebProfileProposed.dc.html", "title": "Web animal profile — proposed", "page": "page-2", "x": 0, "y": 2340, "w": 1440, "h": 1020 },
+    { "file": "Breakpoints.dc.html", "title": "Responsive rules", "page": "page-2", "x": 0, "y": 3520, "w": 940, "h": 1180 }
   ],
   "annotations": [
     {
       "id": "key",
+      "page": "page-1",
       "x": 0,
       "y": -300,
       "w": 910,
-      "text": "VIVARIUM — DESIGN MARKUPS\nWhat to cut, what to add. Left column is the app as it is today, recreated from src/. Right column is the proposal. Both at 390px.\n\nCUT — delete it. The information is duplicated, or it does not change what you do next.\nMERGE / TRIM / SWAP — keep the information, spend less screen on it.\nNEW — add it. In every case here the data already exists in the app and never reaches a screen.\n\nThe thread running through all three screens: the app tells you a lot about state, and very little about what to do about it — and it tells you the same state three or four times per screen."
+      "text": "VIVARIUM — DESIGN MARKUPS\nWhat to cut, what to add. Left column is the app as it is today, recreated from src/. Right column is the proposal. Both at 390px.\n\nCUT — delete it. The information is duplicated, or it does not change what you do next.\nMERGE / TRIM / SWAP — keep the information, spend less screen on it.\nNEW — add it. In every case here the data already exists in the app and never reaches a screen.\n\nThe thread running through all three screens: the app tells you a lot about state, and very little about what to do about it — and it tells you the same state three or four times per screen.\n\nThe second page, Mobile vs web, takes this proposal to 1440px."
     },
     {
       "id": "note-dashboard",
+      "page": "page-1",
       "x": 1000,
       "y": 0,
       "w": 290,
@@ -24,6 +35,7 @@
     },
     {
       "id": "note-animals",
+      "page": "page-1",
       "x": 1000,
       "y": 1880,
       "w": 290,
@@ -31,11 +43,44 @@
     },
     {
       "id": "note-profile",
+      "page": "page-1",
       "x": 1000,
       "y": 3420,
       "w": 290,
       "text": "ANIMAL PROFILE\n\nThis screen states \"this animal is late\" three times in the top 400px: the header chip, the banner, and the Next feeding tile.\n\nCut\n· The header chip row — all three chips repeat the stats grid below, with less in them\n· The overdue banner\n· Two tabs: Feeding and Vitals are Timeline with a filter chip pre-selected\n\nAdd\n· One feeding bar carrying status + last meal + the only Feed button\n· Enclosure under the name\n· \"Takes food — 9 of 10\", already computed on the Feeding tab, promoted to a tile\n· Weight sparkline on its tile\n· Health as the third quick action\n\nNothing is deleted from the data — the Feeding and Vitals tabs' contents are already reachable through Timeline's filters."
+    },
+    {
+      "id": "note-web-intro",
+      "page": "page-2",
+      "x": 0,
+      "y": -300,
+      "w": 1440,
+      "text": "MOBILE VS WEB\nThe same proposal at 1440px, and the rules that get it there.\n\nWhat exists today: the app's whole responsive treatment is four things — card grids go 2 → 3 → 4 columns, the bottom padding drops (md:pb-8, in six files), the FAB hides, and the sidebar appears. Grep the pages and you find seven breakpoint utilities in Dashboard, seven in AnimalDetail, five in Animals, and one each everywhere else. There is no desktop layout; there is a phone layout centred in a max-w-5xl column with 96px of dead gutter on each side.\n\nThe answer is not a separate web design — it is one set of components that know what to do with more width. The first board shows the problem, the next two show the proposal, and the last one is the spec."
+    },
+    {
+      "id": "note-web-today",
+      "page": "page-2",
+      "x": 1540,
+      "y": 0,
+      "w": 300,
+      "text": "TODAY AT 1440px\n\nThree things break, and none of them are cosmetic.\n\n1. Rows stretch instead of filling. A queue row spans 1024px with a 10px dot at one end and a 12px button at the other. The fields that would justify that width — the schedule, the last meal, the enclosure — are not shown at any width.\n\n2. The stat grid is grid-cols-2 with no breakpoint at all: two 506px cards, each holding a single digit.\n\n3. Four actions disappear. The FAB offers add animal, feeding, shed, weight and expense; it is md:hidden, and its desktop replacement is one Log feeding button. Above 768px, logging a shed or a weight means opening an animal first.\n\nThe photo grid is the one thing that genuinely responds."
+    },
+    {
+      "id": "note-web-dashboard",
+      "page": "page-2",
+      "x": 1540,
+      "y": 1240,
+      "w": 300,
+      "text": "WEB DASHBOARD\n\nThe phone's three blocks, reordered rather than redesigned.\n\n· The queue keeps the primary column and unfolds: status, last meal and location come out from under the name into their own columns. Below 1024 they fold back into the two-line mobile row. One component, two arrangements.\n\n· Stock and activity — read often, acted on rarely — move into a 380px rail instead of sitting below the fold.\n\n· The FAB becomes a split button carrying the same five actions in the same order, opening the same modals.\n\n· Content caps at 1240px so a wide monitor grows the gutters, not the rows.\n\nSame 40–44px targets as the phone. A mouse tolerates smaller buttons; it does not earn them."
+    },
+    {
+      "id": "note-web-profile",
+      "page": "page-2",
+      "x": 1540,
+      "y": 2340,
+      "w": 300,
+      "text": "WEB ANIMAL PROFILE\n\nThe mobile profile is a vertical stack: hero, identity, feeding bar, quick actions, stats, then tabs. On desktop that entire stack becomes a 380px rail, pinned, and the tab content fills the rest — so the animal stays on screen while you read six months of its history.\n\nThe payoff is the records. Every feeding row stores prey, size, quantity, refusal, notes and who logged it; the phone can show two of those. Desktop is where you audit a season, so desktop is where the columns appear.\n\nSame for the growth chart: a sparkline in the Weight tile on a phone, the real chart inline on the web. Recharts is already a dependency.\n\nNote the profile is capped at max-w-3xl today — 768px on a 1440px screen."
     }
   ],
-  "launch": { "view": "canvas" }
+  "launch": { "view": "canvas", "page": "page-2" }
 }
