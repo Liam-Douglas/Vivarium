@@ -1,0 +1,167 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" />
+  <style>
+    body { margin: 0; background: #1a1a18; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #8fbe5a; text-decoration: none; }
+    a:hover { color: #a5cf74; }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 1180px; background: #1a1a18; position: relative; box-sizing: border-box; padding: 24px 16px 88px;">
+
+  <!-- Header -->
+  <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 24px;">
+    <div>
+      <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 700; line-height: 1.15; color: #f0ece0;">Animals</h1>
+      <p style="margin: 2px 0 0; font-size: 14px; color: #a8a090;">12 in your collection</p>
+    </div>
+    <span style="display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 12px; background: #8fbe5a; color: #1a1a18; font-size: 14px; font-weight: 500;">
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" /></svg>
+      Add animal
+    </span>
+  </div>
+
+  <!-- Tab toggle -->
+  <div style="display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: #1a1a18; border: 1px solid rgba(255,255,255,0.06); margin-bottom: 16px;">
+    <div style="flex: 1; text-align: center; padding: 8px 0; border-radius: 8px; background: #242420; color: #f0ece0; font-size: 14px; font-weight: 500;">&#128062; Animals</div>
+    <div style="flex: 1; text-align: center; padding: 8px 0; border-radius: 8px; color: #6a6458; font-size: 14px; font-weight: 500;">&#127968; Enclosures</div>
+  </div>
+
+  <!-- CUT: urgent carousel -->
+  <div style="position: relative; margin-bottom: 8px;">
+    <div style="display: flex; gap: 8px; opacity: 0.6; overflow: hidden;">
+      <div style="width: 140px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; border-radius: 12px; padding: 8px 12px; background: rgba(196,90,90,0.08); border: 1px solid rgba(196,90,90,0.2);">
+        <span style="font-size: 12px; font-weight: 500; color: #f0ece0;">Kaa</span>
+        <span style="font-size: 12px; color: #c45a5a;">Overdue</span>
+        <span style="align-self: flex-start; margin-top: 2px; border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 500; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.25);">Feed</span>
+      </div>
+      <div style="width: 140px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; border-radius: 12px; padding: 8px 12px; background: rgba(196,90,90,0.08); border: 1px solid rgba(196,90,90,0.2);">
+        <span style="font-size: 12px; font-weight: 500; color: #f0ece0;">Nagini</span>
+        <span style="font-size: 12px; color: #c45a5a;">Overdue</span>
+        <span style="align-self: flex-start; margin-top: 2px; border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 500; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.25);">Feed</span>
+      </div>
+      <div style="width: 140px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px; border-radius: 12px; padding: 8px 12px; background: rgba(212,146,74,0.08); border: 1px solid rgba(212,146,74,0.2);">
+        <span style="font-size: 12px; font-weight: 500; color: #f0ece0;">Monty</span>
+        <span style="font-size: 12px; color: #d4924a;">Due today</span>
+        <span style="align-self: flex-start; margin-top: 2px; border-radius: 999px; padding: 2px 8px; font-size: 12px; font-weight: 500; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.25);">Feed</span>
+      </div>
+    </div>
+    <div style="position: absolute; inset: -5px; border: 1px dashed rgba(196,90,90,0.5); border-radius: 16px; pointer-events: none;"></div>
+    <div style="position: absolute; top: -14px; right: -2px; display: inline-flex; align-items: center; font-size: 9px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: #c45a5a; background: #2a1e1e; border: 1px solid rgba(196,90,90,0.45); border-radius: 4px; padding: 2px 6px;">Cut</div>
+  </div>
+  <p style="margin: 0 0 20px; font-size: 11px; line-height: 1.5; color: #c45a5a;">The <strong style="color: #f0ece0; font-weight: 500;">third</strong> rendering of the same overdue list &mdash; after Dashboard &ldquo;Needs feeding&rdquo; and &ldquo;Due soon&rdquo;. Horizontal scroll hides items past the third, and it sits above the search box you came here to use. The queue belongs on the Dashboard; this screen is for finding an animal.</p>
+
+  <!-- Search + sort -->
+  <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+    <div style="flex: 1; border-radius: 12px; padding: 10px 16px; font-size: 14px; background: #242420; border: 1px solid rgba(255,255,255,0.08); color: #6a6458;">Search animals&hellip;</div>
+    <div style="border-radius: 12px; padding: 10px 12px; font-size: 14px; background: #242420; border: 1px solid rgba(255,255,255,0.08); color: #a8a090;">Name A &rarr; Z</div>
+  </div>
+
+  <!-- Category chips -->
+  <div style="display: flex; gap: 8px; margin-bottom: 16px; overflow: hidden;">
+    <span style="flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 500; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.3);">&#128062; All</span>
+    <span style="flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 12px; background: #242420; color: #a8a090; border: 1px solid rgba(255,255,255,0.06);">&#128013; Snakes</span>
+    <span style="flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 12px; background: #242420; color: #a8a090; border: 1px solid rgba(255,255,255,0.06);">&#129422; Lizards</span>
+    <span style="flex-shrink: 0; padding: 6px 12px; border-radius: 999px; font-size: 12px; background: #242420; color: #a8a090; border: 1px solid rgba(255,255,255,0.06);">&#128034; Turtles</span>
+  </div>
+
+  <!-- Grid -->
+  <div style="position: relative;">
+    <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+
+      <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden;">
+        <div style="height: 160px; background: #211f1c; position: relative; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 34px; opacity: 0.3;">&#129422;</span>
+          <span style="position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 999px; background: #c45a5a; box-shadow: 0 0 0 3px rgba(0,0,0,0.4);"></span>
+          <span style="position: absolute; bottom: 8px; left: 8px; padding: 1px 6px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(0,0,0,0.55); color: #f0ece0;">&#128293; 6</span>
+        </div>
+        <div style="padding: 12px;">
+          <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 14px; font-weight: 600; color: #f0ece0;">Kaa</p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #a8a090;">Ball Python &middot; Pastel</p>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #6a6458;">Fed 18 days ago</p>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px;">
+            <span style="padding: 1px 6px; border-radius: 999px; font-size: 12px; background: rgba(143,190,90,0.1); color: #8fbe5a;">#breeder</span>
+            <span style="padding: 1px 6px; border-radius: 999px; font-size: 12px; background: rgba(143,190,90,0.1); color: #8fbe5a;">#2021</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden;">
+        <div style="height: 160px; background: #1e2119; position: relative; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 34px; opacity: 0.3;">&#129422;</span>
+          <span style="position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 999px; background: #d4924a; box-shadow: 0 0 0 3px rgba(0,0,0,0.4);"></span>
+          <span style="position: absolute; bottom: 8px; right: 8px; padding: 1px 6px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(143,190,90,0.85); color: #1a1a18;">For Sale</span>
+        </div>
+        <div style="padding: 12px;">
+          <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 14px; font-weight: 600; color: #f0ece0;">Monty</p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #a8a090;">Carpet Python &middot; Jaguar</p>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #6a6458;">Fed 13 days ago</p>
+          <div style="display: flex; gap: 4px; flex-wrap: wrap; margin-top: 8px;">
+            <span style="padding: 1px 6px; border-radius: 999px; font-size: 12px; background: rgba(143,190,90,0.1); color: #8fbe5a;">#rack-a</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden;">
+        <div style="height: 160px; background: #21201c; position: relative; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 34px; opacity: 0.3;">&#129422;</span>
+          <span style="position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 999px; background: #5a9e6a; box-shadow: 0 0 0 3px rgba(0,0,0,0.4);"></span>
+        </div>
+        <div style="padding: 12px;">
+          <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 14px; font-weight: 600; color: #f0ece0;">Sahara</p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #a8a090;">Bearded Dragon</p>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #6a6458;">Fed 2 days ago</p>
+        </div>
+      </div>
+
+      <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden;">
+        <div style="height: 160px; background: #1c2021; position: relative; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 34px; opacity: 0.3;">&#129422;</span>
+          <span style="position: absolute; top: 10px; left: 10px; padding: 1px 6px; border-radius: 6px; font-size: 12px; font-weight: 600; background: rgba(212,146,74,0.85); color: #1a1a18;">&#128300; Q</span>
+          <span style="position: absolute; top: 10px; right: 10px; width: 10px; height: 10px; border-radius: 999px; background: #5a9e6a; box-shadow: 0 0 0 3px rgba(0,0,0,0.4);"></span>
+        </div>
+        <div style="padding: 12px;">
+          <p style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 14px; font-weight: 600; color: #f0ece0;">Iris</p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #a8a090;">Crested Gecko</p>
+          <p style="margin: 8px 0 0; font-size: 12px; color: #6a6458;">Fed 4 days ago</p>
+        </div>
+      </div>
+
+    </div>
+    <div style="position: absolute; inset: -5px; border: 1px dashed rgba(212,146,74,0.5); border-radius: 16px; pointer-events: none;"></div>
+    <div style="position: absolute; top: -14px; right: -2px; display: inline-flex; align-items: center; font-size: 9px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: #d4924a; background: #2a2419; border: 1px solid rgba(212,146,74,0.45); border-radius: 4px; padding: 2px 6px;">Trim</div>
+  </div>
+  <p style="margin: 12px 0 0; font-size: 11px; line-height: 1.5; color: #d4924a;">Up to six pieces of metadata on a 171px-wide card: status dot, streak, quarantine, for-sale, species, last fed, tags. Cut the &#128293; streak badge (a vanity number that duplicates Stats) and the tag chips (truncated at three, and they push every card in the row taller). And &ldquo;Fed 18 days ago&rdquo; is the wrong half of the fact &mdash; 18 days is fine for one animal and a fortnight late for another.</p>
+
+  <!-- Bottom nav -->
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64px; display: flex; align-items: stretch; background: #1a1a18; border-top: 1px solid rgba(255,255,255,0.07);">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #505048;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.092 0L22.25 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">Home</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #8fbe5a;">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M3 6a3 3 0 013-3h2.25a3 3 0 013 3v2.25a3 3 0 01-3 3H6a3 3 0 01-3-3V6zm9.75 0a3 3 0 013-3H18a3 3 0 013 3v2.25a3 3 0 01-3 3h-2.25a3 3 0 01-3-3V6zM3 15.75a3 3 0 013-3h2.25a3 3 0 013 3V18a3 3 0 01-3 3H6a3 3 0 01-3-3v-2.25zm9.75 0a3 3 0 013-3H18a3 3 0 013 3V18a3 3 0 01-3 3h-2.25a3 3 0 01-3-3v-2.25z" clip-rule="evenodd" /></svg>
+      <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.02em;">Animals</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #505048;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">Expenses</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #505048;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">Settings</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

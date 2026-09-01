@@ -25,3 +25,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Seeded design canvas — 2.6MB generated bundle, rebuilt from docs/design/markups/*.dc.html
+docs/design/markups/*.html
+!docs/design/markups/*.dc.html
