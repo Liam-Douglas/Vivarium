@@ -1,0 +1,103 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" />
+  <style>
+    body { margin: 0; background: #1a1a18; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #8fbe5a; text-decoration: none; }
+    a:hover { color: #a5cf74; }
+  </style>
+</helmet>
+
+<div style="width: 940px; min-height: 1180px; background: #1a1a18; box-sizing: border-box; padding: 36px 40px;">
+
+  <h2 style="margin: 0 0 6px; font-family: 'Playfair Display', Georgia, serif; font-size: 22px; font-weight: 600; color: #f0ece0;">Five states, one layout</h2>
+  <p style="margin: 0 0 24px; font-size: 13px; line-height: 1.6; color: #a8a090; max-width: 720px;">A queue-led dashboard has an obvious failure mode: on a well-kept collection the queue is empty most days, and on long feeding cycles &ldquo;most days&rdquo; is nearly all of them. The fix is not to pad the screen &mdash; it is to make the slots hold something true in every state.</p>
+
+  <div style="padding: 18px 20px; border-radius: 12px; background: rgba(196,90,90,0.07); border: 1px solid rgba(196,90,90,0.28); margin-bottom: 30px;">
+    <p style="margin: 0; font-size: 15px; font-weight: 600; color: #c45a5a;">The false all-clear &mdash; worth fixing whatever else happens here</p>
+    <p style="margin: 8px 0 0; font-size: 13px; line-height: 1.6; color: #a8a090;">Today <code style="font-size: 12px; color: #f0ece0;">getStatusForAnimal</code> returns <code style="font-size: 12px; color: #f0ece0;">'muted'</code> when an animal has no <code style="font-size: 12px; color: #f0ece0;">last_fed_at</code> or no <code style="font-size: 12px; color: #f0ece0;">feeding_frequency_days</code>, and the overdue count tallies only <code style="font-size: 12px; color: #f0ece0;">'red'</code>. So an animal with no schedule is <strong style="color: #f0ece0; font-weight: 500;">invisible to every queue in the app, permanently</strong> &mdash; and a collection of twelve animals that has never been fed renders &ldquo;Overdue&nbsp;0&rdquo; in green.</p>
+    <p style="margin: 10px 0 0; font-size: 13px; line-height: 1.6; color: #a8a090;">The dashboard&rsquo;s healthiest state and its least-known state currently look identical. Any real all-clear design has to be able to tell them apart before it is allowed to say &ldquo;nothing due&rdquo;.</p>
+  </div>
+
+  <p style="margin: 0 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #6a6458;">The four slots &mdash; fixed in every state</p>
+  <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden; margin-bottom: 10px;">
+      <div style="display: flex; gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgba(143,190,90,0.22); color: #8fbe5a; flex-shrink: 0;">1</span>
+        <span style="width: 132px; flex-shrink: 0; font-size: 13px; font-weight: 500; color: #f0ece0;">Workload line</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">busy &mdash;</span> &ldquo;2 overdue &middot; 2 due today&rdquo;</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">quiet &mdash;</span> &ldquo;Nothing due today &middot; next Thursday&rdquo;</span>
+      </div>
+      <div style="display: flex; gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgba(143,190,90,0.22); color: #8fbe5a; flex-shrink: 0;">2</span>
+        <span style="width: 132px; flex-shrink: 0; font-size: 13px; font-weight: 500; color: #f0ece0;">Queue card</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">busy &mdash;</span> &ldquo;Today&rdquo;, actions on every row</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">quiet &mdash;</span> &ldquo;Coming up&rdquo;, dates instead of actions</span>
+      </div>
+      <div style="display: flex; gap: 14px; padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgba(143,190,90,0.22); color: #8fbe5a; flex-shrink: 0;">3</span>
+        <span style="width: 132px; flex-shrink: 0; font-size: 13px; font-weight: 500; color: #f0ece0;">Attention card</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">busy &mdash;</span> hidden &mdash; the queue outranks it</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">quiet &mdash;</span> &ldquo;Worth a look&rdquo;, max 4 rows</span>
+      </div>
+      <div style="display: flex; gap: 14px; padding: 12px 16px; ">
+        <span style="display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 5px; font-size: 10px; font-weight: 700; background: rgba(143,190,90,0.22); color: #8fbe5a; flex-shrink: 0;">4</span>
+        <span style="width: 132px; flex-shrink: 0; font-size: 13px; font-weight: 500; color: #f0ece0;">Stock + activity</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">busy &mdash;</span> amber warning + shopping list</span>
+        <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #a8a090;"><span style="color: #6a6458;">quiet &mdash;</span> a two-week projection</span>
+      </div>
+  </div>
+  <p style="margin: 0 0 30px; font-size: 12px; line-height: 1.6; color: #8fbe5a;">Slots never move and never disappear; their heading and fill change. A quiet day reads as a calm version of the same screen rather than a different app &mdash; and the busy day is protected too, because &ldquo;Worth a look&rdquo; is capped and yields entirely when there is a queue.</p>
+
+  <p style="margin: 0 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #6a6458;">The states</p>
+  <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden;">
+    <div style="display: flex; gap: 16px; padding: 9px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+      <span style="width: 130px; flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">State</span>
+      <span style="width: 190px; flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">Trigger</span>
+      <span style="width: 240px; flex-shrink: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">Queue slot shows</span>
+      <span style="flex: 1; min-width: 0; font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">What happens today</span>
+    </div>
+    <div style="display: flex; gap: 16px; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="width: 130px; flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 500; color: #f0ece0;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #6a6458; flex-shrink: 0; margin-top: 6px;"></span>New household</span>
+      <span style="width: 190px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">No animals</span>
+      <span style="width: 240px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #a8a090;">One onboarding card &mdash; add an animal, or import a collection</span>
+      <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Already handled &mdash; &ldquo;Add your first animal&rdquo;</span>
+    </div>
+    <div style="display: flex; gap: 16px; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="width: 130px; flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 500; color: #f0ece0;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #c45a5a; flex-shrink: 0; margin-top: 6px;"></span>No history yet</span>
+      <span style="width: 190px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Animals exist, none has a logged feed</span>
+      <span style="width: 240px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #a8a090;">&ldquo;Set a feeding schedule&rdquo; &mdash; the setup the collection still needs</span>
+      <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Reads as healthy: &ldquo;Overdue 0&rdquo; in green, &ldquo;Fed this week 0 of 12&rdquo;</span>
+    </div>
+    <div style="display: flex; gap: 16px; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="width: 130px; flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 500; color: #f0ece0;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #5a9e6a; flex-shrink: 0; margin-top: 6px;"></span>All clear</span>
+      <span style="width: 190px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Everything scheduled, nothing due within 3 days</span>
+      <span style="width: 240px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #a8a090;">&ldquo;Coming up&rdquo; &mdash; the next 7 days, dated, no actions</span>
+      <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Grid of every animal + three vanity stats fill the space</span>
+    </div>
+    <div style="display: flex; gap: 16px; padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="width: 130px; flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 500; color: #f0ece0;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #d4924a; flex-shrink: 0; margin-top: 6px;"></span>Quiet, with gaps</span>
+      <span style="width: 190px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Nothing due, but some animals unscheduled or long unweighed</span>
+      <span style="width: 240px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #a8a090;">&ldquo;Coming up&rdquo;, with &ldquo;Worth a look&rdquo; leading on the unscheduled animals</span>
+      <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Indistinguishable from all clear</span>
+    </div>
+    <div style="display: flex; gap: 16px; padding: 13px 16px; ">
+      <span style="width: 130px; flex-shrink: 0; display: flex; align-items: flex-start; gap: 8px; font-size: 13px; font-weight: 500; color: #f0ece0;"><span style="width: 6px; height: 6px; border-radius: 999px; background: #8fbe5a; flex-shrink: 0; margin-top: 6px;"></span>Busy</span>
+      <span style="width: 190px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Anything overdue, due today, or a dose scheduled</span>
+      <span style="width: 240px; flex-shrink: 0; font-size: 12px; line-height: 1.5; color: #a8a090;">&ldquo;Today&rdquo; &mdash; the ordered queue with actions</span>
+      <span style="flex: 1; min-width: 0; font-size: 12px; line-height: 1.5; color: #6a6458;">Split across &ldquo;Needs feeding&rdquo; and &ldquo;Due soon&rdquo;</span>
+    </div>
+  </div>
+
+  <p style="margin: 22px 0 0; font-size: 12px; line-height: 1.6; color: #a8a090; max-width: 780px;">Two of the five states are ones the app cannot currently distinguish, and both of those are the quiet ones. That is the real answer to &ldquo;what if everything is up to date&rdquo;: the dashboard should be able to tell you that it is genuinely up to date, rather than that it has nothing to say.</p>
+
+</div>
+</x-dc>
+</body>
+</html>

@@ -11,6 +11,9 @@ column is the proposal.
 animal profile drawn at both widths side by side, a nav-and-actions parity board, a fold
 diagram, and the responsive spec.
 
+**Page 3 — When nothing is due.** The all-clear dashboard at both widths, and the
+five-state ladder.
+
 Published canvas: https://claude.ai/code/artifact/793ff7b3-0abb-4ce7-a58f-0f274a8bb5b4
 
 ## Files
@@ -31,6 +34,9 @@ Published canvas: https://claude.ai/code/artifact/793ff7b3-0abb-4ce7-a58f-0f274a
 | `PhoneNav.dc.html` | Phone nav & actions — parity |
 | `RowFold.dc.html` | How a row folds |
 | `Breakpoints.dc.html` | Responsive rules |
+| `AllClearPhone.dc.html` | All clear — phone |
+| `AllClearWeb.dc.html` | All clear — web |
+| `DashboardStates.dc.html` | Dashboard states |
 | `canvas.json` | Pages, frame positions, sizes and the margin notes |
 
 Each artboard is a standalone HTML file — 390px for the mobile boards, 1440px for the
@@ -91,6 +97,23 @@ mystery you have to tap to resolve.
 
 Note the phone profile's top stack *is* the desktop's 380px rail. Fix the stack once and
 both widths improve, which is why the mobile profile needed no separate design.
+
+**When nothing is due.** A queue-led dashboard is built from exceptions, so on a
+well-run collection with 14-day cycles it would be near-blank most days. The layout does
+not restructure between states: four slots stay put and only their heading and fill
+change. The queue widens rather than empties — "Today" becomes "Coming up", the next
+seven days, dated, with the action giving way to a date. The space that opens goes to
+"Worth a look": husbandry that is always true but never urgent (unscheduled animals,
+stale weights, predicted sheds, running quarantines), capped at four rows and yielding
+entirely when there is a queue. Stock becomes a two-week projection rather than a
+threshold.
+
+**The false all-clear** — worth fixing regardless of any redesign. `getStatusForAnimal`
+returns `'muted'` when an animal has no `last_fed_at` or no `feeding_frequency_days`, and
+the overdue tally counts only `'red'`. So an animal with no schedule is invisible to every
+queue in the app permanently, and a twelve-animal collection that has never been fed
+renders "Overdue 0" in green. The healthiest-looking state and the least-known state are
+currently identical.
 
 The parity break worth fixing first — the sidebar has six destinations and the bottom
 nav has four, so **Feeding and Stats cannot be reached on a phone at all**, on a

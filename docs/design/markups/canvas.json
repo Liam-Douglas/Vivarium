@@ -7,6 +7,10 @@
     {
       "id": "page-2",
       "name": "Mobile vs web"
+    },
+    {
+      "id": "page-3",
+      "name": "When nothing is due"
     }
   ],
   "artboards": [
@@ -135,6 +139,33 @@
       "y": 5320,
       "w": 940,
       "h": 1180
+    },
+    {
+      "file": "AllClearPhone.dc.html",
+      "title": "All clear \u2014 phone",
+      "page": "page-3",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1240
+    },
+    {
+      "file": "AllClearWeb.dc.html",
+      "title": "All clear \u2014 web",
+      "page": "page-3",
+      "x": 520,
+      "y": 0,
+      "w": 1440,
+      "h": 900
+    },
+    {
+      "file": "DashboardStates.dc.html",
+      "title": "Dashboard states",
+      "page": "page-3",
+      "x": 0,
+      "y": 1400,
+      "w": 940,
+      "h": 1180
     }
   ],
   "annotations": [
@@ -209,10 +240,34 @@
       "y": 4020,
       "w": 300,
       "text": "PARITY AND THE FOLD\n\nThese two boards are the load-bearing claims of the whole page, drawn rather than asserted.\n\nParity \u2014 the sidebar's six destinations arrive on a phone as four, so Feeding and Stats cannot be reached at all; and the FAB's five actions arrive on the web as one. Both are fixed by changing the trigger, not the capability: five tabs plus a More sheet, and a split button carrying the same five actions in the same order.\n\nThe fold \u2014 numbers trace each field between the desktop and phone arrangements. Six of six queue fields and six of seven record fields survive. The rule it generalises to: compose fields into phrases, demote only the unbounded one, and never make a phone row a mystery you have to tap to resolve."
+    },
+    {
+      "id": "note-states-intro",
+      "page": "page-3",
+      "x": 0,
+      "y": -300,
+      "w": 1440,
+      "text": "WHEN NOTHING IS DUE\nThe proposal on page 2 is built entirely from exceptions \u2014 a queue of what is late, a warning when stock is low, a feed of what just happened. On a well-run collection with 14-day cycles, none of those fire on most days, so the dashboard would be close to blank. That is a real hole in it, and this page closes it.\n\nThe principle: the layout does not restructure between states. Four slots stay put; their heading and fill change. The queue does not vanish when it empties \u2014 it widens its horizon from today to the next seven days. And the space that opens up goes to husbandry that is always true but never urgent: unscheduled animals, stale weights, predicted sheds, running quarantines.\n\nBefore any of that, though, read the red box on the states board \u2014 the app currently cannot tell an all-clear collection from one that has never been fed."
+    },
+    {
+      "id": "note-allclear",
+      "page": "page-3",
+      "x": 2060,
+      "y": 0,
+      "w": 300,
+      "text": "THE ALL-CLEAR DASHBOARD\n\nFour changes from the busy version, no new structure.\n\n1. The confirmation is one clause in the workload line \u2014 \"Nothing due today \u00b7 next is Monty, Thursday\". Not a banner, not a tick, not a celebration. This is the normal state, so it cannot cost a card.\n\n2. The queue widens rather than empties: \"Today\" becomes \"Coming up\", the next 7 days, and the Feed button gives way to a date because nothing is actionable yet.\n\n3. \"Worth a look\" appears \u2014 husbandry that is never urgent and so never surfaces. Capped at four rows, and it yields completely when there is a queue.\n\n4. Stock becomes a projection: schedules give the burn rate, so it answers \"will I run out?\" rather than only shouting once you have.\n\nNothing here is invented to fill space \u2014 every row is a fact about the collection that is true on a busy day too, just outranked."
+    },
+    {
+      "id": "note-states",
+      "page": "page-3",
+      "x": 2060,
+      "y": 1400,
+      "w": 300,
+      "text": "THE STATE LADDER\n\nFive states, and the app can currently distinguish three of them.\n\nThe one to fix regardless of any redesign: getStatusForAnimal returns 'muted' when an animal has no last_fed_at or no feeding_frequency_days, and the overdue tally counts only 'red'. So an animal with no schedule never appears in any queue, ever \u2014 and a twelve-animal collection that has never been fed shows \"Overdue 0\" in green.\n\nThe healthiest-looking state and the least-known state render identically. An all-clear message is only honest once the dashboard can tell them apart, which is why \"3 animals have no feeding schedule\" is the first row of Worth a look rather than a nicety.\n\nThe two states the app cannot see are both quiet ones. That is the answer to the question: it should be able to say it is genuinely up to date, not merely that it has nothing to say."
     }
   ],
   "launch": {
     "view": "canvas",
-    "page": "page-2"
+    "page": "page-3"
   }
 }
