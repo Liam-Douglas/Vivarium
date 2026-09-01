@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { differenceInDays } from 'date-fns'
 import { useAnimals } from '@/hooks/useAnimals'
+import { getFeedingStatus, FEEDING_STATUS_META, FEEDING_URGENCY } from '@/lib/feedingStatus'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import type { Enclosure } from '@/hooks/useEnclosures'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
@@ -42,21 +43,11 @@ function categorize(species: string): string {
 }
 
 function feedingUrgency(animal: Animal): number {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) return 3
-  const days = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  const freq = animal.feeding_frequency_days
-  if (days > freq) return 0
-  if (days >= freq - 1) return 1
-  return 2
+  return FEEDING_URGENCY[getFeedingStatus(animal)]
 }
 
 function getAnimalFeedingColor(animal: Animal): string {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) return '#6a6458'
-  const daysSince = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  const freq = animal.feeding_frequency_days
-  if (daysSince > freq) return '#c45a5a'
-  if (daysSince >= freq - 1) return '#d4924a'
-  return '#5a9e6a'
+  return FEEDING_STATUS_META[getFeedingStatus(animal)].color
 }
 
 
@@ -148,10 +139,9 @@ export function Animals() {
     return list
   }, [animals, search, categoryFilter, sort])
 
-  const urgentAnimals = animals.filter(a => {
-    if (!a.last_fed_at || !a.feeding_frequency_days) return false
-    const days = differenceInDays(new Date(), new Date(a.last_fed_at))
-    return days >= a.feeding_frequency_days - 1
+  const urgentAnimals = animals.filter((a) => {
+    const status = getFeedingStatus(a)
+    return status === 'overdue' || status === 'due-soon'
   }).sort((a, b) => {
     const daysA = differenceInDays(new Date(), new Date(a.last_fed_at!))
     const daysB = differenceInDays(new Date(), new Date(b.last_fed_at!))
@@ -309,8 +299,7 @@ export function Animals() {
             <div className="mb-4">
               <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
                 {urgentAnimals.map((a) => {
-                  const days = differenceInDays(new Date(), new Date(a.last_fed_at!))
-                  const isOverdue = days >= a.feeding_frequency_days!
+                  const isOverdue = getFeedingStatus(a) === 'overdue'
                   return (
                     <div
                       key={a.id}

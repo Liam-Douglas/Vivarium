@@ -9,6 +9,9 @@ import {
   createSheddingLog, createWeightLog, createExpense,
 } from '@/lib/queries'
 import { dateInputToISO } from '@/lib/dates'
+import {
+  getFeedingStatus, summariseFeeding, FEEDING_STATUS_META, FEEDING_URGENCY,
+} from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
@@ -33,12 +36,11 @@ interface ActivityEntry {
   detail: string
 }
 
-function getStatusForAnimal(animal: { last_fed_at: string | null; feeding_frequency_days: number | null }) {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) return 'muted'
-  const days = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  if (days > animal.feeding_frequency_days) return 'red'
-  if (days >= animal.feeding_frequency_days - 1) return 'amber'
-  return 'green'
+/** "Ivy, Pascal, Root and 4 more" — untracked animals often arrive by the dozen. */
+function nameList(animals: { name: string }[], max = 3): string {
+  const shown = animals.slice(0, max).map((a) => a.name)
+  const rest = animals.length - shown.length
+  return rest > 0 ? `${shown.join(', ')} and ${rest} more` : shown.join(', ')
 }
 
 const FAB_ACTIONS = [
@@ -149,10 +151,22 @@ export function Dashboard() {
       .finally(() => setActivityLoading(false))
   }, [householdId])
 
-  const overdueCount = animals.filter((a) => getStatusForAnimal(a) === 'red').length
+  const feedingSummary = useMemo(() => summariseFeeding(animals), [animals])
+  const overdueCount = feedingSummary.overdue
   const fedThisWeek = animals.filter(
     (a) => a.last_fed_at && differenceInDays(new Date(), new Date(a.last_fed_at)) <= 7
   ).length
+
+  // Animals with no schedule, or a schedule but no feeding logged, can never
+  // reach a queue — surface them rather than letting them read as on schedule.
+  const unscheduledAnimals = useMemo(
+    () => animals.filter((a) => getFeedingStatus(a) === 'no-schedule'),
+    [animals]
+  )
+  const neverFedAnimals = useMemo(
+    () => animals.filter((a) => getFeedingStatus(a) === 'never-fed'),
+    [animals]
+  )
 
   const greeting = (() => {
     const h = new Date().getHours()
@@ -293,6 +307,33 @@ export function Dashboard() {
         </div>
       )}
 
+      {/* Animals no feeding queue can reach — they would otherwise read as on schedule */}
+      {(unscheduledAnimals.length > 0 || neverFedAnimals.length > 0) && (
+        <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.2)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: '#d4924a' }}>
+              {feedingSummary.untracked} animal{feedingSummary.untracked !== 1 ? 's' : ''} not tracked
+            </p>
+            <Link to="/animals" className="text-xs font-medium shrink-0 mt-0.5" style={{ color: '#d4924a' }}>
+              Review
+            </Link>
+          </div>
+          {unscheduledAnimals.length > 0 && (
+            <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+              {nameList(unscheduledAnimals)} {unscheduledAnimals.length === 1 ? 'has' : 'have'} no
+              feeding schedule, so {unscheduledAnimals.length === 1 ? 'it' : 'they'} will never appear as due. Set a
+              feeding frequency to include {unscheduledAnimals.length === 1 ? 'it' : 'them'}.
+            </p>
+          )}
+          {neverFedAnimals.length > 0 && (
+            <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+              {nameList(neverFedAnimals)} {neverFedAnimals.length === 1 ? 'has' : 'have'} a schedule
+              but no feeding logged yet, so there is nothing to count from.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -302,8 +343,21 @@ export function Dashboard() {
         </div>
         <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
           <p className="text-xs mb-1" style={{ color: '#6a6458' }}>Overdue</p>
-          <p className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: overdueCount > 0 ? '#c45a5a' : '#5a9e6a' }}>{overdueCount}</p>
-          <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>need feeding</p>
+          <p
+            className="text-2xl font-bold"
+            style={{
+              fontFamily: 'Playfair Display, serif',
+              // A zero is only reassuring when every animal is actually tracked.
+              color: overdueCount > 0 ? '#c45a5a' : feedingSummary.untracked > 0 ? '#d4924a' : '#5a9e6a',
+            }}
+          >
+            {overdueCount}
+          </p>
+          <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+            {overdueCount === 0 && feedingSummary.untracked > 0
+              ? `of ${feedingSummary.tracked} tracked`
+              : 'need feeding'}
+          </p>
         </div>
       </div>
 
@@ -311,13 +365,10 @@ export function Dashboard() {
       {(() => {
         const urgentAnimals = animals
           .filter((a) => {
-            const s = getStatusForAnimal(a)
-            return s === 'red' || s === 'amber'
+            const s = getFeedingStatus(a)
+            return s === 'overdue' || s === 'due-soon'
           })
-          .sort((a, b) => {
-            const order = { red: 0, amber: 1 }
-            return (order[getStatusForAnimal(a) as 'red' | 'amber'] ?? 2) - (order[getStatusForAnimal(b) as 'red' | 'amber'] ?? 2)
-          })
+          .sort((a, b) => FEEDING_URGENCY[getFeedingStatus(a)] - FEEDING_URGENCY[getFeedingStatus(b)])
         if (urgentAnimals.length === 0) return null
         return (
           <div className="mb-6">
@@ -332,12 +383,12 @@ export function Dashboard() {
             </div>
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               {urgentAnimals.map((animal, i) => {
-                const status = getStatusForAnimal(animal)
+                const status = getFeedingStatus(animal)
                 const daysSince = animal.last_fed_at
                   ? differenceInDays(new Date(), new Date(animal.last_fed_at))
                   : null
                 const subtitle = daysSince === null ? 'Never fed' : `${daysSince} day${daysSince !== 1 ? 's' : ''} since last fed`
-                const dotColor = status === 'red' ? '#c45a5a' : '#d4900a'
+                const dotColor = FEEDING_STATUS_META[status].color
                 return (
                   <div
                     key={animal.id}
@@ -372,7 +423,7 @@ export function Dashboard() {
         const dueSoonAnimals = animals
           .filter((a) => {
             if (!a.last_fed_at || !a.feeding_frequency_days) return false
-            if (getStatusForAnimal(a) !== 'green') return false
+            if (getFeedingStatus(a) !== 'on-schedule') return false
             const nextDue = addDays(new Date(a.last_fed_at), a.feeding_frequency_days)
             return differenceInDays(nextDue, new Date()) <= 3
           })

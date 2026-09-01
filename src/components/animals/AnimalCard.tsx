@@ -1,17 +1,7 @@
 import { Link } from 'react-router-dom'
-import { formatDistanceToNow, differenceInDays } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import type { Animal } from '@/hooks/useAnimals'
-
-function getFeedingStatus(animal: Animal): { color: string; label: string } {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) {
-    return { color: '#6a6458', label: 'No schedule' }
-  }
-  const daysSince = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  const freq = animal.feeding_frequency_days
-  if (daysSince > freq) return { color: '#c45a5a', label: 'Overdue' }
-  if (daysSince >= freq - 1) return { color: '#d4924a', label: 'Due soon' }
-  return { color: '#5a9e6a', label: 'Fed recently' }
-}
+import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
 
 interface AnimalCardProps {
   animal: Animal
@@ -19,7 +9,7 @@ interface AnimalCardProps {
 }
 
 export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
-  const status = getFeedingStatus(animal)
+  const status = FEEDING_STATUS_META[getFeedingStatus(animal)]
 
   return (
     <Link

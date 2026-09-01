@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
-import { format, differenceInDays, startOfYear } from 'date-fns'
+import { format, startOfYear } from 'date-fns'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useAnimals } from '@/hooks/useAnimals'
+import { summariseFeeding } from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useHousehold } from '@/context/HouseholdContext'
 import { getAllExpenses } from '@/lib/queries'
@@ -106,10 +107,8 @@ export function Stats() {
     return streaks.sort((a, b) => b.streak - a.streak).slice(0, 5)
   }, [logs, animals])
 
-  const overdueCount = animals.filter((a) => {
-    if (!a.last_fed_at || !a.feeding_frequency_days) return false
-    return differenceInDays(now, new Date(a.last_fed_at)) > a.feeding_frequency_days
-  }).length
+  const feedingSummary = useMemo(() => summariseFeeding(animals), [animals])
+  const overdueCount = feedingSummary.overdue
 
   return (
     <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-3xl mx-auto w-full">
@@ -118,7 +117,13 @@ export function Stats() {
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
         <StatCard label="Animals" value={animals.length} color="#8fbe5a" />
-        <StatCard label="Overdue" value={overdueCount} color={overdueCount > 0 ? '#c45a5a' : '#5a9e6a'} />
+        <StatCard
+          label="Overdue"
+          value={overdueCount}
+          // Zero overdue only earns green when every animal is actually tracked.
+          color={overdueCount > 0 ? '#c45a5a' : feedingSummary.untracked > 0 ? '#d4924a' : '#5a9e6a'}
+          note={feedingSummary.untracked > 0 ? `${feedingSummary.untracked} not tracked` : undefined}
+        />
         <StatCard label="YTD feedings" value={feedingStats.fed} color="#8fbe5a" />
         <StatCard label="Compliance" value={`${feedingStats.rate}%`} color={feedingStats.rate >= 80 ? '#8fbe5a' : feedingStats.rate >= 60 ? '#d4924a' : '#c45a5a'} />
       </div>
@@ -216,11 +221,12 @@ export function Stats() {
   )
 }
 
-function StatCard({ label, value, color }: { label: string; value: number | string; color?: string }) {
+function StatCard({ label, value, color, note }: { label: string; value: number | string; color?: string; note?: string }) {
   return (
     <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
       <p className="text-xs mb-1" style={{ color: '#6a6458' }}>{label}</p>
       <p className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: color ?? '#f0ece0' }}>{value}</p>
+      {note && <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{note}</p>}
     </div>
   )
 }
