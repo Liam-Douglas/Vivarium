@@ -7,8 +7,9 @@ lay out on mobile versus the web. Two pages on one canvas.
 and what to add. Left column recreates the app as it is today (from `src/`); right
 column is the proposal.
 
-**Page 2 — Mobile vs web.** Today's dashboard at 1440px, the proposed web dashboard and
-animal profile, and the responsive spec.
+**Page 2 — Mobile vs web.** Today's dashboard at 1440px, then the proposed dashboard and
+animal profile drawn at both widths side by side, a nav-and-actions parity board, a fold
+diagram, and the responsive spec.
 
 Published canvas: https://claude.ai/code/artifact/793ff7b3-0abb-4ce7-a58f-0f274a8bb5b4
 
@@ -25,6 +26,10 @@ Published canvas: https://claude.ai/code/artifact/793ff7b3-0abb-4ce7-a58f-0f274a
 | `WebDashboardToday.dc.html` | Web dashboard — today, 1440px |
 | `WebDashboardProposed.dc.html` | Web dashboard — proposed |
 | `WebProfileProposed.dc.html` | Web animal profile — proposed |
+| `PhoneDashboard.dc.html` | Phone dashboard — proposed |
+| `PhoneProfile.dc.html` | Phone animal profile — proposed |
+| `PhoneNav.dc.html` | Phone nav & actions — parity |
+| `RowFold.dc.html` | How a row folds |
 | `Breakpoints.dc.html` | Responsive rules |
 | `canvas.json` | Pages, frame positions, sizes and the margin notes |
 
@@ -73,6 +78,19 @@ and activity in a 380px rail; the profile's whole mobile stack becomes a sticky 
 beside the tab content; record lists become tables with a column per stored field.
 Invariants at every width: every action and every destination reachable on both, 44px
 targets, one token set.
+
+Both claims that carry the responsive argument are drawn rather than asserted.
+**Parity**: the FAB's five actions become a split button with the same five in the same
+order; the bottom nav goes to five tabs (Home / Animals / Feeding / Stats / More) with a
+More sheet holding Expenses, feeder stock, import and household. The trigger changes at
+the breakpoint, the capability never does. **The fold**: numbered field-by-field tracing
+of the queue row (6 of 6 fields survive; only the species subtitle gives way) and the
+feeding record (6 of 7; only free-text notes go behind the tap). The general rule —
+compose fields into phrases, demote only the unbounded one, never make a phone row a
+mystery you have to tap to resolve.
+
+Note the phone profile's top stack *is* the desktop's 380px rail. Fix the stack once and
+both widths improve, which is why the mobile profile needed no separate design.
 
 The parity break worth fixing first — the sidebar has six destinations and the bottom
 nav has four, so **Feeding and Stats cannot be reached on a phone at all**, on a

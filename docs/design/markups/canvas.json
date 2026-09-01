@@ -1,20 +1,141 @@
 {
   "pages": [
-    { "id": "page-1", "name": "Cut & add — mobile" },
-    { "id": "page-2", "name": "Mobile vs web" }
+    {
+      "id": "page-1",
+      "name": "Cut & add \u2014 mobile"
+    },
+    {
+      "id": "page-2",
+      "name": "Mobile vs web"
+    }
   ],
   "artboards": [
-    { "file": "DashboardCurrent.dc.html", "title": "Dashboard — today", "page": "page-1", "x": 0, "y": 0, "w": 390, "h": 1720 },
-    { "file": "Main.dc.html", "title": "Dashboard — proposed", "page": "page-1", "x": 520, "y": 0, "w": 390, "h": 1280 },
-    { "file": "AnimalsCurrent.dc.html", "title": "Animals — today", "page": "page-1", "x": 0, "y": 1880, "w": 390, "h": 1180 },
-    { "file": "AnimalsProposed.dc.html", "title": "Animals — proposed", "page": "page-1", "x": 520, "y": 1880, "w": 390, "h": 1380 },
-    { "file": "ProfileCurrent.dc.html", "title": "Animal profile — today", "page": "page-1", "x": 0, "y": 3420, "w": 390, "h": 1320 },
-    { "file": "ProfileProposed.dc.html", "title": "Animal profile — proposed", "page": "page-1", "x": 520, "y": 3420, "w": 390, "h": 1320 },
-
-    { "file": "WebDashboardToday.dc.html", "title": "Web dashboard — today, 1440px", "page": "page-2", "x": 0, "y": 0, "w": 1440, "h": 1080 },
-    { "file": "WebDashboardProposed.dc.html", "title": "Web dashboard — proposed", "page": "page-2", "x": 0, "y": 1240, "w": 1440, "h": 940 },
-    { "file": "WebProfileProposed.dc.html", "title": "Web animal profile — proposed", "page": "page-2", "x": 0, "y": 2340, "w": 1440, "h": 1020 },
-    { "file": "Breakpoints.dc.html", "title": "Responsive rules", "page": "page-2", "x": 0, "y": 3520, "w": 940, "h": 1180 }
+    {
+      "file": "DashboardCurrent.dc.html",
+      "title": "Dashboard \u2014 today",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 390,
+      "h": 1720
+    },
+    {
+      "file": "Main.dc.html",
+      "title": "Dashboard \u2014 proposed",
+      "page": "page-1",
+      "x": 520,
+      "y": 0,
+      "w": 390,
+      "h": 1280
+    },
+    {
+      "file": "AnimalsCurrent.dc.html",
+      "title": "Animals \u2014 today",
+      "page": "page-1",
+      "x": 0,
+      "y": 1880,
+      "w": 390,
+      "h": 1180
+    },
+    {
+      "file": "AnimalsProposed.dc.html",
+      "title": "Animals \u2014 proposed",
+      "page": "page-1",
+      "x": 520,
+      "y": 1880,
+      "w": 390,
+      "h": 1380
+    },
+    {
+      "file": "ProfileCurrent.dc.html",
+      "title": "Animal profile \u2014 today",
+      "page": "page-1",
+      "x": 0,
+      "y": 3420,
+      "w": 390,
+      "h": 1320
+    },
+    {
+      "file": "ProfileProposed.dc.html",
+      "title": "Animal profile \u2014 proposed",
+      "page": "page-1",
+      "x": 520,
+      "y": 3420,
+      "w": 390,
+      "h": 1320
+    },
+    {
+      "file": "WebDashboardToday.dc.html",
+      "title": "Web dashboard \u2014 today, 1440px",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 1080
+    },
+    {
+      "file": "PhoneDashboard.dc.html",
+      "title": "Phone dashboard \u2014 proposed",
+      "page": "page-2",
+      "x": 0,
+      "y": 1240,
+      "w": 390,
+      "h": 1180
+    },
+    {
+      "file": "WebDashboardProposed.dc.html",
+      "title": "Web dashboard \u2014 proposed",
+      "page": "page-2",
+      "x": 520,
+      "y": 1240,
+      "w": 1440,
+      "h": 940
+    },
+    {
+      "file": "PhoneProfile.dc.html",
+      "title": "Phone animal profile \u2014 proposed",
+      "page": "page-2",
+      "x": 0,
+      "y": 2580,
+      "w": 390,
+      "h": 1280
+    },
+    {
+      "file": "WebProfileProposed.dc.html",
+      "title": "Web animal profile \u2014 proposed",
+      "page": "page-2",
+      "x": 520,
+      "y": 2580,
+      "w": 1440,
+      "h": 1020
+    },
+    {
+      "file": "PhoneNav.dc.html",
+      "title": "Phone nav & actions \u2014 parity",
+      "page": "page-2",
+      "x": 0,
+      "y": 4020,
+      "w": 390,
+      "h": 1140
+    },
+    {
+      "file": "RowFold.dc.html",
+      "title": "How a row folds",
+      "page": "page-2",
+      "x": 520,
+      "y": 4020,
+      "w": 940,
+      "h": 880
+    },
+    {
+      "file": "Breakpoints.dc.html",
+      "title": "Responsive rules",
+      "page": "page-2",
+      "x": 0,
+      "y": 5320,
+      "w": 940,
+      "h": 1180
+    }
   ],
   "annotations": [
     {
@@ -23,7 +144,7 @@
       "x": 0,
       "y": -300,
       "w": 910,
-      "text": "VIVARIUM — DESIGN MARKUPS\nWhat to cut, what to add. Left column is the app as it is today, recreated from src/. Right column is the proposal. Both at 390px.\n\nCUT — delete it. The information is duplicated, or it does not change what you do next.\nMERGE / TRIM / SWAP — keep the information, spend less screen on it.\nNEW — add it. In every case here the data already exists in the app and never reaches a screen.\n\nThe thread running through all three screens: the app tells you a lot about state, and very little about what to do about it — and it tells you the same state three or four times per screen.\n\nThe second page, Mobile vs web, takes this proposal to 1440px."
+      "text": "VIVARIUM \u2014 DESIGN MARKUPS\nWhat to cut, what to add. Left column is the app as it is today, recreated from src/. Right column is the proposal. Both at 390px.\n\nCUT \u2014 delete it. The information is duplicated, or it does not change what you do next.\nMERGE / TRIM / SWAP \u2014 keep the information, spend less screen on it.\nNEW \u2014 add it. In every case here the data already exists in the app and never reaches a screen.\n\nThe thread running through all three screens: the app tells you a lot about state, and very little about what to do about it \u2014 and it tells you the same state three or four times per screen.\n\nThe second page, Mobile vs web, takes this proposal to 1440px."
     },
     {
       "id": "note-dashboard",
@@ -31,7 +152,7 @@
       "x": 1000,
       "y": 0,
       "w": 290,
-      "text": "DASHBOARD\n\nCut\n· \"Fed this week\" stat card — punishes long feeding cycles\n· The whole-collection photo grid — it is the Animals tab, and it renders every animal\n· The three mini stats at the bottom — all three live on Stats\n\nMerge\n· \"Needs feeding\" + \"Due soon\" → one queue ordered by lateness\n\nAdd\n· A workload line under the greeting\n· Last meal on each queue row, so Feed can prefill\n· Medication doses in the queue — medication_schedules is modelled and never rendered\n· Select → batch log for the queue\n· Low feeder stock, before you start feeding\n\nNet: roughly 1720px of scroll down to about 1280, and the part you act on fits on one screen."
+      "text": "DASHBOARD\n\nCut\n\u00b7 \"Fed this week\" stat card \u2014 punishes long feeding cycles\n\u00b7 The whole-collection photo grid \u2014 it is the Animals tab, and it renders every animal\n\u00b7 The three mini stats at the bottom \u2014 all three live on Stats\n\nMerge\n\u00b7 \"Needs feeding\" + \"Due soon\" \u2192 one queue ordered by lateness\n\nAdd\n\u00b7 A workload line under the greeting\n\u00b7 Last meal on each queue row, so Feed can prefill\n\u00b7 Medication doses in the queue \u2014 medication_schedules is modelled and never rendered\n\u00b7 Select \u2192 batch log for the queue\n\u00b7 Low feeder stock, before you start feeding\n\nNet: roughly 1720px of scroll down to about 1280, and the part you act on fits on one screen."
     },
     {
       "id": "note-animals",
@@ -39,7 +160,7 @@
       "x": 1000,
       "y": 1880,
       "w": 290,
-      "text": "ANIMALS\n\nCut\n· The urgent carousel — the third rendering of the overdue list, sitting on top of the search box\n· Streak badge and tag chips on the card\n\nChange\n· \"Fed 18 days ago\" → \"4 days overdue\". 18 days is fine for one animal and late for another; only the schedule knows which.\n\nAdd\n· Status filter chips — you can sort by overdue today, but not filter to it, and quarantine is invisible\n· Grid / list density toggle — the photo grid is lovely at 12 animals and unusable at 50\n· Enclosure on the card\n\nOpen question: is the Enclosures tab pulling its weight where it is, or is it really a grouping of this list?"
+      "text": "ANIMALS\n\nCut\n\u00b7 The urgent carousel \u2014 the third rendering of the overdue list, sitting on top of the search box\n\u00b7 Streak badge and tag chips on the card\n\nChange\n\u00b7 \"Fed 18 days ago\" \u2192 \"4 days overdue\". 18 days is fine for one animal and late for another; only the schedule knows which.\n\nAdd\n\u00b7 Status filter chips \u2014 you can sort by overdue today, but not filter to it, and quarantine is invisible\n\u00b7 Grid / list density toggle \u2014 the photo grid is lovely at 12 animals and unusable at 50\n\u00b7 Enclosure on the card\n\nOpen question: is the Enclosures tab pulling its weight where it is, or is it really a grouping of this list?"
     },
     {
       "id": "note-profile",
@@ -47,7 +168,7 @@
       "x": 1000,
       "y": 3420,
       "w": 290,
-      "text": "ANIMAL PROFILE\n\nThis screen states \"this animal is late\" three times in the top 400px: the header chip, the banner, and the Next feeding tile.\n\nCut\n· The header chip row — all three chips repeat the stats grid below, with less in them\n· The overdue banner\n· Two tabs: Feeding and Vitals are Timeline with a filter chip pre-selected\n\nAdd\n· One feeding bar carrying status + last meal + the only Feed button\n· Enclosure under the name\n· \"Takes food — 9 of 10\", already computed on the Feeding tab, promoted to a tile\n· Weight sparkline on its tile\n· Health as the third quick action\n\nNothing is deleted from the data — the Feeding and Vitals tabs' contents are already reachable through Timeline's filters."
+      "text": "ANIMAL PROFILE\n\nThis screen states \"this animal is late\" three times in the top 400px: the header chip, the banner, and the Next feeding tile.\n\nCut\n\u00b7 The header chip row \u2014 all three chips repeat the stats grid below, with less in them\n\u00b7 The overdue banner\n\u00b7 Two tabs: Feeding and Vitals are Timeline with a filter chip pre-selected\n\nAdd\n\u00b7 One feeding bar carrying status + last meal + the only Feed button\n\u00b7 Enclosure under the name\n\u00b7 \"Takes food \u2014 9 of 10\", already computed on the Feeding tab, promoted to a tile\n\u00b7 Weight sparkline on its tile\n\u00b7 Health as the third quick action\n\nNothing is deleted from the data \u2014 the Feeding and Vitals tabs' contents are already reachable through Timeline's filters."
     },
     {
       "id": "note-web-intro",
@@ -55,32 +176,43 @@
       "x": 0,
       "y": -300,
       "w": 1440,
-      "text": "MOBILE VS WEB\nThe same proposal at 1440px, and the rules that get it there.\n\nWhat exists today: the app's whole responsive treatment is four things — card grids go 2 → 3 → 4 columns, the bottom padding drops (md:pb-8, in six files), the FAB hides, and the sidebar appears. Grep the pages and you find seven breakpoint utilities in Dashboard, seven in AnimalDetail, five in Animals, and one each everywhere else. There is no desktop layout; there is a phone layout centred in a max-w-5xl column with 96px of dead gutter on each side.\n\nThe answer is not a separate web design — it is one set of components that know what to do with more width. The first board shows the problem, the next two show the proposal, and the last one is the spec."
+      "text": "MOBILE VS WEB\nThe same proposal at both widths, and the rules that connect them. Phone boards on the left, web on the right.\n\nWhat exists today: the app's whole responsive treatment is four things \u2014 card grids go 2 to 3 to 4 columns, the bottom padding drops (md:pb-8, in six files), the FAB hides, and the sidebar appears. Seven breakpoint utilities in Dashboard, seven in AnimalDetail, five in Animals, one each everywhere else. There is no desktop layout; there is a phone layout centred in a max-w-5xl column with 96px of dead gutter on each side.\n\nThe answer is not a separate web design \u2014 it is one set of components that know what to do with more width. Board 1 shows the problem. The two pairs below show the same screen at both sizes. \"How a row folds\" traces every field between the two arrangements, and the last board is the spec."
     },
     {
       "id": "note-web-today",
       "page": "page-2",
-      "x": 1540,
+      "x": 2060,
       "y": 0,
       "w": 300,
-      "text": "TODAY AT 1440px\n\nThree things break, and none of them are cosmetic.\n\n1. Rows stretch instead of filling. A queue row spans 1024px with a 10px dot at one end and a 12px button at the other. The fields that would justify that width — the schedule, the last meal, the enclosure — are not shown at any width.\n\n2. The stat grid is grid-cols-2 with no breakpoint at all: two 506px cards, each holding a single digit.\n\n3. Four actions disappear. The FAB offers add animal, feeding, shed, weight and expense; it is md:hidden, and its desktop replacement is one Log feeding button. Above 768px, logging a shed or a weight means opening an animal first.\n\nThe photo grid is the one thing that genuinely responds."
+      "text": "TODAY AT 1440px\n\nThree things break, and none of them are cosmetic.\n\n1. Rows stretch instead of filling. A queue row spans 1024px with a 10px dot at one end and a 12px button at the other. The fields that would justify that width \u2014 the schedule, the last meal, the enclosure \u2014 are not shown at any width.\n\n2. The stat grid is grid-cols-2 with no breakpoint at all: two 506px cards, each holding a single digit.\n\n3. Four actions disappear. The FAB offers add animal, feeding, shed, weight and expense; it is md:hidden, and its desktop replacement is one Log feeding button. Above 768px, logging a shed or a weight means opening an animal first.\n\nThe photo grid is the one thing that genuinely responds."
     },
     {
-      "id": "note-web-dashboard",
+      "id": "note-phone-dash",
       "page": "page-2",
-      "x": 1540,
+      "x": 2060,
       "y": 1240,
       "w": 300,
-      "text": "WEB DASHBOARD\n\nThe phone's three blocks, reordered rather than redesigned.\n\n· The queue keeps the primary column and unfolds: status, last meal and location come out from under the name into their own columns. Below 1024 they fold back into the two-line mobile row. One component, two arrangements.\n\n· Stock and activity — read often, acted on rarely — move into a 380px rail instead of sitting below the fold.\n\n· The FAB becomes a split button carrying the same five actions in the same order, opening the same modals.\n\n· Content caps at 1240px so a wide monitor grows the gutters, not the rows.\n\nSame 40–44px targets as the phone. A mouse tolerates smaller buttons; it does not earn them."
+      "text": "DASHBOARD, BOTH WIDTHS\n\nThe phone board is not a smaller web board \u2014 it is the same components with the queue rows folded and the rail unrolled into the flow.\n\nWhat differs, and why\n\u00b7 Queue rows: columns on the web, two lines on the phone. Every field survives except the species subtitle.\n\u00b7 Stock and activity: a 380px rail on the web; on the phone, stock stays directly under the queue it affects and activity follows.\n\u00b7 Trigger for the five log actions: FAB on the phone, split button on the web.\n\nWhat does not differ\nThe queue's order, the workload line, the 44px targets, the tokens, and every action and destination.\n\nThe bottom nav here is five tabs, not the four in the app today \u2014 see the parity board."
     },
     {
-      "id": "note-web-profile",
+      "id": "note-phone-profile",
       "page": "page-2",
-      "x": 1540,
-      "y": 2340,
+      "x": 2060,
+      "y": 2580,
       "w": 300,
-      "text": "WEB ANIMAL PROFILE\n\nThe mobile profile is a vertical stack: hero, identity, feeding bar, quick actions, stats, then tabs. On desktop that entire stack becomes a 380px rail, pinned, and the tab content fills the rest — so the animal stays on screen while you read six months of its history.\n\nThe payoff is the records. Every feeding row stores prey, size, quantity, refusal, notes and who logged it; the phone can show two of those. Desktop is where you audit a season, so desktop is where the columns appear.\n\nSame for the growth chart: a sparkline in the Weight tile on a phone, the real chart inline on the web. Recharts is already a dependency.\n\nNote the profile is capped at max-w-3xl today — 768px on a 1440px screen."
+      "text": "PROFILE, BOTH WIDTHS\n\nOne relationship carries this pair: the phone's top stack \u2014 photo, identity, enclosure, feeding bar, quick actions, stats \u2014 IS the desktop's 380px rail. On the web it pins to the left and stays put while you read the history; on the phone it is simply the top of the screen and scrolls away.\n\nThat is why the mobile profile needed no separate design. Fix the stack once and both widths improve.\n\nRecords fold rather than truncate: the phone row gains result and who logged it, which it does not show today. Only free-text notes go behind the tap.\n\nCharts: sparkline in the tile on a phone, full chart inline on the web. The profile is capped at max-w-3xl today, so that cap has to rise for the two-column layout."
+    },
+    {
+      "id": "note-parity",
+      "page": "page-2",
+      "x": 2060,
+      "y": 4020,
+      "w": 300,
+      "text": "PARITY AND THE FOLD\n\nThese two boards are the load-bearing claims of the whole page, drawn rather than asserted.\n\nParity \u2014 the sidebar's six destinations arrive on a phone as four, so Feeding and Stats cannot be reached at all; and the FAB's five actions arrive on the web as one. Both are fixed by changing the trigger, not the capability: five tabs plus a More sheet, and a split button carrying the same five actions in the same order.\n\nThe fold \u2014 numbers trace each field between the desktop and phone arrangements. Six of six queue fields and six of seven record fields survive. The rule it generalises to: compose fields into phrases, demote only the unbounded one, and never make a phone row a mystery you have to tap to resolve."
     }
   ],
-  "launch": { "view": "canvas", "page": "page-2" }
+  "launch": {
+    "view": "canvas",
+    "page": "page-2"
+  }
 }
