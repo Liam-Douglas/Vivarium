@@ -108,12 +108,14 @@ stale weights, predicted sheds, running quarantines), capped at four rows and yi
 entirely when there is a queue. Stock becomes a two-week projection rather than a
 threshold.
 
-**The false all-clear** — worth fixing regardless of any redesign. `getStatusForAnimal`
-returns `'muted'` when an animal has no `last_fed_at` or no `feeding_frequency_days`, and
-the overdue tally counts only `'red'`. So an animal with no schedule is invisible to every
-queue in the app permanently, and a twelve-animal collection that has never been fed
-renders "Overdue 0" in green. The healthiest-looking state and the least-known state are
-currently identical.
+**The false all-clear** — found here, now fixed in the app (`src/lib/feedingStatus.ts`).
+`getStatusForAnimal` returned `'muted'` when an animal had no `last_fed_at` or no
+`feeding_frequency_days`, and the overdue tally counted only `'red'`, so such an animal
+was invisible to every queue permanently and a never-fed collection rendered "Overdue 0"
+in green. `'muted'` now splits into `'no-schedule'` and `'never-fed'`, both counted apart
+from `'on-schedule'`; the Overdue tile is green only when every animal is tracked, and a
+dashboard notice names the ones that are not. The design consequence stands regardless:
+unscheduled animals lead "Worth a look" rather than sitting at the bottom of it.
 
 The parity break worth fixing first — the sidebar has six destinations and the bottom
 nav has four, so **Feeding and Stats cannot be reached on a phone at all**, on a
