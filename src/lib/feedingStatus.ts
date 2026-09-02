@@ -1,4 +1,4 @@
-import { differenceInCalendarDays } from 'date-fns'
+import { addDays, differenceInCalendarDays } from 'date-fns'
 
 /**
  * Feeding status for a single animal.
@@ -38,6 +38,12 @@ export function getFeedingStatus(animal: FeedingSchedule, now: Date = new Date()
   if (daysSince > animal.feeding_frequency_days) return 'overdue'
   if (daysSince >= animal.feeding_frequency_days - 1) return 'due-soon'
   return 'on-schedule'
+}
+
+/** When the next feeding falls due, or null when the animal is untracked. */
+export function getNextFeedingDue(animal: FeedingSchedule): Date | null {
+  if (!animal.last_fed_at || !animal.feeding_frequency_days) return null
+  return addDays(new Date(animal.last_fed_at), animal.feeding_frequency_days)
 }
 
 /**
