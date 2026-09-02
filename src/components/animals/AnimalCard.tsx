@@ -5,9 +5,11 @@ import { getFeedingStatus, getNextFeedingDue, FEEDING_STATUS_META } from '@/lib/
 
 interface AnimalCardProps {
   animal: Animal
+  /** Resolved by the parent, which already holds the enclosure list. */
+  enclosureName?: string | null
 }
 
-export function AnimalCard({ animal }: AnimalCardProps) {
+export function AnimalCard({ animal, enclosureName }: AnimalCardProps) {
   const feedingStatus = getFeedingStatus(animal)
   const status = FEEDING_STATUS_META[feedingStatus]
 
@@ -67,6 +69,9 @@ export function AnimalCard({ animal }: AnimalCardProps) {
         <p className="text-xs mt-2 font-medium" style={{ color: status.color }}>
           {dueLabel}
         </p>
+        {enclosureName && (
+          <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>{enclosureName}</p>
+        )}
       </div>
     </Link>
   )

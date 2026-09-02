@@ -1,10 +1,26 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { NavLink, useNavigate } from 'react-router-dom'
 
+/**
+ * Five destinations plus a More sheet.
+ *
+ * The sidebar reaches six destinations; this bar reached four, so Feeding and
+ * Stats could not be opened on a phone at all — on a mobile-first PWA. Five is
+ * the comfortable maximum at 390px (78px per target, well clear of the 44px
+ * floor), so the two screens opened least often move into the sheet.
+ */
 const tabs = [
   { to: '/', label: 'Home', icon: HomeIcon, exact: true },
   { to: '/animals', label: 'Animals', icon: AnimalsIcon },
-  { to: '/expenses', label: 'Expenses', icon: ExpensesIcon },
-  { to: '/settings', label: 'Settings', icon: SettingsIcon },
+  { to: '/feeding', label: 'Feeding', icon: FeedingIcon },
+  { to: '/stats', label: 'Stats', icon: StatsIcon },
+]
+
+const moreLinks = [
+  { to: '/expenses', label: 'Expenses', detail: 'Monthly spend by category' },
+  { to: '/feeders', label: 'Feeder stock', detail: 'Inventory and shopping list' },
+  { to: '/import', label: 'Import collection', detail: 'CSV or spreadsheet' },
+  { to: '/settings', label: 'Settings', detail: 'Household, account, notifications' },
 ]
 
 function HomeIcon({ active }: { active: boolean }) {
@@ -23,54 +39,121 @@ function AnimalsIcon({ active }: { active: boolean }) {
   )
 }
 
-function SettingsIcon({ active }: { active: boolean }) {
+function FeedingIcon({ active }: { active: boolean }) {
   return active ? (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 00-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 00-2.282.819l-.922 1.597a1.875 1.875 0 00.432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 000 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 00-.432 2.385l.922 1.597a1.875 1.875 0 002.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 002.28-.819l.923-1.597a1.875 1.875 0 00-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 000-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 00-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 00-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 00-1.85-1.567h-1.843zM12 15.75a3.75 3.75 0 100-7.5 3.75 3.75 0 000 7.5z" clipRule="evenodd" /></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" d="M6.75 2.25A.75.75 0 017.5 3v1.5h9V3A.75.75 0 0118 3v1.5h.75a3 3 0 013 3v11.25a3 3 0 01-3 3H5.25a3 3 0 01-3-3V7.5a3 3 0 013-3H6V3a.75.75 0 01.75-.75zm13.5 9a1.5 1.5 0 00-1.5-1.5H5.25a1.5 1.5 0 00-1.5 1.5v7.5a1.5 1.5 0 001.5 1.5h13.5a1.5 1.5 0 001.5-1.5v-7.5z" clipRule="evenodd" /></svg>
   ) : (
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" /><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
   )
 }
 
-function ExpensesIcon({ active }: { active: boolean }) {
+function StatsIcon({ active }: { active: boolean }) {
   return active ? (
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M10.464 8.746c.227-.18.497-.311.786-.394v2.795a2.252 2.252 0 01-.786-.393c-.394-.313-.546-.681-.546-1.004 0-.323.152-.691.546-1.004zM12.75 15.662v-2.824c.347.085.664.228.921.421.427.32.579.686.579.991 0 .305-.152.671-.579.991a2.534 2.534 0 01-.921.42z" /><path fillRule="evenodd" d="M12 2.25c-5.385 0-9.75 4.365-9.75 9.75s4.365 9.75 9.75 9.75 9.75-4.365 9.75-9.75S17.385 2.25 12 2.25zM12.75 6a.75.75 0 00-1.5 0v.816a3.836 3.836 0 00-1.72.756c-.712.566-1.112 1.35-1.112 2.178 0 .829.4 1.612 1.113 2.178.502.4 1.102.647 1.719.756v2.978a2.536 2.536 0 01-.921-.421l-.879-.66a.75.75 0 00-.9 1.2l.879.66c.533.4 1.169.645 1.821.75V18a.75.75 0 001.5 0v-.81a4.124 4.124 0 001.821-.749c.745-.559 1.179-1.344 1.179-2.191 0-.847-.434-1.632-1.179-2.191a4.122 4.122 0 00-1.821-.75V8.354c.29.082.559.213.786.393l.415.33a.75.75 0 00.933-1.175l-.415-.33a3.836 3.836 0 00-1.719-.755V6z" clipRule="evenodd" /></svg>
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
   ) : (
-    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}><path strokeLinecap="round" strokeLinejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
   )
 }
 
 export function BottomNav() {
+  const [moreOpen, setMoreOpen] = useState(false)
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!moreOpen) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMoreOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [moreOpen])
+
   return (
-    <nav
-      className="md:hidden fixed bottom-0 left-0 right-0 z-40 flex items-stretch"
-      style={{
-        backgroundColor: '#1a1a18',
-        borderTop: '1px solid rgba(255,255,255,0.07)',
-        paddingBottom: 'env(safe-area-inset-bottom)',
-      }}
-    >
-      {tabs.map((tab) => (
-        <NavLink
-          key={tab.to}
-          to={tab.to}
-          end={tab.exact}
-          className="flex-1 flex flex-col items-center justify-center py-2 gap-1"
-        >
-          {({ isActive }) => (
-            <>
-              <span style={{ color: isActive ? '#8fbe5a' : '#505048' }}>
-                <tab.icon active={isActive} />
-              </span>
-              <span
-                className="text-[10px] tracking-wide"
-                style={{ color: isActive ? '#8fbe5a' : '#505048', fontWeight: isActive ? 600 : 400 }}
+    <>
+      {moreOpen && (
+        <button
+          aria-label="Close menu"
+          onClick={() => setMoreOpen(false)}
+          className="md:hidden fixed inset-0 z-30 w-full"
+          style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
+        />
+      )}
+
+      {/* Sheet and bar share one bottom-anchored stack, so the sheet sits on
+          the bar's real height rather than a guessed offset. */}
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-40">
+        {moreOpen && (
+          <div
+            className="rounded-t-2xl overflow-hidden"
+            style={{ backgroundColor: '#242420', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+          >
+            <div className="flex justify-center pt-2.5 pb-1.5">
+              <span className="w-9 h-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.14)' }} />
+            </div>
+            {moreLinks.map((link, i) => (
+              <button
+                key={link.to}
+                onClick={() => { setMoreOpen(false); navigate(link.to) }}
+                className="w-full flex items-center gap-3 px-5 text-left"
+                style={{
+                  height: 60,
+                  borderBottom: i < moreLinks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                }}
               >
-                {tab.label}
-              </span>
-            </>
-          )}
-        </NavLink>
-      ))}
-    </nav>
+                <span className="flex-1 min-w-0">
+                  <span className="block text-[15px]" style={{ color: '#f0ece0' }}>{link.label}</span>
+                  <span className="block text-xs mt-0.5" style={{ color: '#6a6458' }}>{link.detail}</span>
+                </span>
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2} className="shrink-0">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            ))}
+          </div>
+        )}
+
+      <nav
+        className="flex items-stretch"
+        style={{
+          backgroundColor: '#1a1a18',
+          borderTop: '1px solid rgba(255,255,255,0.07)',
+          paddingBottom: 'env(safe-area-inset-bottom)',
+        }}
+      >
+        {tabs.map((tab) => (
+          <NavLink
+            key={tab.to}
+            to={tab.to}
+            end={tab.exact}
+            onClick={() => setMoreOpen(false)}
+            className="flex-1 flex flex-col items-center justify-center py-2 gap-1"
+          >
+            {({ isActive }) => (
+              <>
+                <span style={{ color: isActive && !moreOpen ? '#8fbe5a' : '#505048' }}>
+                  <tab.icon active={isActive && !moreOpen} />
+                </span>
+                <span
+                  className="text-[10px] tracking-wide"
+                  style={{ color: isActive && !moreOpen ? '#8fbe5a' : '#505048', fontWeight: isActive && !moreOpen ? 600 : 400 }}
+                >
+                  {tab.label}
+                </span>
+              </>
+            )}
+          </NavLink>
+        ))}
+        <button
+          onClick={() => setMoreOpen((open) => !open)}
+          aria-expanded={moreOpen}
+          className="flex-1 flex flex-col items-center justify-center py-2 gap-1"
+          style={{ color: moreOpen ? '#8fbe5a' : '#505048' }}
+        >
+          <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+          </svg>
+          <span className="text-[10px] tracking-wide" style={{ fontWeight: moreOpen ? 600 : 400 }}>More</span>
+        </button>
+      </nav>
+      </div>
+    </>
   )
 }

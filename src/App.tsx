@@ -72,9 +72,9 @@ function AppShell() {
             <Route path="/animals/:id" element={<ErrorBoundary><AnimalDetail /></ErrorBoundary>} />
             <Route path="/feeding" element={<ErrorBoundary><FeedingLog /></ErrorBoundary>} />
             <Route path="/calendar" element={<Navigate to="/feeding" replace />} />
-            <Route path="/feeders" element={<Navigate to="/expenses" replace />} />
+            <Route path="/feeders" element={<ErrorBoundary><Expenses initialTab="feeders" /></ErrorBoundary>} />
             <Route path="/expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
-            <Route path="/import" element={<Navigate to="/settings" replace />} />
+            <Route path="/import" element={<ErrorBoundary><Settings initialTab="import" /></ErrorBoundary>} />
             <Route path="/stats" element={<ErrorBoundary><Stats /></ErrorBoundary>} />
           </Route>
           <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />

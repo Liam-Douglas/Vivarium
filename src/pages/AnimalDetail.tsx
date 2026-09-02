@@ -15,6 +15,7 @@ import {
 import { processImage } from '@/lib/image'
 import { dateInputToISO, daysSince } from '@/lib/dates'
 import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
+import { useEnclosures } from '@/hooks/useEnclosures'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
 import { useWeightLogs } from '@/hooks/useWeightLogs'
@@ -85,6 +86,7 @@ export function AnimalDetail() {
   const { data: feedingLogs, refresh: refreshFeeding } = useFeedingLogs(id)
   const { data: sheddingLogs, refresh: refreshShedding } = useSheddingLogs(id)
   const { data: weightLogs, refresh: refreshWeight } = useWeightLogs(id)
+  const { data: enclosures } = useEnclosures()
   const { data: healthEvents, refresh: refreshHealth } = useHealthEvents(id)
   const { data: acquisitionRecords, refresh: refreshAcquisition } = useAcquisitionRecords(id)
   const { data: exitRecords, refresh: refreshExit } = useExitRecords(id)
@@ -660,6 +662,7 @@ export function AnimalDetail() {
 
   const daysSinceFed = animal.last_fed_at ? daysSince(animal.last_fed_at) : null
   const weightTrend = weightLogs.length >= 2 ? weightLogs[0].weight_grams - weightLogs[1].weight_grams : null
+  const enclosure = enclosures.find((e) => e.id === animal.enclosure_id) ?? null
   const feedingStatusColor = FEEDING_STATUS_META[getFeedingStatus(animal)].color
 
   // Promoted from the Feeding tab's summary strip — whether a refusal is a blip
@@ -738,6 +741,15 @@ export function AnimalDetail() {
           <p className="text-sm mt-1" style={{ color: '#a8a090' }}>
             {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex.charAt(0).toUpperCase() + animal.sex.slice(1)}` : ''}{age ? ` · ${age}` : ''}
           </p>
+          {enclosure && (
+            <p className="text-xs mt-1.5 inline-flex items-center gap-1.5" style={{ color: '#6a6458' }}>
+              <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="shrink-0">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+              {enclosure.name}
+            </p>
+          )}
         </div>
 
         {/* Tabs */}

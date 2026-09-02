@@ -9,7 +9,7 @@ import {
   createFeederItem, createFeederStockEvent, getFeederStockEvents, updateFeederItem, deleteFeederItem,
 } from '@/lib/queries'
 import type { Expense } from '@/hooks/useExpenses'
-import { useFeederInventory } from '@/hooks/useFeederInventory'
+import { useFeederInventory, isLowStock } from '@/hooks/useFeederInventory'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -73,8 +73,13 @@ interface ParsedReceiptItem {
   editedQty: string
 }
 
-export function Expenses() {
-  const [activeTab, setActiveTab] = useState<'expenses' | 'feeders'>('expenses')
+interface ExpensesProps {
+  /** Opens straight onto a tab, so /feeders is a real destination. */
+  initialTab?: 'expenses' | 'feeders'
+}
+
+export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
+  const [activeTab, setActiveTab] = useState<'expenses' | 'feeders'>(initialTab)
 
   // ── Shared ────────────────────────────────────────────────────────────────
   const { user } = useAuth()
@@ -161,7 +166,7 @@ export function Expenses() {
     total: items.reduce((s, e) => s + e.amount_cents, 0),
   })).filter((g) => g.total > 0)
   const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' })
-  const lowStockFeeders = feeders.filter((f) => f.currentStock < f.low_stock_threshold)
+  const lowStockFeeders = feeders.filter(isLowStock)
 
   // ── Expense handlers ──────────────────────────────────────────────────────
   function changeMonth(delta: number) {

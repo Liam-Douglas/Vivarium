@@ -14,11 +14,13 @@ import { ALL_PREY_NAMES } from '@/lib/preyTypes'
 
 interface FeedingLogFormProps {
   preselectedAnimalId?: string
+  /** Last meal for that animal, so a repeat feed opens ready to save. */
+  prefill?: { preyType: string; preySize?: string | null; quantity?: number }
   onSuccess: () => void
   onCancel: () => void
 }
 
-export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: FeedingLogFormProps) {
+export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCancel }: FeedingLogFormProps) {
   const { user } = useAuth()
   const { householdId } = useHousehold()
   const { showToast } = useToast()
@@ -26,11 +28,17 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
   const { data: feeders, refresh: refreshFeeders } = useFeederInventory()
 
   const [animalId, setAnimalId] = useState(preselectedAnimalId ?? '')
-  const [preyType, setPreyType] = useState('')
+  const [preyType, setPreyType] = useState(prefill?.preyType ?? '')
   const [preySearch, setPreySearch] = useState('')
   const [showPreyList, setShowPreyList] = useState(false)
-  const [preySize, setPreySize] = useState('')
-  const [quantity, setQuantity] = useState('1')
+  // Only carry the size over when the type actually offers it, so a prefilled
+  // value can never be submitted from a Select that never rendered.
+  const [preySize, setPreySize] = useState(
+    prefill?.preyType && prefill.preySize && getPreySizes(prefill.preyType).includes(prefill.preySize)
+      ? prefill.preySize
+      : ''
+  )
+  const [quantity, setQuantity] = useState(String(prefill?.quantity ?? 1))
   const [fedAt, setFedAt] = useState(new Date().toISOString().slice(0, 16))
   const [refused, setRefused] = useState(false)
   const [notes, setNotes] = useState('')
