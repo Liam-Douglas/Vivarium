@@ -13,14 +13,14 @@ export interface WeightLog {
   created_at: string
 }
 
-export function useWeightLogs(animalId: string) {
+export function useWeightLogs(animalId?: string) {
   const { householdId } = useHousehold()
   const [data, setData] = useState<WeightLog[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const fetch = useCallback(async () => {
-    if (!householdId || !animalId) { setLoading(false); return }
+    if (!householdId) { setLoading(false); return }
     setLoading(true)
     setError(null)
     try {

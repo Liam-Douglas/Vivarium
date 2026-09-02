@@ -286,13 +286,14 @@ export async function deleteSheddingLog(id: string) {
 
 // ─── Weight logs ─────────────────────────────────────────────────────────────
 
-export async function getWeightLogs(householdId: string, animalId: string) {
-  const { data, error } = await supabase
+export async function getWeightLogs(householdId: string, animalId?: string) {
+  let query = supabase
     .from('weight_logs')
     .select('*')
     .eq('household_id', householdId)
-    .eq('animal_id', animalId)
     .order('logged_at', { ascending: false })
+  if (animalId) query = query.eq('animal_id', animalId)
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -1022,13 +1023,14 @@ export async function uploadAdditionalPhoto(householdId: string, animalId: strin
 
 // ─── Medication schedules ─────────────────────────────────────────────────────
 
-export async function getMedicationSchedules(householdId: string, animalId: string) {
-  const { data, error } = await supabase
+export async function getMedicationSchedules(householdId: string, animalId?: string) {
+  let query = supabase
     .from('medication_schedules')
     .select('*')
     .eq('household_id', householdId)
-    .eq('animal_id', animalId)
     .order('created_at', { ascending: false })
+  if (animalId) query = query.eq('animal_id', animalId)
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -1059,13 +1061,14 @@ export async function deleteMedicationSchedule(id: string) {
   if (error) throw error
 }
 
-export async function getMedicationLogs(householdId: string, animalId: string) {
-  const { data, error } = await supabase
+export async function getMedicationLogs(householdId: string, animalId?: string) {
+  let query = supabase
     .from('medication_logs')
     .select('*')
     .eq('household_id', householdId)
-    .eq('animal_id', animalId)
     .order('given_at', { ascending: false })
+  if (animalId) query = query.eq('animal_id', animalId)
+  const { data, error } = await query
   if (error) throw error
   return data
 }

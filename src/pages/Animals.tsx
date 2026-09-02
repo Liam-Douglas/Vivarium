@@ -19,7 +19,9 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { AnimalCardSkeleton } from '@/components/ui/LoadingSkeleton'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
-import { createFeedingLog, createEnclosure, updateEnclosure, deleteEnclosure, updateAnimal } from '@/lib/queries'
+import { logFeeding, createEnclosure, updateEnclosure, deleteEnclosure } from '@/lib/queries'
+import { findMatchingFeeder } from '@/lib/feederMatch'
+import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { dateInputToISO } from '@/lib/dates'
 import type { Animal } from '@/hooks/useAnimals'
 
@@ -55,6 +57,7 @@ export function Animals() {
   const { data: animals, loading, error, refresh } = useAnimals()
   const { data: enclosures, loading: enclosuresLoading, refresh: refreshEnclosures } = useEnclosures()
   const { data: allLogs } = useFeedingLogs()
+  const { data: feeders, refresh: refreshFeeders } = useFeederInventory()
   const { canAddAnimal, user } = useAuth()
   const { householdId } = useHousehold()
   const { showToast } = useToast()
@@ -223,25 +226,52 @@ export function Animals() {
     setBatchFeedLoading(true)
     try {
       const fedAt = dateInputToISO(batchFeedDate)
-      await Promise.all(enclosureAnimals.map(a =>
-        createFeedingLog({
+      const preyType = batchFeedPreyType.trim() || 'Unknown'
+      const preySize = batchFeedPreySize.trim() || undefined
+      const quantity = Math.max(1, parseInt(batchFeedQuantity) || 1)
+      const feeder = findMatchingFeeder(feeders, preyType, preySize)
+
+      // Same atomic path as a single feeding — log, last_fed_at and stock
+      // deduction in one transaction per animal. The previous sequential
+      // createFeedingLog + updateAnimal pair skipped stock entirely, so a
+      // rack feed silently left the inventory untouched.
+      const results = await Promise.allSettled(enclosureAnimals.map((a) =>
+        logFeeding({
           household_id: householdId,
           animal_id: a.id,
           user_id: user.id,
           fed_at: fedAt,
-          prey_type: batchFeedPreyType.trim() || 'Unknown',
-          prey_size: batchFeedPreySize.trim() || undefined,
-          quantity: Math.max(1, parseInt(batchFeedQuantity) || 1),
+          prey_type: preyType,
+          prey_size: preySize,
+          quantity,
           refused: false,
           notes: batchFeedNotes.trim() || undefined,
+          feeder_item_id: feeder?.id ?? null,
+          stock_note: `Fed to ${a.name}`,
         })
       ))
-      await Promise.all(enclosureAnimals.map(a =>
-        updateAnimal(a.id, { last_fed_at: fedAt })
-      ))
-      showToast(`Fed ${enclosureAnimals.length} animal${enclosureAnimals.length !== 1 ? 's' : ''}`, 'success')
+
+      const failed = results.filter((r) => r.status === 'rejected').length
+      const fed = enclosureAnimals.length - failed
+      const stockError = results.find(
+        (r): r is PromiseFulfilledResult<{ stockError: string | null }> =>
+          r.status === 'fulfilled' && r.value.stockError !== null
+      )?.value.stockError
+
+      if (feeder) refreshFeeders()
+
+      // Close either way: the successful writes are already committed, so
+      // re-running the batch would feed those animals twice.
       setBatchFeedOpen(false)
       refresh()
+
+      if (failed > 0) {
+        showToast(`Fed ${fed} of ${enclosureAnimals.length} — ${failed} failed`, 'error')
+      } else if (stockError) {
+        showToast(`Fed ${fed} animal${fed !== 1 ? 's' : ''} but stock not updated — ${stockError}`, 'error')
+      } else {
+        showToast(`Fed ${fed} animal${fed !== 1 ? 's' : ''}`, 'success')
+      }
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Batch feed failed', 'error')
     } finally {

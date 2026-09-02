@@ -1,4 +1,4 @@
-import { differenceInDays } from 'date-fns'
+import { differenceInCalendarDays } from 'date-fns'
 
 /**
  * Feeding status for a single animal.
@@ -32,7 +32,9 @@ export const FEEDING_STATUS_META: Record<FeedingStatus, { color: string; label: 
 export function getFeedingStatus(animal: FeedingSchedule, now: Date = new Date()): FeedingStatus {
   if (!animal.feeding_frequency_days) return 'no-schedule'
   if (!animal.last_fed_at) return 'never-fed'
-  const daysSince = differenceInDays(now, new Date(animal.last_fed_at))
+  // Calendar days, not elapsed 24h periods, so "fed yesterday" is 1 whatever
+  // the clock says — the rule lib/dates.ts already documents and applies.
+  const daysSince = differenceInCalendarDays(now, new Date(animal.last_fed_at))
   if (daysSince > animal.feeding_frequency_days) return 'overdue'
   if (daysSince >= animal.feeding_frequency_days - 1) return 'due-soon'
   return 'on-schedule'

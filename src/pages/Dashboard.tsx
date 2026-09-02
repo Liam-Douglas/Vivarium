@@ -8,7 +8,7 @@ import {
   getRecentActivity, approveHouseholdRequest, denyHouseholdRequest,
   createSheddingLog, createWeightLog, createExpense,
 } from '@/lib/queries'
-import { dateInputToISO } from '@/lib/dates'
+import { dateInputToISO, daysSince } from '@/lib/dates'
 import {
   getFeedingStatus, summariseFeeding, FEEDING_STATUS_META, FEEDING_URGENCY,
 } from '@/lib/feedingStatus'
@@ -384,10 +384,8 @@ export function Dashboard() {
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               {urgentAnimals.map((animal, i) => {
                 const status = getFeedingStatus(animal)
-                const daysSince = animal.last_fed_at
-                  ? differenceInDays(new Date(), new Date(animal.last_fed_at))
-                  : null
-                const subtitle = daysSince === null ? 'Never fed' : `${daysSince} day${daysSince !== 1 ? 's' : ''} since last fed`
+                const days = animal.last_fed_at ? daysSince(animal.last_fed_at) : null
+                const subtitle = days === null ? 'Never fed' : `${days} day${days !== 1 ? 's' : ''} since last fed`
                 const dotColor = FEEDING_STATUS_META[status].color
                 return (
                   <div

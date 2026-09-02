@@ -7,6 +7,7 @@
 // stored timestamp always falls on the day the user actually picked.
 
 import { differenceInCalendarDays } from 'date-fns'
+import { getFeedingStatus } from '@/lib/feedingStatus'
 
 const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
 
@@ -26,8 +27,17 @@ export function daysSince(iso: string): number {
   return differenceInCalendarDays(new Date(), new Date(iso))
 }
 
-// An animal is overdue once a full feeding interval of calendar days has elapsed.
-export function isOverdue(lastFedAt: string | null, frequencyDays: number | null): boolean {
-  if (!lastFedAt || !frequencyDays) return false
-  return daysSince(lastFedAt) >= frequencyDays
+// Delegates to the shared feeding status so a notification can never disagree
+// with what the screens show. Previously this used `>= frequencyDays` while
+// every screen used `>`, so an animal at exactly its interval was pushed as
+// "overdue" and displayed as "due soon".
+export function isOverdue(
+  lastFedAt: string | null,
+  frequencyDays: number | null,
+  now: Date = new Date()
+): boolean {
+  return getFeedingStatus(
+    { last_fed_at: lastFedAt, feeding_frequency_days: frequencyDays },
+    now
+  ) === 'overdue'
 }

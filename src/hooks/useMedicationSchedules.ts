@@ -25,7 +25,7 @@ export function useMedicationSchedules(animalId?: string) {
   const [error, setError] = useState<string | null>(null)
 
   const fetch = useCallback(async () => {
-    if (!householdId || !animalId) return
+    if (!householdId) return
     setLoading(true)
     setError(null)
     try {

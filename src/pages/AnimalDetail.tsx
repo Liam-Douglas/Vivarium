@@ -13,7 +13,8 @@ import {
   getMedicationLogs, createMedicationLog,
 } from '@/lib/queries'
 import { processImage } from '@/lib/image'
-import { dateInputToISO } from '@/lib/dates'
+import { dateInputToISO, daysSince } from '@/lib/dates'
+import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
 import { useWeightLogs } from '@/hooks/useWeightLogs'
@@ -83,7 +84,7 @@ export function AnimalDetail() {
 
   const { data: feedingLogs, refresh: refreshFeeding } = useFeedingLogs(id)
   const { data: sheddingLogs, refresh: refreshShedding } = useSheddingLogs(id)
-  const { data: weightLogs, refresh: refreshWeight } = useWeightLogs(id ?? '')
+  const { data: weightLogs, refresh: refreshWeight } = useWeightLogs(id)
   const { data: healthEvents, refresh: refreshHealth } = useHealthEvents(id)
   const { data: acquisitionRecords, refresh: refreshAcquisition } = useAcquisitionRecords(id)
   const { data: exitRecords, refresh: refreshExit } = useExitRecords(id)
@@ -657,14 +658,9 @@ export function AnimalDetail() {
   const salePrice = exitRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
   const financials = { acqCost, salePrice, vetCost: totalHealthCost, totalCost: acqCost + totalHealthCost, net: salePrice - acqCost - totalHealthCost }
 
-  const daysSinceFed = animal.last_fed_at ? differenceInDays(new Date(), new Date(animal.last_fed_at)) : null
+  const daysSinceFed = animal.last_fed_at ? daysSince(animal.last_fed_at) : null
   const weightTrend = weightLogs.length >= 2 ? weightLogs[0].weight_grams - weightLogs[1].weight_grams : null
-  const feedingStatusColor = (() => {
-    if (daysSinceFed === null || !animal.feeding_frequency_days) return '#f0ece0'
-    if (daysSinceFed > animal.feeding_frequency_days) return '#c45a5a'
-    if (daysSinceFed >= animal.feeding_frequency_days - 2) return '#d4924a'
-    return '#8fbe5a'
-  })()
+  const feedingStatusColor = FEEDING_STATUS_META[getFeedingStatus(animal)].color
 
   const nextFeedingDue = animal.last_fed_at && animal.feeding_frequency_days
     ? addDays(new Date(animal.last_fed_at), animal.feeding_frequency_days)
