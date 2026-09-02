@@ -1,0 +1,136 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" />
+  <style>
+    body { margin: 0; background: #1a1a18; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #8fbe5a; text-decoration: none; }
+    a:hover { color: #a5cf74; }
+  </style>
+</helmet>
+
+<div style="width: 940px; min-height: 1180px; background: #1a1a18; box-sizing: border-box; padding: 40px;">
+
+  <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 30px; font-weight: 700; color: #f0ece0;">One layout, three widths</h1>
+  <p style="margin: 8px 0 0; font-size: 15px; line-height: 1.6; color: #a8a090; max-width: 660px;">Vivarium&rsquo;s entire responsive treatment today is four things: card grids go 2 &rarr; 3 &rarr; 4 columns, the bottom padding drops, the FAB hides, and the sidebar appears. Everything else is a phone layout centred in a column. The proposal is not a second design for the web &mdash; it is the same components, told what to do with extra width.</p>
+
+  <div style="margin: 28px 0 0; padding: 16px 20px; border-radius: 12px; background: rgba(143,190,90,0.07); border: 1px solid rgba(143,190,90,0.25);">
+    <p style="margin: 0; font-size: 16px; font-weight: 600; color: #8fbe5a;">Width buys columns, not whitespace.</p>
+    <p style="margin: 6px 0 0; font-size: 14px; line-height: 1.55; color: #a8a090;">Every screen here already stores more per record than a 390px phone can show. When the viewport grows, the fields that were truncated get their own column &mdash; the row does not stretch and the gutters do not grow. When it shrinks, those columns fold back under the title. Same component, same data, same tap targets.</p>
+  </div>
+
+  <!-- Breakpoint ladder -->
+  <p style="margin: 32px 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #6a6458;">The ladder</p>
+  <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px;">
+    <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 600; color: #f0ece0;">Phone</p>
+      <p style="margin: 2px 0 10px; font-size: 12px; color: #6a6458;">&lt; 768px</p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #a8a090;">Bottom nav. FAB. One column. Rows stack to two lines. Charts become sparklines.</p>
+    </div>
+    <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 600; color: #f0ece0;">Tablet</p>
+      <p style="margin: 2px 0 10px; font-size: 12px; color: #6a6458;">768 &ndash; 1023px</p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #a8a090;">Sidebar replaces bottom nav. Split button replaces FAB. Still one content column; grids go 3-up.</p>
+    </div>
+    <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 16px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 600; color: #f0ece0;">Desktop</p>
+      <p style="margin: 2px 0 10px; font-size: 12px; color: #6a6458;">&ge; 1024px</p>
+      <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #a8a090;">Two columns: primary work + a rail. Rows unfold into columns. Records become tables. Content caps at 1240px.</p>
+    </div>
+  </div>
+  <p style="margin: 10px 0 0; font-size: 12px; line-height: 1.55; color: #6a6458;">Tailwind already gives you these as <code style="color: #a8a090;">md:</code> and <code style="color: #a8a090;">lg:</code> &mdash; the app just does not use them for anything but grid columns.</p>
+
+  <!-- Component table -->
+  <p style="margin: 32px 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #6a6458;">Component by component</p>
+  <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden;">
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 10px 16px; border-bottom: 1px solid rgba(255,255,255,0.08);">
+      <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">Component</span>
+      <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">Phone</span>
+      <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">Desktop</span>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Navigation</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Bottom nav, 5 tabs, last is More</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Sidebar, 224px, all destinations</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Primary action</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">FAB speed dial, 5 actions</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Split button, the same 5</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Dashboard</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Queue, then stock, then activity</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Queue in main column; stock and activity in a 380px rail</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Queue row</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Two lines: name + status, last meal beneath</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Columns: animal, status, last meal, where, action</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Animal list</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">2-up photo grid, or compact list</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">4-up photo grid, or a table with sortable columns</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Animal profile</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Hero, identity, feeding bar, stats, then tabs</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">That whole stack becomes a sticky 380px rail; tabs fill the rest</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Record lists</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Summary line + date; tap for the rest</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Table: every stored field gets a column</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Charts</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Sparkline in the tile; full chart one tap away</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Full chart inline, axis labelled</span>
+    </div>
+    <div style="display: grid; grid-template-columns: 152px minmax(0, 1fr) minmax(0, 1fr); gap: 16px; padding: 11px 16px;">
+      <span style="font-size: 13px; font-weight: 500; color: #f0ece0;">Log forms</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Full-height sheet</span>
+      <span style="font-size: 13px; line-height: 1.5; color: #a8a090;">Centred modal, ~480px, fields side by side</span>
+    </div>
+  </div>
+
+  <!-- Invariants -->
+  <p style="margin: 32px 0 12px; font-size: 11px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: #6a6458;">True at every width</p>
+  <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;">
+    <div style="display: flex; gap: 10px; padding: 13px 16px; border-radius: 12px; background: #242420; border: 1px solid rgba(255,255,255,0.06);">
+      <span style="color: #8fbe5a; font-size: 14px; line-height: 1.5;">&#10003;</span>
+      <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #a8a090;"><strong style="color: #f0ece0; font-weight: 500;">Every action is reachable on both.</strong> No capability may exist only above or only below a breakpoint.</p>
+    </div>
+    <div style="display: flex; gap: 10px; padding: 13px 16px; border-radius: 12px; background: #242420; border: 1px solid rgba(255,255,255,0.06);">
+      <span style="color: #8fbe5a; font-size: 14px; line-height: 1.5;">&#10003;</span>
+      <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #a8a090;"><strong style="color: #f0ece0; font-weight: 500;">Every destination is reachable on both.</strong> The bottom nav and the sidebar must agree on where you can go.</p>
+    </div>
+    <div style="display: flex; gap: 10px; padding: 13px 16px; border-radius: 12px; background: #242420; border: 1px solid rgba(255,255,255,0.06);">
+      <span style="color: #8fbe5a; font-size: 14px; line-height: 1.5;">&#10003;</span>
+      <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #a8a090;"><strong style="color: #f0ece0; font-weight: 500;">Interactive targets stay 44px.</strong> A mouse does not earn a smaller button; it just tolerates one.</p>
+    </div>
+    <div style="display: flex; gap: 10px; padding: 13px 16px; border-radius: 12px; background: #242420; border: 1px solid rgba(255,255,255,0.06);">
+      <span style="color: #8fbe5a; font-size: 14px; line-height: 1.5;">&#10003;</span>
+      <p style="margin: 0; font-size: 13px; line-height: 1.55; color: #a8a090;"><strong style="color: #f0ece0; font-weight: 500;">One token set.</strong> Same type ramp, radii, surfaces and status colours; no desktop-only palette.</p>
+    </div>
+  </div>
+
+  <!-- Nav parity -->
+  <div style="margin: 24px 0 0; padding: 16px 20px; border-radius: 12px; background: rgba(196,90,90,0.07); border: 1px solid rgba(196,90,90,0.28);">
+    <p style="margin: 0; font-size: 14px; font-weight: 600; color: #c45a5a;">The parity break to fix first</p>
+    <p style="margin: 7px 0 0; font-size: 13px; line-height: 1.6; color: #a8a090;">The sidebar has six destinations; the bottom nav has four. <strong style="color: #f0ece0; font-weight: 500;">Feeding and Stats cannot be reached on a phone at all</strong> &mdash; on a mobile-first PWA. Proposal: five tabs, Home / Animals / Feeding / Stats / More, with Expenses and Settings under More.</p>
+    <p style="margin: 10px 0 0; font-size: 12px; line-height: 1.6; color: #6a6458;">Worth checking while you are in there: <code style="color: #a8a090;">FeederInventory.tsx</code> (645 lines) and <code style="color: #a8a090;">FeedingCalendar.tsx</code> (209 lines) are not imported anywhere &mdash; their routes redirect to Expenses and Feeding, and feeder stock now lives inside the Expenses page. They look like dead code rather than missing nav.</p>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

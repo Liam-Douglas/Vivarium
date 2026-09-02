@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
 import { logFeeding } from '@/lib/queries'
+import { findMatchingFeeder } from '@/lib/feederMatch'
 import { feedingLogSchema } from '@/lib/validation'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
@@ -44,43 +45,6 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
   const preyWeightMin = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.10) : null
   const preyWeightMax = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.15) : null
 
-  // Find matching feeder for this prey type + optional size.
-  // Feeder names follow the pattern "Rats (Large)" — parse base + modifier separately
-  // so "Rat" + size "Large" matches "Rats (Large)" and not "Rats (Fuzzie)".
-  function findMatchingFeeder() {
-    const typeLc = preyType.toLowerCase()
-    const sizeLc = preySize?.toLowerCase() ?? ''
-
-    function parse(name: string) {
-      const m = name.toLowerCase().match(/^(.+?)\s*\((.+)\)$/)
-      return m ? { base: m[1].trim(), modifier: m[2].trim() } : { base: name.toLowerCase(), modifier: '' }
-    }
-
-    function typeMatches(base: string) {
-      const singular = base.replace(/s$/, '')
-      return base.includes(typeLc) || typeLc.includes(base) ||
-        singular.includes(typeLc) || typeLc.includes(singular)
-    }
-
-    function sizeMatches(modifier: string) {
-      if (!sizeLc) return true
-      return modifier.includes(sizeLc) || sizeLc.includes(modifier)
-    }
-
-    // 1. Type + size both match
-    const withBoth = feeders.filter((f) => {
-      const { base, modifier } = parse(f.name)
-      return typeMatches(base) && sizeMatches(modifier)
-    })
-    if (withBoth.length === 1) return withBoth[0]
-    if (withBoth.length > 1) {
-      return withBoth.find((f) => parse(f.name).modifier === sizeLc) ?? withBoth[0]
-    }
-
-    // 2. Type-only match (no size specified or no size match found)
-    return feeders.find((f) => typeMatches(parse(f.name).base)) ?? null
-  }
-
   async function handleSubmit() {
     if (!user || !householdId || saving) return
 
@@ -100,7 +64,7 @@ export function FeedingLogForm({ preselectedAnimalId, onSuccess, onCancel }: Fee
 
     setSaving(true)
     try {
-      const feeder = parsed.data.refused ? null : findMatchingFeeder()
+      const feeder = parsed.data.refused ? null : findMatchingFeeder(feeders, preyType, preySize)
 
       // Single atomic write (log + last_fed_at + stock deduction) via RPC,
       // with a legacy sequential fallback until the migration is applied.

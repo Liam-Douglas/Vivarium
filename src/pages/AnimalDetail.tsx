@@ -13,7 +13,8 @@ import {
   getMedicationLogs, createMedicationLog,
 } from '@/lib/queries'
 import { processImage } from '@/lib/image'
-import { dateInputToISO } from '@/lib/dates'
+import { dateInputToISO, daysSince } from '@/lib/dates'
+import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
 import { useWeightLogs } from '@/hooks/useWeightLogs'
@@ -83,7 +84,7 @@ export function AnimalDetail() {
 
   const { data: feedingLogs, refresh: refreshFeeding } = useFeedingLogs(id)
   const { data: sheddingLogs, refresh: refreshShedding } = useSheddingLogs(id)
-  const { data: weightLogs, refresh: refreshWeight } = useWeightLogs(id ?? '')
+  const { data: weightLogs, refresh: refreshWeight } = useWeightLogs(id)
   const { data: healthEvents, refresh: refreshHealth } = useHealthEvents(id)
   const { data: acquisitionRecords, refresh: refreshAcquisition } = useAcquisitionRecords(id)
   const { data: exitRecords, refresh: refreshExit } = useExitRecords(id)
@@ -657,13 +658,37 @@ export function AnimalDetail() {
   const salePrice = exitRecords.reduce((s, r) => s + (r.price_cents ?? 0), 0)
   const financials = { acqCost, salePrice, vetCost: totalHealthCost, totalCost: acqCost + totalHealthCost, net: salePrice - acqCost - totalHealthCost }
 
-  const daysSinceFed = animal.last_fed_at ? differenceInDays(new Date(), new Date(animal.last_fed_at)) : null
+  const daysSinceFed = animal.last_fed_at ? daysSince(animal.last_fed_at) : null
   const weightTrend = weightLogs.length >= 2 ? weightLogs[0].weight_grams - weightLogs[1].weight_grams : null
-  const feedingStatusColor = (() => {
-    if (daysSinceFed === null || !animal.feeding_frequency_days) return '#f0ece0'
-    if (daysSinceFed > animal.feeding_frequency_days) return '#c45a5a'
-    if (daysSinceFed >= animal.feeding_frequency_days - 2) return '#d4924a'
-    return '#8fbe5a'
+  const feedingStatusColor = FEEDING_STATUS_META[getFeedingStatus(animal)].color
+
+  // Promoted from the Feeding tab's summary strip — whether a refusal is a blip
+  // or a pattern is the thing a keeper checks this screen for.
+  const feedResponse = (() => {
+    const recent = feedingLogs.slice(0, 10)
+    if (recent.length === 0) return null
+    const taken = recent.filter((l) => !l.refused).length
+    const rate = taken / recent.length
+    const refusal = feedingLogs.find((l) => l.refused)
+    return {
+      taken,
+      total: recent.length,
+      color: rate >= 0.8 ? '#8fbe5a' : rate >= 0.5 ? '#d4924a' : '#c45a5a',
+      lastRefusedAt: refusal ? new Date(refusal.fed_at) : null,
+    }
+  })()
+
+  // Sparkline over the last dozen weights, oldest to newest, normalised into
+  // the 100x20 viewBox. The full growth chart stays on the Vitals tab.
+  const weightSparkline = (() => {
+    const points = weightLogs.slice(0, 12).map((l) => l.weight_grams).reverse()
+    if (points.length < 2) return null
+    const min = Math.min(...points)
+    const max = Math.max(...points)
+    const span = max - min || 1
+    return points
+      .map((g, i) => `${(i / (points.length - 1)) * 100},${18 - ((g - min) / span) * 16}`)
+      .join(' ')
   })()
 
   const nextFeedingDue = animal.last_fed_at && animal.feeding_frequency_days
@@ -713,24 +738,6 @@ export function AnimalDetail() {
           <p className="text-sm mt-1" style={{ color: '#a8a090' }}>
             {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex.charAt(0).toUpperCase() + animal.sex.slice(1)}` : ''}{age ? ` · ${age}` : ''}
           </p>
-          <div className="flex gap-2 flex-wrap mt-1.5">
-            {daysSinceFed !== null && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: `${feedingStatusColor}22`, color: feedingStatusColor }}>
-                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ backgroundColor: feedingStatusColor }} />
-                {daysSinceFed === 0 ? 'Fed today' : `Fed ${daysSinceFed}d ago`}
-              </span>
-            )}
-            {animal.weight_grams && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#a8a090' }}>
-                ⚖️ {animal.weight_grams}g{weightTrend !== null ? ` (${weightTrend >= 0 ? '+' : ''}${weightTrend}g)` : ''}
-              </span>
-            )}
-            {sheddingLogs[0] && (
-              <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#a8a090' }}>
-                🐍 Shed {format(new Date(sheddingLogs[0].shed_at), 'MMM d')}
-              </span>
-            )}
-          </div>
         </div>
 
         {/* Tabs */}
@@ -768,36 +775,6 @@ export function AnimalDetail() {
                     <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Asking ${(animal.asking_price_cents / 100).toFixed(2)} AUD</p>
                   )}
                 </div>
-              </div>
-            )}
-
-            {/* Feeding notification */}
-            {daysUntilFeed !== null && daysUntilFeed <= 1 && (
-              <div
-                className="rounded-xl px-4 py-3 flex items-center gap-3"
-                style={{
-                  backgroundColor: daysUntilFeed < 0 ? 'rgba(196,90,90,0.08)' : 'rgba(212,146,74,0.08)',
-                  border: `1px solid ${daysUntilFeed < 0 ? 'rgba(196,90,90,0.3)' : 'rgba(212,146,74,0.3)'}`,
-                }}
-              >
-                <span className="text-lg">🍖</span>
-                <div className="flex-1">
-                  <p className="text-sm font-medium" style={{ color: daysUntilFeed < 0 ? '#c45a5a' : '#d4924a' }}>
-                    {daysUntilFeed < 0 ? 'Feeding overdue' : 'Feeding due soon'}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
-                    {daysUntilFeed < 0
-                      ? `${Math.abs(daysUntilFeed)} day${Math.abs(daysUntilFeed) !== 1 ? 's' : ''} overdue — was due ${format(nextFeedingDue!, 'MMM d')}`
-                      : `Due ${daysUntilFeed === 0 ? 'today' : 'tomorrow'}, ${format(nextFeedingDue!, 'MMM d')}`}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setFeedOpen(true)}
-                  className="text-xs font-medium px-2.5 py-1 rounded-lg shrink-0"
-                  style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
-                >
-                  Feed
-                </button>
               </div>
             )}
 
@@ -851,11 +828,24 @@ export function AnimalDetail() {
                 <p className="text-xs" style={{ color: '#6a6458' }}>Current weight</p>
                 <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
                   {animal.weight_grams ? `${animal.weight_grams}g` : '—'}
+                  {weightTrend !== null && (
+                    <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#c45a5a' }}>
+                      {weightTrend >= 0 ? `+${weightTrend}` : weightTrend}
+                    </span>
+                  )}
                 </p>
-                {weightTrend !== null && (
-                  <p className="text-xs mt-0.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#c45a5a' }}>
-                    {weightTrend >= 0 ? `↑ +${weightTrend}g` : `↓ ${weightTrend}g`}
-                  </p>
+                {weightSparkline && (
+                  <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" className="mt-1.5 block" aria-hidden="true">
+                    <polyline
+                      points={weightSparkline}
+                      fill="none"
+                      stroke={weightTrend !== null && weightTrend < 0 ? '#c45a5a' : '#8fbe5a'}
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      vectorEffect="non-scaling-stroke"
+                    />
+                  </svg>
                 )}
               </div>
               <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -869,6 +859,19 @@ export function AnimalDetail() {
                   </p>
                 )}
               </div>
+              {feedResponse && (
+                <div className="rounded-xl p-3 col-span-2" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <p className="text-xs" style={{ color: '#6a6458' }}>Takes food</p>
+                  <p className="text-base font-semibold mt-0.5" style={{ color: feedResponse.color }}>
+                    {feedResponse.taken} of last {feedResponse.total}
+                  </p>
+                  <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                    {feedResponse.lastRefusedAt
+                      ? `Last refused ${format(feedResponse.lastRefusedAt, 'MMM d, yyyy')}`
+                      : 'No refusals on record'}
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Recent feedings */}

@@ -1,15 +1,13 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { differenceInDays } from 'date-fns'
 import { useAnimals } from '@/hooks/useAnimals'
+import { getFeedingStatus, FEEDING_STATUS_META, FEEDING_URGENCY } from '@/lib/feedingStatus'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import type { Enclosure } from '@/hooks/useEnclosures'
-import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
-import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -18,7 +16,9 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { AnimalCardSkeleton } from '@/components/ui/LoadingSkeleton'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
-import { createFeedingLog, createEnclosure, updateEnclosure, deleteEnclosure, updateAnimal } from '@/lib/queries'
+import { logFeeding, createEnclosure, updateEnclosure, deleteEnclosure } from '@/lib/queries'
+import { findMatchingFeeder } from '@/lib/feederMatch'
+import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { dateInputToISO } from '@/lib/dates'
 import type { Animal } from '@/hooks/useAnimals'
 
@@ -42,28 +42,17 @@ function categorize(species: string): string {
 }
 
 function feedingUrgency(animal: Animal): number {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) return 3
-  const days = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  const freq = animal.feeding_frequency_days
-  if (days > freq) return 0
-  if (days >= freq - 1) return 1
-  return 2
+  return FEEDING_URGENCY[getFeedingStatus(animal)]
 }
 
 function getAnimalFeedingColor(animal: Animal): string {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) return '#6a6458'
-  const daysSince = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  const freq = animal.feeding_frequency_days
-  if (daysSince > freq) return '#c45a5a'
-  if (daysSince >= freq - 1) return '#d4924a'
-  return '#5a9e6a'
+  return FEEDING_STATUS_META[getFeedingStatus(animal)].color
 }
-
 
 export function Animals() {
   const { data: animals, loading, error, refresh } = useAnimals()
   const { data: enclosures, loading: enclosuresLoading, refresh: refreshEnclosures } = useEnclosures()
-  const { data: allLogs } = useFeedingLogs()
+  const { data: feeders, refresh: refreshFeeders } = useFeederInventory()
   const { canAddAnimal, user } = useAuth()
   const { householdId } = useHousehold()
   const { showToast } = useToast()
@@ -74,8 +63,6 @@ export function Animals() {
   // Animals tab state
   const [addOpen, setAddOpen] = useState(false)
   const [upgradeOpen, setUpgradeOpen] = useState(false)
-  const [quickFeedId, setQuickFeedId] = useState<string | null>(null)
-  const [quickFeedOpen, setQuickFeedOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('name-asc')
@@ -96,26 +83,6 @@ export function Animals() {
   const [batchFeedQuantity, setBatchFeedQuantity] = useState('1')
   const [batchFeedNotes, setBatchFeedNotes] = useState('')
   const [batchFeedLoading, setBatchFeedLoading] = useState(false)
-
-  const streakByAnimal = useMemo(() => {
-    const map = new Map<string, number>()
-    const byAnimal = new Map<string, typeof allLogs>()
-    allLogs.forEach((log) => {
-      const list = byAnimal.get(log.animal_id) ?? []
-      list.push(log)
-      byAnimal.set(log.animal_id, list)
-    })
-    byAnimal.forEach((logs, animalId) => {
-      const sorted = [...logs].sort((a, b) => new Date(b.fed_at).getTime() - new Date(a.fed_at).getTime())
-      let streak = 0
-      for (const log of sorted) {
-        if (log.refused) break
-        streak++
-      }
-      map.set(animalId, streak)
-    })
-    return map
-  }, [allLogs])
 
   const presentCategories = useMemo(() => {
     const seen = new Set(animals.map((a) => categorize(a.species)))
@@ -147,16 +114,6 @@ export function Animals() {
 
     return list
   }, [animals, search, categoryFilter, sort])
-
-  const urgentAnimals = animals.filter(a => {
-    if (!a.last_fed_at || !a.feeding_frequency_days) return false
-    const days = differenceInDays(new Date(), new Date(a.last_fed_at))
-    return days >= a.feeding_frequency_days - 1
-  }).sort((a, b) => {
-    const daysA = differenceInDays(new Date(), new Date(a.last_fed_at!))
-    const daysB = differenceInDays(new Date(), new Date(b.last_fed_at!))
-    return daysB - daysA
-  })
 
   function handleAddClick() {
     if (!canAddAnimal(animals.length)) setUpgradeOpen(true)
@@ -233,25 +190,52 @@ export function Animals() {
     setBatchFeedLoading(true)
     try {
       const fedAt = dateInputToISO(batchFeedDate)
-      await Promise.all(enclosureAnimals.map(a =>
-        createFeedingLog({
+      const preyType = batchFeedPreyType.trim() || 'Unknown'
+      const preySize = batchFeedPreySize.trim() || undefined
+      const quantity = Math.max(1, parseInt(batchFeedQuantity) || 1)
+      const feeder = findMatchingFeeder(feeders, preyType, preySize)
+
+      // Same atomic path as a single feeding — log, last_fed_at and stock
+      // deduction in one transaction per animal. The previous sequential
+      // createFeedingLog + updateAnimal pair skipped stock entirely, so a
+      // rack feed silently left the inventory untouched.
+      const results = await Promise.allSettled(enclosureAnimals.map((a) =>
+        logFeeding({
           household_id: householdId,
           animal_id: a.id,
           user_id: user.id,
           fed_at: fedAt,
-          prey_type: batchFeedPreyType.trim() || 'Unknown',
-          prey_size: batchFeedPreySize.trim() || undefined,
-          quantity: Math.max(1, parseInt(batchFeedQuantity) || 1),
+          prey_type: preyType,
+          prey_size: preySize,
+          quantity,
           refused: false,
           notes: batchFeedNotes.trim() || undefined,
+          feeder_item_id: feeder?.id ?? null,
+          stock_note: `Fed to ${a.name}`,
         })
       ))
-      await Promise.all(enclosureAnimals.map(a =>
-        updateAnimal(a.id, { last_fed_at: fedAt })
-      ))
-      showToast(`Fed ${enclosureAnimals.length} animal${enclosureAnimals.length !== 1 ? 's' : ''}`, 'success')
+
+      const failed = results.filter((r) => r.status === 'rejected').length
+      const fed = enclosureAnimals.length - failed
+      const stockError = results.find(
+        (r): r is PromiseFulfilledResult<{ stockError: string | null }> =>
+          r.status === 'fulfilled' && r.value.stockError !== null
+      )?.value.stockError
+
+      if (feeder) refreshFeeders()
+
+      // Close either way: the successful writes are already committed, so
+      // re-running the batch would feed those animals twice.
       setBatchFeedOpen(false)
       refresh()
+
+      if (failed > 0) {
+        showToast(`Fed ${fed} of ${enclosureAnimals.length} — ${failed} failed`, 'error')
+      } else if (stockError) {
+        showToast(`Fed ${fed} animal${fed !== 1 ? 's' : ''} but stock not updated — ${stockError}`, 'error')
+      } else {
+        showToast(`Fed ${fed} animal${fed !== 1 ? 's' : ''}`, 'success')
+      }
     } catch (e) {
       showToast(e instanceof Error ? e.message : 'Batch feed failed', 'error')
     } finally {
@@ -305,40 +289,6 @@ export function Animals() {
       {/* ── ANIMALS TAB ── */}
       {pageTab === 'animals' && (
         <>
-          {urgentAnimals.length > 0 && (
-            <div className="mb-4">
-              <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
-                {urgentAnimals.map((a) => {
-                  const days = differenceInDays(new Date(), new Date(a.last_fed_at!))
-                  const isOverdue = days >= a.feeding_frequency_days!
-                  return (
-                    <div
-                      key={a.id}
-                      className="shrink-0 flex flex-col gap-1 rounded-xl px-3 py-2"
-                      style={{
-                        width: 140,
-                        backgroundColor: isOverdue ? 'rgba(196,90,90,0.08)' : 'rgba(212,146,74,0.08)',
-                        border: `1px solid ${isOverdue ? 'rgba(196,90,90,0.2)' : 'rgba(212,146,74,0.2)'}`,
-                      }}
-                    >
-                      <span className="text-xs font-medium truncate" style={{ color: '#f0ece0' }}>{a.name}</span>
-                      <span className="text-xs" style={{ color: isOverdue ? '#c45a5a' : '#d4924a' }}>
-                        {isOverdue ? 'Overdue' : 'Due today'}
-                      </span>
-                      <button
-                        onClick={() => { setQuickFeedId(a.id); setQuickFeedOpen(true) }}
-                        className="rounded-full px-2 py-0.5 text-xs font-medium mt-0.5 self-start"
-                        style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
-                      >
-                        Feed
-                      </button>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
           {animals.length > 0 && (
             <div className="flex flex-col gap-3 mb-4">
               <div className="flex gap-2">
@@ -394,7 +344,7 @@ export function Animals() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {displayed.map((animal) => (
-                <AnimalCard key={animal.id} animal={animal} streak={streakByAnimal.get(animal.id) ?? 0} />
+                <AnimalCard key={animal.id} animal={animal} />
               ))}
             </div>
           )}
@@ -500,14 +450,6 @@ export function Animals() {
       </Modal>
 
       <UpgradeModal open={upgradeOpen} onClose={() => setUpgradeOpen(false)} />
-
-      <Modal open={quickFeedOpen} onClose={() => setQuickFeedOpen(false)} title="Log feeding">
-        <FeedingLogForm
-          preselectedAnimalId={quickFeedId ?? undefined}
-          onSuccess={() => { setQuickFeedOpen(false); refresh() }}
-          onCancel={() => setQuickFeedOpen(false)}
-        />
-      </Modal>
 
       {/* Enclosure form modal */}
       <Modal

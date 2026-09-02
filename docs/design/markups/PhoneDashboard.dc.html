@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500;600&display=swap" />
+  <style>
+    body { margin: 0; background: #1a1a18; font-family: 'DM Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+    a { color: #8fbe5a; text-decoration: none; }
+    a:hover { color: #a5cf74; }
+  </style>
+</helmet>
+
+<div style="width: 390px; min-height: 1180px; background: #1a1a18; position: relative; box-sizing: border-box; padding: 24px 16px 88px;">
+
+  <h1 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 24px; font-weight: 700; line-height: 1.2; color: #f0ece0;">Good morning, Liam</h1>
+  <p style="margin: 3px 0 22px; font-size: 14px; color: #a8a090;"><span style="color: #c45a5a; font-weight: 500;">2 overdue</span> &middot; 2 due today &middot; 1 dose</p>
+
+  <div style="position: relative; margin-bottom: 8px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+      <h2 style="margin: 0; font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; color: #f0ece0;">Today</h2>
+      <span style="font-size: 12px; font-weight: 500; color: #8fbe5a;">Select</span>
+    </div>
+    <div style="background: #242420; border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; overflow: hidden;">
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #c45a5a; flex-shrink: 0;"></span>
+        <div style="flex: 1; min-width: 0;">
+          <p style="margin: 0; font-size: 14px; font-weight: 500; color: #f0ece0;">Kaa <span style="font-weight: 400; color: #c45a5a;">&middot; 4 days overdue</span></p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Rat, medium &times;1 &middot; Rack A &middot; 3</p>
+        </div>
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 62px; height: 44px; font-size: 13px; font-weight: 500; border-radius: 10px; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.25); flex-shrink: 0;">Feed</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #c45a5a; flex-shrink: 0;"></span>
+        <div style="flex: 1; min-width: 0;">
+          <p style="margin: 0; font-size: 14px; font-weight: 500; color: #f0ece0;">Nagini <span style="font-weight: 400; color: #c45a5a;">&middot; 1 day overdue</span></p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Rat, small &times;1 &middot; refused &middot; Rack A &middot; 5</p>
+        </div>
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 62px; height: 44px; font-size: 13px; font-weight: 500; border-radius: 10px; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.25); flex-shrink: 0;">Feed</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #5a8fbe; flex-shrink: 0;"></span>
+        <div style="flex: 1; min-width: 0;">
+          <p style="margin: 0; font-size: 14px; font-weight: 500; color: #f0ece0;">Iris <span style="font-weight: 400; color: #5a8fbe;">&middot; dose 3 of 7</span></p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Baytril 0.1 ml &middot; Quarantine</p>
+        </div>
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 62px; height: 44px; font-size: 13px; font-weight: 500; border-radius: 10px; background: rgba(90,143,190,0.15); color: #5a8fbe; border: 1px solid rgba(90,143,190,0.25); flex-shrink: 0;">Log</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #d4924a; flex-shrink: 0;"></span>
+        <div style="flex: 1; min-width: 0;">
+          <p style="margin: 0; font-size: 14px; font-weight: 500; color: #f0ece0;">Monty <span style="font-weight: 400; color: #d4924a;">&middot; due today</span></p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Rat, large &times;1 &middot; Rack A &middot; 1</p>
+        </div>
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 62px; height: 44px; font-size: 13px; font-weight: 500; border-radius: 10px; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.25); flex-shrink: 0;">Feed</span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 12px; padding: 11px 12px 11px 16px; border-bottom: 1px solid rgba(255,255,255,0.04);">
+        <span style="width: 10px; height: 10px; border-radius: 999px; background: #d4924a; flex-shrink: 0;"></span>
+        <div style="flex: 1; min-width: 0;">
+          <p style="margin: 0; font-size: 14px; font-weight: 500; color: #f0ece0;">Sahara <span style="font-weight: 400; color: #d4924a;">&middot; due tomorrow</span></p>
+          <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Dubia roach &times;6 &middot; Vivarium 2</p>
+        </div>
+        <span style="display: inline-flex; align-items: center; justify-content: center; min-width: 62px; height: 44px; font-size: 13px; font-weight: 500; border-radius: 10px; background: rgba(143,190,90,0.15); color: #8fbe5a; border: 1px solid rgba(143,190,90,0.25); flex-shrink: 0;">Feed</span>
+      </div>
+      <div style="display: flex; align-items: center; justify-content: center; height: 44px; border-top: 1px solid rgba(255,255,255,0.04);">
+        <span style="font-size: 13px; color: #a8a090;">View all 12 animals &rarr;</span>
+      </div>
+    </div>
+    <div style="position: absolute; inset: -5px; border: 1px dashed rgba(143,190,90,0.45); border-radius: 16px; pointer-events: none;"></div>
+    <div style="position: absolute; top: -14px; right: -2px; display: inline-flex; align-items: center; font-size: 9px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase; color: #8fbe5a; background: #1f2419; border: 1px solid rgba(143,190,90,0.45); border-radius: 4px; padding: 2px 6px;">Folded</div>
+  </div>
+  <p style="margin: 0 0 22px; font-size: 11px; line-height: 1.55; color: #8fbe5a;">Every row here is the desktop table row with its columns folded. Status joins the name on line one; last meal and location share line two; the 44px action stays exactly where it is. Nothing is dropped and nothing is phone-only &mdash; see the fold diagram for which field lands where.</p>
+
+  <div style="border-radius: 12px; padding: 14px 16px; background: rgba(212,146,74,0.08); border: 1px solid rgba(212,146,74,0.25); margin-bottom: 8px;">
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+      <p style="margin: 0; font-size: 13px; font-weight: 500; color: #d4924a;">Feeder stock is running low</p>
+      <span style="font-size: 12px; color: #d4924a; white-space: nowrap;">List &rarr;</span>
+    </div>
+    <p style="margin: 5px 0 0; font-size: 12px; color: #a8a090;">Rat, medium &mdash; 2 left &middot; Pinky mouse &mdash; 4 left</p>
+  </div>
+  <p style="margin: 0 0 22px; font-size: 11px; line-height: 1.55; color: #8fbe5a;">On the web this sits in the right rail. On a phone there is no rail, so it stays in the flow &mdash; directly under the queue it affects, above the activity feed it outranks.</p>
+
+  <div>
+    <h2 style="margin: 0 0 12px; font-family: 'Playfair Display', Georgia, serif; font-size: 16px; font-weight: 600; color: #f0ece0;">Recent activity</h2>
+    <p style="margin: 0 0 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">Today</p>
+    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 18px; line-height: 1;">&#127869;</span>
+      <div style="flex: 1; min-width: 0;">
+        <p style="margin: 0; font-size: 14px; color: #f0ece0;"><strong style="font-weight: 600;">Sahara</strong> &mdash; fed Dubia roach &times;6</p>
+        <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Liam &middot; 2h ago</p>
+      </div>
+    </div>
+    <p style="margin: 14px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: #6a6458;">Yesterday</p>
+    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);">
+      <span style="font-size: 18px; line-height: 1;">&#9878;</span>
+      <div style="flex: 1; min-width: 0;">
+        <p style="margin: 0; font-size: 14px; color: #f0ece0;"><strong style="font-weight: 600;">Iris</strong> &mdash; weighed 62g</p>
+        <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Sam &middot; 7:45 pm</p>
+      </div>
+    </div>
+    <div style="display: flex; align-items: flex-start; gap: 12px; padding: 10px 0;">
+      <span style="font-size: 18px; line-height: 1;">&#128013;</span>
+      <div style="flex: 1; min-width: 0;">
+        <p style="margin: 0; font-size: 14px; color: #f0ece0;"><strong style="font-weight: 600;">Monty</strong> &mdash; complete shed</p>
+        <p style="margin: 2px 0 0; font-size: 12px; color: #6a6458;">Liam &middot; 9:03 am</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="position: absolute; left: 16px; right: 16px; bottom: 96px;">
+    <p style="margin: 0; font-size: 11px; line-height: 1.55; color: #8fbe5a;">Five tabs, not four. <strong style="color: #f0ece0; font-weight: 500;">Feeding and Stats become reachable on a phone for the first time</strong>; Expenses, feeder stock, import and household move under More. The green dots mark the two that today exist only on the web.</p>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; bottom: 0; height: 64px; display: flex; align-items: stretch; background: #1a1a18; border-top: 1px solid rgba(255,255,255,0.07);">
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #8fbe5a;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955a1.5 1.5 0 012.092 0L22.25 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">Home</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #505048;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">Animals</span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #505048; position: relative;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">Feeding</span>
+      <span style="position: absolute; top: 2px; right: 12px; width: 6px; height: 6px; border-radius: 999px; background: #8fbe5a;"></span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #505048; position: relative;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">Stats</span>
+      <span style="position: absolute; top: 2px; right: 16px; width: 6px; height: 6px; border-radius: 999px; background: #8fbe5a;"></span>
+    </div>
+    <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #505048;">
+      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" /></svg>
+      <span style="font-size: 10px; letter-spacing: 0.02em;">More</span>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

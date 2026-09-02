@@ -1,25 +1,27 @@
 import { Link } from 'react-router-dom'
-import { formatDistanceToNow, differenceInDays } from 'date-fns'
+import { differenceInCalendarDays } from 'date-fns'
 import type { Animal } from '@/hooks/useAnimals'
-
-function getFeedingStatus(animal: Animal): { color: string; label: string } {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) {
-    return { color: '#6a6458', label: 'No schedule' }
-  }
-  const daysSince = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  const freq = animal.feeding_frequency_days
-  if (daysSince > freq) return { color: '#c45a5a', label: 'Overdue' }
-  if (daysSince >= freq - 1) return { color: '#d4924a', label: 'Due soon' }
-  return { color: '#5a9e6a', label: 'Fed recently' }
-}
+import { getFeedingStatus, getNextFeedingDue, FEEDING_STATUS_META } from '@/lib/feedingStatus'
 
 interface AnimalCardProps {
   animal: Animal
-  streak?: number
 }
 
-export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
-  const status = getFeedingStatus(animal)
+export function AnimalCard({ animal }: AnimalCardProps) {
+  const feedingStatus = getFeedingStatus(animal)
+  const status = FEEDING_STATUS_META[feedingStatus]
+
+  // When the animal is next due, not when it last ate — the same number of days
+  // is fine for one animal and overdue for another; only the schedule knows.
+  const nextDue = getNextFeedingDue(animal)
+  const dueLabel = (() => {
+    if (!nextDue) return status.label
+    const days = differenceInCalendarDays(nextDue, new Date())
+    if (days < 0) return `${Math.abs(days)} day${days !== -1 ? 's' : ''} overdue`
+    if (days === 0) return 'Due today'
+    if (days === 1) return 'Due tomorrow'
+    return `Due in ${days} days`
+  })()
 
   return (
     <Link
@@ -40,12 +42,6 @@ export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
           style={{ backgroundColor: status.color, boxShadow: `0 0 0 3px rgba(0,0,0,0.4)` }}
           title={status.label}
         />
-        {/* Streak badge */}
-        {streak >= 3 && (
-          <div className="absolute bottom-2 left-2 flex items-center gap-1 px-1.5 py-0.5 rounded-md text-xs font-semibold" style={{ backgroundColor: 'rgba(0,0,0,0.55)', color: '#f0ece0' }}>
-            🔥 {streak}
-          </div>
-        )}
         {/* Quarantine badge */}
         {animal.quarantine_started_at && !animal.quarantine_ended_at && (
           <div className="absolute top-2.5 left-2.5 px-1.5 py-0.5 rounded-md text-xs font-semibold" style={{ backgroundColor: 'rgba(212,146,74,0.85)', color: '#1a1a18' }}>
@@ -68,20 +64,9 @@ export function AnimalCard({ animal, streak = 0 }: AnimalCardProps) {
         <p className="text-xs mt-0.5 truncate" style={{ color: '#a8a090' }}>
           {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}
         </p>
-        <p className="text-xs mt-2" style={{ color: '#6a6458' }}>
-          {animal.last_fed_at
-            ? `Fed ${formatDistanceToNow(new Date(animal.last_fed_at), { addSuffix: true })}`
-            : 'Never fed'}
+        <p className="text-xs mt-2 font-medium" style={{ color: status.color }}>
+          {dueLabel}
         </p>
-        {(animal.tags ?? []).length > 0 && (
-          <div className="flex gap-1 flex-wrap mt-2">
-            {animal.tags.slice(0, 3).map((t) => (
-              <span key={t} className="text-xs px-1.5 py-0.5 rounded-full" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a' }}>
-                #{t}
-              </span>
-            ))}
-          </div>
-        )}
       </div>
     </Link>
   )

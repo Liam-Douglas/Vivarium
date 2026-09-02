@@ -9,14 +9,15 @@ import {
   createSheddingLog, createWeightLog, createExpense,
 } from '@/lib/queries'
 import { dateInputToISO } from '@/lib/dates'
+import {
+  getFeedingStatus, summariseFeeding, FEEDING_STATUS_META, FEEDING_URGENCY,
+} from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
-import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
-import { AnimalCardSkeleton } from '@/components/ui/LoadingSkeleton'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
@@ -33,12 +34,11 @@ interface ActivityEntry {
   detail: string
 }
 
-function getStatusForAnimal(animal: { last_fed_at: string | null; feeding_frequency_days: number | null }) {
-  if (!animal.last_fed_at || !animal.feeding_frequency_days) return 'muted'
-  const days = differenceInDays(new Date(), new Date(animal.last_fed_at))
-  if (days > animal.feeding_frequency_days) return 'red'
-  if (days >= animal.feeding_frequency_days - 1) return 'amber'
-  return 'green'
+/** "Ivy, Pascal, Root and 4 more" — untracked animals often arrive by the dozen. */
+function nameList(animals: { name: string }[], max = 3): string {
+  const shown = animals.slice(0, max).map((a) => a.name)
+  const rest = animals.length - shown.length
+  return rest > 0 ? `${shown.join(', ')} and ${rest} more` : shown.join(', ')
 }
 
 const FAB_ACTIONS = [
@@ -52,7 +52,7 @@ const FAB_ACTIONS = [
 export function Dashboard() {
   const { profile, user, canAddAnimal } = useAuth()
   const { householdId, pendingRequests, currentUserRole, refresh: refreshHousehold } = useHousehold()
-  const { data: animals, loading: animalsLoading, refresh: refreshAnimals } = useAnimals()
+  const { data: animals, refresh: refreshAnimals } = useAnimals()
   const { data: allLogs } = useFeedingLogs()
   const { showToast } = useToast()
 
@@ -79,36 +79,6 @@ export function Dashboard() {
     return strikes
   }, [allLogs, animals])
 
-  const feedingsThisMonth = useMemo(() => {
-    const now = new Date()
-    const year = now.getFullYear()
-    const month = now.getMonth()
-    return allLogs.filter((log) => {
-      if (log.refused) return false
-      const d = new Date(log.fed_at)
-      return d.getFullYear() === year && d.getMonth() === month
-    }).length
-  }, [allLogs])
-
-  const bestStreak = useMemo(() => {
-    const byAnimal = new Map<string, typeof allLogs>()
-    allLogs.forEach((log) => {
-      const list = byAnimal.get(log.animal_id) ?? []
-      list.push(log)
-      byAnimal.set(log.animal_id, list)
-    })
-    let best = 0
-    byAnimal.forEach((logs) => {
-      const sorted = [...logs].sort((a, b) => new Date(b.fed_at).getTime() - new Date(a.fed_at).getTime())
-      let count = 0
-      for (const log of sorted) {
-        if (log.refused) break
-        count++
-      }
-      if (count > best) best = count
-    })
-    return best
-  }, [allLogs])
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [activityLoading, setActivityLoading] = useState(true)
   const [approvingId, setApprovingId] = useState<string | null>(null)
@@ -149,10 +119,44 @@ export function Dashboard() {
       .finally(() => setActivityLoading(false))
   }, [householdId])
 
-  const overdueCount = animals.filter((a) => getStatusForAnimal(a) === 'red').length
-  const fedThisWeek = animals.filter(
-    (a) => a.last_fed_at && differenceInDays(new Date(), new Date(a.last_fed_at)) <= 7
-  ).length
+  const feedingSummary = useMemo(() => summariseFeeding(animals), [animals])
+
+  // One queue ordered by lateness, replacing the old "Needs feeding" and
+  // "Due soon" cards — they had identical row anatomy and were split by an
+  // arbitrary threshold. Includes anything overdue, due soon, or falling due
+  // within three days.
+  const queue = useMemo(() => {
+    const now = new Date()
+    return animals
+      .map((animal) => {
+        const status = getFeedingStatus(animal, now)
+        const nextDue = animal.last_fed_at && animal.feeding_frequency_days
+          ? addDays(new Date(animal.last_fed_at), animal.feeding_frequency_days)
+          : null
+        return { animal, status, nextDue }
+      })
+      .filter(({ status, nextDue }) =>
+        status === 'overdue' || status === 'due-soon' ||
+        (status === 'on-schedule' && nextDue !== null && differenceInDays(nextDue, now) <= 3))
+      .sort((a, b) => {
+        const byUrgency = FEEDING_URGENCY[a.status] - FEEDING_URGENCY[b.status]
+        if (byUrgency !== 0) return byUrgency
+        // Within a status, soonest due first — which for overdue animals is
+        // also most-overdue first.
+        return (a.nextDue?.getTime() ?? 0) - (b.nextDue?.getTime() ?? 0)
+      })
+  }, [animals])
+
+  // Animals with no schedule, or a schedule but no feeding logged, can never
+  // reach a queue — surface them rather than letting them read as on schedule.
+  const unscheduledAnimals = useMemo(
+    () => animals.filter((a) => getFeedingStatus(a) === 'no-schedule'),
+    [animals]
+  )
+  const neverFedAnimals = useMemo(
+    () => animals.filter((a) => getFeedingStatus(a) === 'never-fed'),
+    [animals]
+  )
 
   const greeting = (() => {
     const h = new Date().getHours()
@@ -247,7 +251,14 @@ export function Dashboard() {
             {greeting}{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
           </h1>
           <p className="text-sm mt-0.5" style={{ color: '#a8a090' }}>
-            {animals.length} animal{animals.length !== 1 ? 's' : ''} in your collection
+            {feedingSummary.overdue > 0 && (
+              <span style={{ color: '#c45a5a', fontWeight: 500 }}>{feedingSummary.overdue} overdue</span>
+            )}
+            {feedingSummary.overdue > 0 && feedingSummary.dueSoon > 0 && ' · '}
+            {feedingSummary.dueSoon > 0 && `${feedingSummary.dueSoon} due soon`}
+            {feedingSummary.overdue === 0 && feedingSummary.dueSoon === 0 && 'Nothing due today'}
+            {/* Never imply all-clear while animals are untracked. */}
+            {feedingSummary.untracked > 0 && ` · ${feedingSummary.untracked} not tracked`}
           </p>
         </div>
         {/* Desktop only — mobile uses FAB */}
@@ -293,158 +304,89 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
-        <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs mb-1" style={{ color: '#6a6458' }}>Fed this week</p>
-          <p className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#8fbe5a' }}>{fedThisWeek}</p>
-          <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>of {animals.length}</p>
+      {/* Animals no feeding queue can reach — they would otherwise read as on schedule */}
+      {(unscheduledAnimals.length > 0 || neverFedAnimals.length > 0) && (
+        <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.2)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: '#d4924a' }}>
+              {feedingSummary.untracked} animal{feedingSummary.untracked !== 1 ? 's' : ''} not tracked
+            </p>
+            <Link to="/animals" className="text-xs font-medium shrink-0 mt-0.5" style={{ color: '#d4924a' }}>
+              Review
+            </Link>
+          </div>
+          {unscheduledAnimals.length > 0 && (
+            <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+              {nameList(unscheduledAnimals)} {unscheduledAnimals.length === 1 ? 'has' : 'have'} no
+              feeding schedule, so {unscheduledAnimals.length === 1 ? 'it' : 'they'} will never appear as due. Set a
+              feeding frequency to include {unscheduledAnimals.length === 1 ? 'it' : 'them'}.
+            </p>
+          )}
+          {neverFedAnimals.length > 0 && (
+            <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+              {nameList(neverFedAnimals)} {neverFedAnimals.length === 1 ? 'has' : 'have'} a schedule
+              but no feeding logged yet, so there is nothing to count from.
+            </p>
+          )}
         </div>
-        <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs mb-1" style={{ color: '#6a6458' }}>Overdue</p>
-          <p className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: overdueCount > 0 ? '#c45a5a' : '#5a9e6a' }}>{overdueCount}</p>
-          <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>need feeding</p>
-        </div>
-      </div>
+      )}
 
-      {/* Needs feeding */}
-      {(() => {
-        const urgentAnimals = animals
-          .filter((a) => {
-            const s = getStatusForAnimal(a)
-            return s === 'red' || s === 'amber'
-          })
-          .sort((a, b) => {
-            const order = { red: 0, amber: 1 }
-            return (order[getStatusForAnimal(a) as 'red' | 'amber'] ?? 2) - (order[getStatusForAnimal(b) as 'red' | 'amber'] ?? 2)
-          })
-        if (urgentAnimals.length === 0) return null
-        return (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Needs feeding</h2>
-              <span
-                className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                style={{ backgroundColor: 'rgba(196,90,90,0.18)', color: '#c45a5a' }}
-              >
-                {urgentAnimals.length}
-              </span>
-            </div>
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              {urgentAnimals.map((animal, i) => {
-                const status = getStatusForAnimal(animal)
-                const daysSince = animal.last_fed_at
-                  ? differenceInDays(new Date(), new Date(animal.last_fed_at))
-                  : null
-                const subtitle = daysSince === null ? 'Never fed' : `${daysSince} day${daysSince !== 1 ? 's' : ''} since last fed`
-                const dotColor = status === 'red' ? '#c45a5a' : '#d4900a'
-                return (
-                  <div
-                    key={animal.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                    style={{ borderBottom: i < urgentAnimals.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
-                  >
-                    <span
-                      className="w-2.5 h-2.5 rounded-full shrink-0"
-                      style={{ backgroundColor: dotColor }}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{animal.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{subtitle}</p>
-                    </div>
-                    <button
-                      onClick={() => { setQuickFeedAnimalId(animal.id); setActiveModal('feeding') }}
-                      className="text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 transition-opacity active:opacity-70"
-                      style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
-                    >
-                      Feed
-                    </button>
+      {/* Today — one queue, ordered by lateness */}
+      {queue.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Today</h2>
+            <span
+              className="text-xs font-medium px-1.5 py-0.5 rounded-full"
+              style={feedingSummary.overdue > 0
+                ? { backgroundColor: 'rgba(196,90,90,0.18)', color: '#c45a5a' }
+                : { backgroundColor: 'rgba(212,146,74,0.18)', color: '#d4924a' }}
+            >
+              {queue.length}
+            </span>
+          </div>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {queue.map(({ animal, status, nextDue }, i) => {
+              const daysLate = nextDue ? differenceInDays(new Date(), nextDue) : null
+              const daysUntil = nextDue ? differenceInDays(nextDue, new Date()) : null
+              const subtitle = status === 'overdue'
+                ? `${daysLate} day${daysLate !== 1 ? 's' : ''} overdue · was due ${format(nextDue!, 'MMM d')}`
+                : daysUntil === 0 ? `Due today · ${format(nextDue!, 'MMM d')}`
+                : daysUntil === 1 ? `Due tomorrow · ${format(nextDue!, 'MMM d')}`
+                : `Due in ${daysUntil} days · ${format(nextDue!, 'MMM d')}`
+              return (
+                <div
+                  key={animal.id}
+                  className="flex items-center gap-3 px-4 py-2.5"
+                  style={{ borderBottom: i < queue.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                >
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: FEEDING_STATUS_META[status].color }} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{animal.name}</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{subtitle}</p>
                   </div>
-                )
-              })}
-            </div>
-          </div>
-        )
-      })()}
-
-      {/* Due soon */}
-      {(() => {
-        const dueSoonAnimals = animals
-          .filter((a) => {
-            if (!a.last_fed_at || !a.feeding_frequency_days) return false
-            if (getStatusForAnimal(a) !== 'green') return false
-            const nextDue = addDays(new Date(a.last_fed_at), a.feeding_frequency_days)
-            return differenceInDays(nextDue, new Date()) <= 3
-          })
-          .sort((a, b) => {
-            const nextA = addDays(new Date(a.last_fed_at!), a.feeding_frequency_days!)
-            const nextB = addDays(new Date(b.last_fed_at!), b.feeding_frequency_days!)
-            return nextA.getTime() - nextB.getTime()
-          })
-        if (dueSoonAnimals.length === 0) return null
-        return (
-          <div className="mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Due soon</h2>
-              <span
-                className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-                style={{ backgroundColor: 'rgba(212,146,74,0.18)', color: '#d4924a' }}
-              >
-                {dueSoonAnimals.length}
-              </span>
-            </div>
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              {dueSoonAnimals.map((animal, i) => {
-                const nextDue = addDays(new Date(animal.last_fed_at!), animal.feeding_frequency_days!)
-                const daysUntil = differenceInDays(nextDue, new Date())
-                const subtitle = daysUntil === 0 ? `Due today · ${format(nextDue, 'MMM d')}` : daysUntil === 1 ? `Due tomorrow · ${format(nextDue, 'MMM d')}` : `Due in ${daysUntil} days · ${format(nextDue, 'MMM d')}`
-                return (
-                  <div
-                    key={animal.id}
-                    className="flex items-center gap-3 px-4 py-3"
-                    style={{ borderBottom: i < dueSoonAnimals.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                  <button
+                    onClick={() => { setQuickFeedAnimalId(animal.id); setActiveModal('feeding') }}
+                    className="text-sm font-medium px-3 rounded-lg shrink-0 transition-opacity active:opacity-70"
+                    style={{ height: 44, minWidth: 62, backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
                   >
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: '#d4924a' }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{animal.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{subtitle}</p>
-                    </div>
-                    <button
-                      onClick={() => { setQuickFeedAnimalId(animal.id); setActiveModal('feeding') }}
-                      className="text-xs font-medium px-2.5 py-1 rounded-lg shrink-0 transition-opacity active:opacity-70"
-                      style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
-                    >
-                      Feed
-                    </button>
-                  </div>
-                )
-              })}
-            </div>
+                    Feed
+                  </button>
+                </div>
+              )
+            })}
+            {/* The collection count lives here now rather than in the header —
+                a link to act on, not a figure to admire. */}
+            <Link
+              to="/animals"
+              className="flex items-center justify-center h-11 text-sm"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.04)', color: '#a8a090' }}
+            >
+              View all {animals.length} animal{animals.length !== 1 ? 's' : ''} &rarr;
+            </Link>
           </div>
-        )
-      })()}
-
-      {/* Animals */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Your animals</h2>
-          <Link to="/animals" className="text-xs font-medium" style={{ color: '#8fbe5a' }}>View all</Link>
         </div>
-        {animalsLoading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {Array.from({ length: 3 }).map((_, i) => <AnimalCardSkeleton key={i} />)}
-          </div>
-        ) : animals.length === 0 ? (
-          <div className="rounded-xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px dashed rgba(255,255,255,0.08)' }}>
-            <p className="text-sm mb-3" style={{ color: '#a8a090' }}>Add your first animal to get started</p>
-            <Link to="/animals"><Button size="sm">Add animal</Button></Link>
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {animals.map((a) => <AnimalCard key={a.id} animal={a} />)}
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Recent activity */}
       <div>
@@ -479,21 +421,6 @@ export function Dashboard() {
             ))}
           </div>
         )}
-      </div>
-
-      {/* Mini stats strip */}
-      <div className="grid grid-cols-3 gap-3 mt-6">
-        {[
-          { value: feedingsThisMonth, label: 'This month', sub: 'feedings' },
-          { value: bestStreak, label: 'Best streak', sub: 'meals in a row' },
-          { value: animals.length, label: 'Animals', sub: 'in collection' },
-        ].map(({ value, label, sub }) => (
-          <div key={label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs mb-1 truncate" style={{ color: '#6a6458' }}>{label}</p>
-            <p className="text-xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{value}</p>
-            <p className="text-xs mt-0.5 leading-tight" style={{ color: '#6a6458' }}>{sub}</p>
-          </div>
-        ))}
       </div>
 
       {/* FAB speed dial (mobile only) */}

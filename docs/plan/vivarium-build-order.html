@@ -1,0 +1,302 @@
+<title>Vivarium Build Order</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f4f5f0; --surface: #fbfbf8; --raised: #ffffff;
+    --ink: #22241d; --ink-2: #55594c; --ink-3: #82877a;
+    --accent: #4e7a25; --accent-soft: rgba(78,122,37,0.10);
+    --line: rgba(34,36,29,0.13); --line-soft: rgba(34,36,29,0.07);
+    --done: #3f7a4d; --warn: #9a5f18; --risk: #a33c3c; --cool: #35618a;
+    --warn-soft: rgba(154,95,24,0.09); --risk-soft: rgba(163,60,60,0.08);
+    --display: 'Playfair Display', Georgia, serif;
+    --body: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  :root:not([data-theme="light"]) { }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1a1a18; --surface: #242420; --raised: #2e2e2a;
+      --ink: #f0ece0; --ink-2: #a8a090; --ink-3: #6a6458;
+      --accent: #8fbe5a; --accent-soft: rgba(143,190,90,0.12);
+      --line: rgba(255,255,255,0.10); --line-soft: rgba(255,255,255,0.055);
+      --done: #5a9e6a; --warn: #d4924a; --risk: #c45a5a; --cool: #5a8fbe;
+      --warn-soft: rgba(212,146,74,0.10); --risk-soft: rgba(196,90,90,0.09);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1a1a18; --surface: #242420; --raised: #2e2e2a;
+    --ink: #f0ece0; --ink-2: #a8a090; --ink-3: #6a6458;
+    --accent: #8fbe5a; --accent-soft: rgba(143,190,90,0.12);
+    --line: rgba(255,255,255,0.10); --line-soft: rgba(255,255,255,0.055);
+    --done: #5a9e6a; --warn: #d4924a; --risk: #c45a5a; --cool: #5a8fbe;
+    --warn-soft: rgba(212,146,74,0.10); --risk-soft: rgba(196,90,90,0.09);
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 900px; margin: 0 auto; padding: 56px 28px 96px; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  code, .mono { font-family: var(--mono); font-size: 0.86em; }
+  code { color: var(--ink); background: var(--accent-soft); padding: 0.1em 0.36em; border-radius: 4px; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3); }
+
+  /* header */
+  header { border-bottom: 1px solid var(--line); padding-bottom: 28px; margin-bottom: 40px; }
+  h1 { font-size: 42px; font-weight: 700; line-height: 1.08; margin: 10px 0 0; letter-spacing: -0.015em; }
+  .thesis { font-size: 18px; line-height: 1.55; color: var(--ink-2); margin-top: 14px; max-width: 62ch; }
+  .facts { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 24px; }
+  .fact { display: flex; align-items: baseline; gap: 8px; font-size: 13px; color: var(--ink-2); }
+  .fact b { font-family: var(--mono); font-size: 15px; font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* callout */
+  .callout { border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px; margin-bottom: 40px; background: var(--surface); }
+  .callout.risk { background: var(--risk-soft); border-color: rgba(163,60,60,0.28); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .callout.risk { border-color: rgba(196,90,90,0.3); } }
+  :root[data-theme="dark"] .callout.risk { border-color: rgba(196,90,90,0.3); }
+  .callout h2 { font-size: 17px; font-weight: 600; color: var(--risk); }
+  .bugs { list-style: none; padding: 0; margin: 14px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .bugs li { display: grid; grid-template-columns: 20px 1fr; gap: 12px; font-size: 14.5px; line-height: 1.55; color: var(--ink-2); }
+  .bugs .n { font-family: var(--mono); font-size: 12px; color: var(--risk); padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .bugs strong { color: var(--ink); font-weight: 500; }
+
+  /* spine */
+  .phase { display: grid; grid-template-columns: 56px 1fr; gap: 24px; }
+  .spine { display: flex; flex-direction: column; align-items: center; }
+  .num { font-family: var(--mono); font-size: 13px; font-weight: 500; width: 34px; height: 34px; border-radius: 50%;
+         display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);
+         color: var(--ink-2); background: var(--surface); flex-shrink: 0; font-variant-numeric: tabular-nums; }
+  .phase.shipped .num { border-color: var(--done); color: var(--done); background: transparent; }
+  .rule { flex: 1; width: 1px; background: var(--line); margin: 10px 0 0; }
+  .body { padding-bottom: 44px; min-width: 0; }
+  .phase:last-child .body { padding-bottom: 0; }
+  .ptitle { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; }
+  .ptitle h2 { font-size: 23px; font-weight: 600; letter-spacing: -0.01em; }
+  .chip { font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+          padding: 3px 8px; border-radius: 5px; border: 1px solid var(--line); color: var(--ink-3); white-space: nowrap; }
+  .chip.s { color: var(--done); border-color: currentColor; }
+  .chip.m { color: var(--warn); border-color: currentColor; }
+  .chip.l { color: var(--risk); border-color: currentColor; }
+  .chip.ok { color: var(--done); border-color: currentColor; }
+  .why { font-size: 14.5px; color: var(--ink-2); margin-top: 8px; max-width: 60ch; }
+  .why em { color: var(--ink); font-style: normal; font-weight: 500; }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 14px; }
+  .scroll { overflow-x: auto; margin-top: 16px; }
+  .scroll table { margin-top: 0; min-width: 520px; }
+  th { text-align: left; font-size: 10.5px; font-weight: 600; letter-spacing: 0.09em; text-transform: uppercase;
+       color: var(--ink-3); padding: 0 14px 8px 0; border-bottom: 1px solid var(--line); }
+  td { padding: 10px 14px 10px 0; border-bottom: 1px solid var(--line-soft); vertical-align: top; color: var(--ink-2); line-height: 1.5; }
+  td:first-child { color: var(--ink); }
+  td.file { font-family: var(--mono); font-size: 12.5px; color: var(--ink-3); white-space: nowrap; }
+  tr:last-child td { border-bottom: none; }
+
+  .verify { margin-top: 14px; font-size: 13.5px; color: var(--ink-3); display: flex; gap: 9px; align-items: baseline; }
+  .verify b { color: var(--ink-2); font-weight: 500; }
+
+  /* decisions */
+  .section { margin-top: 8px; padding-top: 40px; border-top: 1px solid var(--line); }
+  .section > h2 { font-size: 27px; font-weight: 600; letter-spacing: -0.012em; }
+  .section > p.lede { font-size: 15px; color: var(--ink-2); margin-top: 10px; max-width: 62ch; }
+  .decisions { display: flex; flex-direction: column; gap: 2px; margin-top: 24px; }
+  .dec { display: grid; grid-template-columns: 1fr; gap: 6px; padding: 15px 0; border-bottom: 1px solid var(--line-soft); }
+  .dec:last-child { border-bottom: none; }
+  .dq { font-size: 15.5px; font-weight: 500; color: var(--ink); }
+  .da { font-size: 14px; color: var(--ink-2); line-height: 1.55; }
+  .da .rec { color: var(--accent); font-weight: 500; }
+
+  .out { margin-top: 20px; font-size: 14.5px; color: var(--ink-2); line-height: 1.6; max-width: 62ch; }
+  footer { margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
+
+  @media (max-width: 640px) {
+    .wrap { padding: 36px 18px 64px; }
+    h1 { font-size: 32px; }
+    .phase { grid-template-columns: 34px 1fr; gap: 16px; }
+    .num { width: 30px; height: 30px; font-size: 12px; }
+  }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Vivarium &middot; implementation plan</p>
+  <h1>Build Order</h1>
+  <p class="thesis">Six phases to ship the design markups, ordered by what unblocks what rather than by screen. Each phase stands alone &mdash; you can stop after any of them and the app is coherent.</p>
+  <div class="facts">
+    <span class="fact"><b>0</b> schema migrations</span>
+    <span class="fact"><b>3</b> query functions to widen</span>
+    <span class="fact"><b>3</b> defects found while planning</span>
+    <span class="fact"><b>1</b> phase already shipped</span>
+  </div>
+</header>
+
+<div class="callout risk">
+  <h2>Three defects found while planning</h2>
+  <p style="font-size:14.5px; color:var(--ink-2); margin-top:8px; max-width:62ch;">All three are in Phase 1. They are independent of whether you build any of the redesign, and the first one loses data silently.</p>
+  <ol class="bugs">
+    <li><span class="n">01</span><span><strong>Enclosure batch feed does not deduct feeder stock.</strong> <code>handleBatchFeed</code> in <span class="mono">Animals.tsx</span> still uses the legacy <code>createFeedingLog</code> + <code>updateAnimal</code> pair, while single feeding goes through the atomic <code>log_feeding</code> RPC. Feeding six animals from a rack writes six logs and deducts nothing, so stock silently drifts &mdash; and the two writes are not atomic. Found today.</span></li>
+    <li><span class="n">02</span><span><strong>Notifications disagree with the screens.</strong> <code>isOverdue</code> in <span class="mono">lib/dates.ts</span> treats <code>days &gt;= freq</code> as overdue; every screen uses <code>&gt; freq</code>. An animal at exactly its interval gets a push saying &ldquo;overdue&rdquo; while the dashboard shows &ldquo;Due soon&rdquo;.</span></li>
+    <li><span class="n">03</span><span><strong>The profile turns amber a day early.</strong> <span class="mono">AnimalDetail.tsx</span> uses <code>freq - 2</code> where the shared status module uses <code>freq - 1</code>.</span></li>
+  </ol>
+</div>
+
+<div class="phase shipped">
+  <div class="spine"><div class="num">&#10003;</div><div class="rule"></div></div>
+  <div class="body">
+    <div class="ptitle"><h2>Fix the false all-clear</h2><span class="chip ok">Shipped</span></div>
+    <p class="why">Untracked animals were collapsed into on-schedule ones, so an unscheduled animal was invisible to every queue and a never-fed collection read &ldquo;Overdue&nbsp;0&rdquo; in green. <code>lib/feedingStatus.ts</code> is now the single source of truth for feeding state, and everything below reads from it.</p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="spine"><div class="num">1</div><div class="rule"></div></div>
+  <div class="body">
+    <div class="ptitle"><h2>Foundations</h2><span class="chip s">Small</span><span class="chip">Unblocks 3 and 6</span></div>
+    <p class="why">Fix the three defects above, and widen the three per-animal queries that later phases need household-wide. <em>Nothing here is visible to a user</em> except the batch-feed fix &mdash; do it first because everything else reads through it.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Work</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Route batch feed through the <code>log_feeding</code> RPC</td><td class="file">pages/Animals.tsx</td></tr>
+        <tr><td>Align <code>isOverdue</code> with <code>getFeedingStatus</code></td><td class="file">lib/dates.ts</td></tr>
+        <tr><td>Replace the local colour helper with the shared status</td><td class="file">pages/AnimalDetail.tsx</td></tr>
+        <tr><td>Make <code>animalId</code> optional on <code>getWeightLogs</code>, <code>getMedicationSchedules</code>, <code>getMedicationLogs</code></td><td class="file">lib/queries.ts</td></tr>
+        <tr><td>Drop the <code>!animalId</code> early return so the hooks can run household-wide</td><td class="file">hooks/useWeightLogs.ts<br>hooks/useMedicationSchedules.ts</td></tr>
+      </tbody>
+    </table></div>
+    <p class="verify"><b>Verify</b> <span>Feed an enclosure, confirm stock decrements by the right count and one log lands per animal. Confirm an animal at exactly its interval reads the same in the notification and on the dashboard.</span></p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="spine"><div class="num">2</div><div class="rule"></div></div>
+  <div class="body">
+    <div class="ptitle"><h2>Delete the duplication</h2><span class="chip m">Medium</span><span class="chip">No new data</span></div>
+    <p class="why">Almost entirely deletion and rearrangement of what is already on screen, so it is the cheapest visible win and it <em>shrinks the surface every later phase has to edit</em>. Nothing here needs a query that does not exist.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Work</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Merge &ldquo;Needs feeding&rdquo; and &ldquo;Due soon&rdquo; into one queue ordered by lateness</td><td class="file">pages/Dashboard.tsx</td></tr>
+        <tr><td>Remove the &ldquo;Fed this week&rdquo; tile, the all-animals grid and the three mini stats</td><td class="file">pages/Dashboard.tsx</td></tr>
+        <tr><td>Remove the urgent carousel, streak badge and tag chips; last-fed becomes next-due</td><td class="file">pages/Animals.tsx<br>components/animals/AnimalCard.tsx</td></tr>
+        <tr><td>Remove the header chip row and the overdue banner</td><td class="file">pages/AnimalDetail.tsx</td></tr>
+        <tr><td>Fold the Feeding and Vitals tabs into Timeline; move their summary strips onto Overview as the &ldquo;Takes food&rdquo; tile and the weight sparkline</td><td class="file">pages/AnimalDetail.tsx</td></tr>
+      </tbody>
+    </table></div>
+    <p class="verify"><b>Note</b> <span><span class="mono">AnimalDetail.tsx</span> is 1,866 lines and this phase touches most of it. Worth extracting the tabs into <span class="mono">pages/animal/</span> while you are in there rather than after.</span></p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="spine"><div class="num">3</div><div class="rule"></div></div>
+  <div class="body">
+    <div class="ptitle"><h2>Surface what already exists</h2><span class="chip m">Medium</span><span class="chip">Needs 1</span></div>
+    <p class="why">Every item here is data the app already stores and never shows. They are <em>mutually independent</em> &mdash; ship them one at a time in any order, or drop any of them.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Work</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Enclosure on the profile and the animal card, from <code>enclosure_id</code></td><td class="file">pages/AnimalDetail.tsx<br>components/animals/AnimalCard.tsx</td></tr>
+        <tr><td>Last meal on each queue row, and prefill the feed sheet from it</td><td class="file">pages/Dashboard.tsx<br>components/feeding/FeedingLogForm.tsx</td></tr>
+        <tr><td>Low feeder stock strip, from the existing thresholds and shopping list</td><td class="file">pages/Dashboard.tsx</td></tr>
+        <tr><td>Medication doses as queue rows &mdash; both tables already exist</td><td class="file">pages/Dashboard.tsx<br>hooks/useMedicationSchedules.ts</td></tr>
+        <tr><td>Select mode on the queue &rarr; batch log, reusing the Phase&nbsp;1 RPC path</td><td class="file">pages/Dashboard.tsx</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="spine"><div class="num">4</div><div class="rule"></div></div>
+  <div class="body">
+    <div class="ptitle"><h2>Navigation and action parity</h2><span class="chip s">Small</span></div>
+    <p class="why">The sidebar reaches six destinations and the bottom nav reaches four, so <em>Feeding and Stats cannot be opened on a phone at all</em>. The FAB offers five actions and its desktop replacement offers one.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Work</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Bottom nav to five tabs plus a More sheet</td><td class="file">components/layout/BottomNav.tsx</td></tr>
+        <tr><td>Desktop split button carrying all five FAB actions</td><td class="file">pages/Dashboard.tsx</td></tr>
+        <tr><td>Resolve the orphans &mdash; <span class="mono">FeederInventory.tsx</span> (645 lines) and <span class="mono">FeedingCalendar.tsx</span> (209) are imported nowhere and their routes redirect elsewhere</td><td class="file">pages/</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="spine"><div class="num">5</div><div class="rule"></div></div>
+  <div class="body">
+    <div class="ptitle"><h2>Make it responsive</h2><span class="chip l">Large</span><span class="chip">After 2</span></div>
+    <p class="why">The biggest phase, and it comes late deliberately: it restructures layout, so <em>doing it before the content is settled means doing it twice</em>. The rule throughout is that width buys columns, not whitespace.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Work</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Extract <code>QueueRow</code> and <code>RecordRow</code> that fold: columns at &ge;1024, two lines below</td><td class="file">components/ (new)</td></tr>
+        <tr><td>Dashboard two-column with a 380px rail at &ge;1024; cap content at 1240px</td><td class="file">pages/Dashboard.tsx</td></tr>
+        <tr><td>Profile sticky rail beside tab content; raise the <code>max-w-3xl</code> cap</td><td class="file">pages/AnimalDetail.tsx</td></tr>
+        <tr><td>Status filter and grid/list density toggle</td><td class="file">pages/Animals.tsx</td></tr>
+        <tr><td>Record lists become tables on desktop; full weight chart inline</td><td class="file">pages/animal/</td></tr>
+      </tbody>
+    </table></div>
+    <p class="verify"><b>Verify</b> <span>Every screen at 390, 768 and 1440. No horizontal body scroll; no interactive target under 44px at any width.</span></p>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="spine"><div class="num">6</div><div class="rule"></div></div>
+  <div class="body">
+    <div class="ptitle"><h2>The quiet states</h2><span class="chip m">Medium</span><span class="chip">Needs 1 and 5</span></div>
+    <p class="why">Phases 2 and 3 build a dashboard out of exceptions, which on a well-run collection is <em>blank most days</em>. This closes that. Last because it depends on the household-wide weight query from Phase 1 and the layout from Phase 5.</p>
+    <div class="scroll"><table>
+      <thead><tr><th>Work</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>&ldquo;Coming up&rdquo; &mdash; the queue widens to the next 7 days instead of emptying</td><td class="file">pages/Dashboard.tsx</td></tr>
+        <tr><td>&ldquo;Worth a look&rdquo; &mdash; unscheduled animals, stale weights, predicted sheds, running quarantines. Capped at four rows, hidden entirely when there is a queue</td><td class="file">pages/Dashboard.tsx</td></tr>
+        <tr><td>Stock as a two-week projection from schedules rather than a threshold</td><td class="file">pages/Dashboard.tsx</td></tr>
+      </tbody>
+    </table></div>
+    <p class="verify"><b>Verify</b> <span>The four states render correctly: nothing due, nothing due with gaps, a busy day, and a collection with no history.</span></p>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Seven decisions for you</h2>
+  <p class="lede">None of these block starting Phase 1. Each has a recommendation; say the word and I take it, or overrule any of them.</p>
+  <div class="decisions">
+    <div class="dec">
+      <p class="dq">Which destination gets the fifth bottom-nav tab?</p>
+      <p class="da"><span class="rec">Recommend Feeding and Stats in, Expenses under More.</span> Expenses currently takes a quarter of the phone&rsquo;s navigation for a screen you open monthly. If your household actually checks spend weekly, swap it with Stats.</p>
+    </div>
+    <div class="dec">
+      <p class="dq">Delete the two orphaned pages, or wire them into the nav?</p>
+      <p class="da"><span class="rec">Recommend delete.</span> Feeder stock already lives inside Expenses and the feeding calendar redirects to the Feeding page &mdash; keeping 854 lines of unreachable code that duplicates shipped screens costs more than it saves.</p>
+    </div>
+    <div class="dec">
+      <p class="dq">Is an animal overdue at <code>freq</code> days, or after it?</p>
+      <p class="da"><span class="rec">Recommend after &mdash; align notifications to <code>&gt; freq</code>.</span> That matches every screen today; the alternative moves four screens instead of one. It does mean push notifications fire a day later than they do now.</p>
+    </div>
+    <div class="dec">
+      <p class="dq">Do feeding streaks survive?</p>
+      <p class="da"><span class="rec">Recommend cutting the card badge, keeping the Stats section.</span> On a 171px card it is one of six competing pieces of metadata; on Stats it is a thing you went looking for.</p>
+    </div>
+    <div class="dec">
+      <p class="dq">Removing the dashboard&rsquo;s all-animals grid &mdash; is your household happy with that?</p>
+      <p class="da">The one change in Phase 2 that removes something people may use daily. It renders every animal, so it is also the single biggest cause of dashboard scroll. Worth asking before it goes.</p>
+    </div>
+    <div class="dec">
+      <p class="dq">Batch feed: loop the existing RPC, or add a new one?</p>
+      <p class="da"><span class="rec">Recommend looping <code>log_feeding</code>.</span> No migration, atomic per animal, and a rack is rarely more than a dozen. A <code>log_feedings</code> RPC would be one round trip and one transaction, but it is the only thing in this plan that needs a schema change.</p>
+    </div>
+    <div class="dec">
+      <p class="dq">Add a test runner?</p>
+      <p class="da"><span class="rec">Recommend vitest before Phase 6.</span> There is none today, so the 19 checks behind the all-clear fix ran as a throwaway script. Phase 6 is all date arithmetic across five states &mdash; the first work here where that genuinely hurts.</p>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>What this does not cover</h2>
+  <p class="out">Expenses, Import, Settings and the auth screens are untouched &mdash; they were outside the markups and nothing above depends on them. Nothing here needs a Supabase migration: <code>medication_logs</code>, <code>medication_schedules</code>, <code>enclosures</code> and the <code>feeder_stock</code> view all exist already, and the only work at the data layer is making three query functions accept a missing <code>animalId</code>. The one exception is the optional <code>log_feedings</code> RPC in decision six.</p>
+</div>
+
+<footer>Grounded in the markups at <span class="mono">docs/design/markups/</span> and the code on <span class="mono">claude/app-design-markups-tnpnui</span>. Sizes are relative, not estimates.</footer>
+
+</div>
