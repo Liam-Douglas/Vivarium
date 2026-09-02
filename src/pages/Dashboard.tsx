@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { useAnimals, type Animal } from '@/hooks/useAnimals'
@@ -147,6 +147,10 @@ export function Dashboard() {
   const [selected, setSelected] = useState<Set<string>>(new Set())
   const [loggingDoseId, setLoggingDoseId] = useState<string | null>(null)
 
+  // Desktop split-button menu
+  const [logMenuOpen, setLogMenuOpen] = useState(false)
+  const logMenuRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
     if (!householdId) return
     getRecentActivity(householdId)
@@ -227,6 +231,20 @@ export function Dashboard() {
     if (h < 17) return 'Good afternoon'
     return 'Good evening'
   })()
+
+  useEffect(() => {
+    if (!logMenuOpen) return
+    const onPointer = (e: MouseEvent) => {
+      if (!logMenuRef.current?.contains(e.target as Node)) setLogMenuOpen(false)
+    }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLogMenuOpen(false) }
+    document.addEventListener('mousedown', onPointer)
+    window.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('mousedown', onPointer)
+      window.removeEventListener('keydown', onKey)
+    }
+  }, [logMenuOpen])
 
   const selectableIds = useMemo(
     () => queue.filter((i) => i.kind === 'feeding').map((i) => i.animal.id),
@@ -362,14 +380,52 @@ export function Dashboard() {
             {feedingSummary.untracked > 0 && ` · ${feedingSummary.untracked} not tracked`}
           </p>
         </div>
-        {/* Desktop only — mobile uses FAB */}
-        <div className="hidden md:block">
-          <Button size="sm" onClick={() => openModal('feeding')}>
-            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-            </svg>
-            Log feeding
-          </Button>
+        {/* Desktop counterpart of the FAB. It used to offer only "Log feeding",
+            so logging a shed, weight or expense meant opening an animal first —
+            four of the five actions vanished above 768px. */}
+        <div className="hidden md:block relative" ref={logMenuRef}>
+          <div className="flex items-stretch">
+            <button
+              onClick={() => openModal('feeding')}
+              className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-l-xl transition-opacity active:opacity-80"
+              style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}
+            >
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Log feeding
+            </button>
+            <button
+              onClick={() => setLogMenuOpen((open) => !open)}
+              aria-label="More logging actions"
+              aria-expanded={logMenuOpen}
+              className="inline-flex items-center justify-center w-9 h-10 rounded-r-xl transition-opacity active:opacity-80"
+              style={{ backgroundColor: '#7fae4c', color: '#1a1a18', borderLeft: '1px solid rgba(26,26,24,0.18)' }}
+            >
+              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                style={{ transform: logMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+          {logMenuOpen && (
+            <div
+              className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-30"
+              style={{ backgroundColor: '#2a2a26', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 12px 28px rgba(0,0,0,0.45)' }}
+            >
+              {FAB_ACTIONS.filter((a) => a.key !== 'feeding').map((action) => (
+                <button
+                  key={action.key}
+                  onClick={() => { setLogMenuOpen(false); openModal(action.key as ActiveModal) }}
+                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left transition-colors hover:bg-white/5"
+                  style={{ color: '#f0ece0' }}
+                >
+                  <span className="text-[15px]">{action.icon}</span>
+                  {action.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 

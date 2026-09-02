@@ -73,8 +73,13 @@ interface ParsedReceiptItem {
   editedQty: string
 }
 
-export function Expenses() {
-  const [activeTab, setActiveTab] = useState<'expenses' | 'feeders'>('expenses')
+interface ExpensesProps {
+  /** Opens straight onto a tab, so /feeders is a real destination. */
+  initialTab?: 'expenses' | 'feeders'
+}
+
+export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
+  const [activeTab, setActiveTab] = useState<'expenses' | 'feeders'>(initialTab)
 
   // ── Shared ────────────────────────────────────────────────────────────────
   const { user } = useAuth()

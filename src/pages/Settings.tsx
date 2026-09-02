@@ -15,9 +15,14 @@ import { Modal } from '@/components/ui/Modal'
 import { useVetContacts } from '@/hooks/useVetContacts'
 import type { VetContact } from '@/hooks/useVetContacts'
 
-export function Settings() {
+interface SettingsProps {
+  /** Opens straight onto a tab, so /import is a real destination. */
+  initialTab?: 'settings' | 'import'
+}
+
+export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   const navigate = useNavigate()
-  const [activeTab, setActiveTab] = useState<'settings' | 'import'>('settings')
+  const [activeTab, setActiveTab] = useState<'settings' | 'import'>(initialTab)
   const { user, profile, refreshProfile } = useAuth()
   const { householdId, householdName, inviteCode, members, currentUserRole, pendingRequests, refresh: refreshHousehold } = useHousehold()
   const { showToast } = useToast()
