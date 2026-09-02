@@ -705,6 +705,116 @@ export function AnimalDetail() {
     return '#8fbe5a'
   })()
 
+  // Rendered twice at different breakpoints — as functions rather than inline
+  // components so React keeps the same element identity across renders.
+  function renderQuickActions(className: string) {
+    // TypeScript drops the outer narrowing inside a closure over state.
+    if (!animal) return null
+    return (
+          <div className={`grid grid-cols-3 gap-2 ${className}`}>
+            {[
+              { label: 'Feed', icon: '🍖', action: () => setFeedOpen(true) },
+              { label: 'Weigh', icon: '⚖️', action: openAddWeight },
+              { label: 'Shed', icon: '🐍', action: openAddShed },
+            ].map(({ label, icon, action }) => (
+              <button key={label} onClick={action}
+                className="py-3 rounded-xl flex flex-col items-center gap-1.5 transition-colors active:scale-95"
+                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <span className="text-xl">{icon}</span>
+                <span className="text-xs font-medium" style={{ color: '#a8a090' }}>{label}</span>
+              </button>
+            ))}
+          </div>
+
+    )
+  }
+
+  function renderVitals(className: string) {
+    // TypeScript drops the outer narrowing inside a closure over state.
+    if (!animal) return null
+    return (
+          <div className={`grid grid-cols-2 gap-3 ${className}`}>
+            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-xs" style={{ color: '#6a6458' }}>Last fed</p>
+              <p className="text-base font-semibold mt-0.5" style={{ color: feedingStatusColor }}>
+                {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'MMM d') : '—'}
+              </p>
+              {daysSinceFed !== null && (
+                <p className="text-xs mt-0.5" style={{ color: feedingStatusColor }}>
+                  {daysSinceFed === 0 ? 'Today' : `${daysSinceFed}d ago`}
+                </p>
+              )}
+            </div>
+            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-xs" style={{ color: '#6a6458' }}>Next feeding</p>
+              <p className="text-base font-semibold mt-0.5" style={{ color: nextFeedColor }}>
+                {nextFeedingDue ? format(nextFeedingDue, 'MMM d') : '—'}
+              </p>
+              {daysUntilFeed !== null && (
+                <p className="text-xs mt-0.5" style={{ color: nextFeedColor }}>
+                  {daysUntilFeed < 0
+                    ? `${Math.abs(daysUntilFeed)}d overdue`
+                    : daysUntilFeed === 0 ? 'Today'
+                    : `In ${daysUntilFeed}d`}
+                </p>
+              )}
+              {!nextFeedingDue && animal.feeding_frequency_days && (
+                <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>every {animal.feeding_frequency_days}d</p>
+              )}
+            </div>
+            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-xs" style={{ color: '#6a6458' }}>Current weight</p>
+              <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
+                {animal.weight_grams ? `${animal.weight_grams}g` : '—'}
+                {weightTrend !== null && (
+                  <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#c45a5a' }}>
+                    {weightTrend >= 0 ? `+${weightTrend}` : weightTrend}
+                  </span>
+                )}
+              </p>
+              {weightSparkline && (
+                <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" className="mt-1.5 block" aria-hidden="true">
+                  <polyline
+                    points={weightSparkline}
+                    fill="none"
+                    stroke={weightTrend !== null && weightTrend < 0 ? '#c45a5a' : '#8fbe5a'}
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    vectorEffect="non-scaling-stroke"
+                  />
+                </svg>
+              )}
+            </div>
+            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="text-xs" style={{ color: '#6a6458' }}>Last shed</p>
+              <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
+                {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—'}
+              </p>
+              {predictedNextShed && (
+                <p className="text-xs mt-0.5" style={{ color: predictedNextShed < new Date() ? '#d4924a' : '#6a6458' }}>
+                  Next ~{format(predictedNextShed, 'MMM d')}
+                </p>
+              )}
+            </div>
+            {feedResponse && (
+              <div className="rounded-xl p-3 col-span-2" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <p className="text-xs" style={{ color: '#6a6458' }}>Takes food</p>
+                <p className="text-base font-semibold mt-0.5" style={{ color: feedResponse.color }}>
+                  {feedResponse.taken} of last {feedResponse.total}
+                </p>
+                <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                  {feedResponse.lastRefusedAt
+                    ? `Last refused ${format(feedResponse.lastRefusedAt, 'MMM d, yyyy')}`
+                    : 'No refusals on record'}
+                </p>
+              </div>
+            )}
+          </div>
+
+    )
+  }
+
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'timeline', label: 'Timeline' },
@@ -715,9 +825,13 @@ export function AnimalDetail() {
   ]
 
   return (
-    <div className="flex-1 max-w-3xl mx-auto w-full">
+    <div className="flex-1 w-full max-w-3xl lg:max-w-[1240px] mx-auto lg:grid lg:grid-cols-[380px_minmax(0,1fr)] lg:gap-7 lg:items-start lg:px-8 lg:py-6">
+      {/* Everything identifying the animal, plus everything you might log about
+          it. Above 1024 this pins to the left so it stays on screen while you
+          read the history beside it; below, it is simply the top of the page. */}
+      <aside className="lg:sticky lg:top-6">
       {/* Hero */}
-      <div className="relative h-52 sm:h-64" style={{ backgroundColor: '#1a1a18' }}>
+      <div className="relative h-52 sm:h-64 lg:h-60 lg:rounded-xl lg:overflow-hidden" style={{ backgroundColor: '#1a1a18' }}>
         {animal.photo_url ? (
           <img src={animal.photo_url} alt={animal.name} className="w-full h-full object-cover" />
         ) : (
@@ -751,7 +865,12 @@ export function AnimalDetail() {
             </p>
           )}
         </div>
+        {renderQuickActions('hidden lg:grid mb-4')}
+        {renderVitals('hidden lg:grid')}
+      </div>
+      </aside>
 
+      <div className="px-4 lg:px-0 relative z-10">
         {/* Tabs */}
         <div className="flex gap-1 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {tabs.map((t) => (
@@ -790,102 +909,10 @@ export function AnimalDetail() {
               </div>
             )}
 
-            {/* Quick log actions */}
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: 'Feed', icon: '🍖', action: () => setFeedOpen(true) },
-                { label: 'Weigh', icon: '⚖️', action: openAddWeight },
-                { label: 'Shed', icon: '🐍', action: openAddShed },
-              ].map(({ label, icon, action }) => (
-                <button key={label} onClick={action}
-                  className="py-3 rounded-xl flex flex-col items-center gap-1.5 transition-colors active:scale-95"
-                  style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <span className="text-xl">{icon}</span>
-                  <span className="text-xs font-medium" style={{ color: '#a8a090' }}>{label}</span>
-                </button>
-              ))}
-            </div>
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Last fed</p>
-                <p className="text-base font-semibold mt-0.5" style={{ color: feedingStatusColor }}>
-                  {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'MMM d') : '—'}
-                </p>
-                {daysSinceFed !== null && (
-                  <p className="text-xs mt-0.5" style={{ color: feedingStatusColor }}>
-                    {daysSinceFed === 0 ? 'Today' : `${daysSinceFed}d ago`}
-                  </p>
-                )}
-              </div>
-              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Next feeding</p>
-                <p className="text-base font-semibold mt-0.5" style={{ color: nextFeedColor }}>
-                  {nextFeedingDue ? format(nextFeedingDue, 'MMM d') : '—'}
-                </p>
-                {daysUntilFeed !== null && (
-                  <p className="text-xs mt-0.5" style={{ color: nextFeedColor }}>
-                    {daysUntilFeed < 0
-                      ? `${Math.abs(daysUntilFeed)}d overdue`
-                      : daysUntilFeed === 0 ? 'Today'
-                      : `In ${daysUntilFeed}d`}
-                  </p>
-                )}
-                {!nextFeedingDue && animal.feeding_frequency_days && (
-                  <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>every {animal.feeding_frequency_days}d</p>
-                )}
-              </div>
-              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Current weight</p>
-                <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
-                  {animal.weight_grams ? `${animal.weight_grams}g` : '—'}
-                  {weightTrend !== null && (
-                    <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#c45a5a' }}>
-                      {weightTrend >= 0 ? `+${weightTrend}` : weightTrend}
-                    </span>
-                  )}
-                </p>
-                {weightSparkline && (
-                  <svg width="100%" height="20" viewBox="0 0 100 20" preserveAspectRatio="none" className="mt-1.5 block" aria-hidden="true">
-                    <polyline
-                      points={weightSparkline}
-                      fill="none"
-                      stroke={weightTrend !== null && weightTrend < 0 ? '#c45a5a' : '#8fbe5a'}
-                      strokeWidth="1.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      vectorEffect="non-scaling-stroke"
-                    />
-                  </svg>
-                )}
-              </div>
-              <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Last shed</p>
-                <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
-                  {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—'}
-                </p>
-                {predictedNextShed && (
-                  <p className="text-xs mt-0.5" style={{ color: predictedNextShed < new Date() ? '#d4924a' : '#6a6458' }}>
-                    Next ~{format(predictedNextShed, 'MMM d')}
-                  </p>
-                )}
-              </div>
-              {feedResponse && (
-                <div className="rounded-xl p-3 col-span-2" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-xs" style={{ color: '#6a6458' }}>Takes food</p>
-                  <p className="text-base font-semibold mt-0.5" style={{ color: feedResponse.color }}>
-                    {feedResponse.taken} of last {feedResponse.total}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
-                    {feedResponse.lastRefusedAt
-                      ? `Last refused ${format(feedResponse.lastRefusedAt, 'MMM d, yyyy')}`
-                      : 'No refusals on record'}
-                  </p>
-                </div>
-              )}
-            </div>
-
+            {/* Below 1024 these sit in the Overview tab; above it they move
+                into the rail so they stay put while you read the history. */}
+            {renderQuickActions('lg:hidden')}
+            {renderVitals('lg:hidden')}
             {/* Recent feedings */}
             {feedingLogs.length > 0 && (
               <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1270,15 +1297,28 @@ export function AnimalDetail() {
                 )}
                 <div className="flex flex-col gap-2">
                   {feedingLogs.map((log) => (
-                    <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div key={log.id} className="rounded-xl p-3 flex items-center gap-3 lg:gap-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : '#5a9e6a' }} />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium" style={{ color: log.refused ? '#a8a090' : '#f0ece0' }}>
-                          {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
+                      {/* Every field below is stored on the row; a phone can show
+                          two of them, so above 1024 they get their own columns
+                          instead of being composed into one line. */}
+                      <div className="flex-1 min-w-0 lg:flex lg:items-center lg:gap-4">
+                        <p className="text-sm font-medium truncate lg:w-36 lg:shrink-0" style={{ color: log.refused ? '#a8a090' : '#f0ece0' }}>
+                          {log.refused && !log.prey_type ? 'Refused' : log.prey_type}
+                          <span className="lg:hidden">
+                            {log.prey_size ? ` (${log.prey_size})` : ''} ×{log.quantity}{log.refused ? ' · refused' : ''}
+                          </span>
                         </p>
-                        {log.notes && <p className="text-xs truncate" style={{ color: '#6a6458' }}>{log.notes}</p>}
+                        <p className="hidden lg:block lg:w-24 lg:shrink-0 text-sm truncate" style={{ color: '#a8a090' }}>{log.prey_size || '—'}</p>
+                        <p className="hidden lg:block lg:w-10 lg:shrink-0 text-sm tabular-nums" style={{ color: '#a8a090' }}>×{log.quantity}</p>
+                        <p className="hidden lg:block lg:w-20 lg:shrink-0 text-sm" style={{ color: log.refused ? '#c45a5a' : '#5a9e6a' }}>
+                          {log.refused ? 'Refused' : 'Taken'}
+                        </p>
+                        {log.notes
+                          ? <p className="text-xs truncate lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#6a6458' }}>{log.notes}</p>
+                          : <p className="hidden lg:block lg:flex-1 lg:min-w-0 text-sm" style={{ color: '#6a6458' }}>—</p>}
                       </div>
-                      <p className="text-xs shrink-0 mr-1" style={{ color: '#6a6458' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+                      <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: '#6a6458' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
                       <RecordActions onEdit={() => openEditFeed(log)} onDelete={() => handleDeleteFeed(log)} />
                     </div>
                   ))}

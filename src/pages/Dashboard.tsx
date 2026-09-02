@@ -362,7 +362,7 @@ export function Dashboard() {
   const activityIcon = { feeding: '🍽️', shedding: '🐍', weight: '⚖️' }
 
   return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-5xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 py-6 pb-24 md:pb-8 max-w-[1240px] mx-auto w-full">
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -488,24 +488,11 @@ export function Dashboard() {
         </div>
       )}
 
-      {/* Feeder stock — needed before you start feeding, not after */}
-      {lowStock.length > 0 && (
-        <Link
-          to="/expenses"
-          className="block mb-6 rounded-xl p-4"
-          style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.25)' }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium" style={{ color: '#d4924a' }}>Feeder stock is running low</p>
-            <span className="text-xs shrink-0" style={{ color: '#d4924a' }}>Stock &rarr;</span>
-          </div>
-          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
-            {lowStock.slice(0, 3).map((f) => `${f.name} — ${f.currentStock} left`).join(' · ')}
-            {lowStock.length > 3 && ` · and ${lowStock.length - 3} more`}
-          </p>
-        </Link>
-      )}
-
+      {/* Above 1024 the queue keeps the primary column and the two blocks you
+          read but rarely act on move into a rail. Below it they simply stack,
+          stock directly under the queue it affects. */}
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-6 lg:items-start">
+        <div className="min-w-0">
       {/* Today — feedings and doses, ordered by when they fall due */}
       {queue.length > 0 && (
         <div className="mb-6">
@@ -530,6 +517,16 @@ export function Dashboard() {
             )}
           </div>
           <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="hidden lg:flex items-center gap-3 px-4 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <span className="w-2.5 shrink-0" aria-hidden="true" />
+              <div className="flex-1 min-w-0 flex items-center gap-4">
+                <span className="w-52 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Animal</span>
+                <span className="w-32 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Status</span>
+                <span className="flex-1 min-w-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Detail</span>
+                <span className="w-28 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Where</span>
+              </div>
+              <span className="shrink-0" style={{ width: 62 }} aria-hidden="true" />
+            </div>
             {queue.map((item, i) => {
               const { animal, due } = item
               const daysLate = differenceInDays(new Date(), due)
@@ -577,13 +574,22 @@ export function Dashboard() {
                   ) : (
                     <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tone }} />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>
-                      {animal.name} <span className="font-normal" style={{ color: tone }}>· {when}</span>
+                  <div className="flex-1 min-w-0 lg:flex lg:items-center lg:gap-4">
+                    <div className="min-w-0 lg:w-52 lg:shrink-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>
+                        {animal.name}
+                        <span className="font-normal lg:hidden" style={{ color: tone }}> · {when}</span>
+                      </p>
+                      <p className="hidden lg:block text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>
+                        {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}
+                      </p>
+                    </div>
+                    <p className="hidden lg:block lg:w-32 lg:shrink-0 text-sm truncate" style={{ color: tone }}>{when}</p>
+                    <p className="text-xs mt-0.5 truncate lg:mt-0 lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#6a6458' }}>
+                      {detail}
+                      <span className="lg:hidden">{where ? ` · ${where}` : ''}</span>
                     </p>
-                    <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>
-                      {detail}{where ? ` · ${where}` : ''}
-                    </p>
+                    <p className="hidden lg:block lg:w-28 lg:shrink-0 text-sm truncate" style={{ color: '#6a6458' }}>{where ?? '—'}</p>
                   </div>
                   {!selectMode && (
                     item.kind === 'dose' ? (
@@ -632,7 +638,25 @@ export function Dashboard() {
           </div>
         </div>
       )}
-
+        </div>
+        <div className="min-w-0">
+      {/* Feeder stock — needed before you start feeding, not after */}
+      {lowStock.length > 0 && (
+        <Link
+          to="/expenses"
+          className="block mb-6 rounded-xl p-4"
+          style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.25)' }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: '#d4924a' }}>Feeder stock is running low</p>
+            <span className="text-xs shrink-0" style={{ color: '#d4924a' }}>Stock &rarr;</span>
+          </div>
+          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+            {lowStock.slice(0, 3).map((f) => `${f.name} — ${f.currentStock} left`).join(' · ')}
+            {lowStock.length > 3 && ` · and ${lowStock.length - 3} more`}
+          </p>
+        </Link>
+      )}
       {/* Recent activity */}
       <div>
         <h2 className="text-base font-semibold mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Recent activity</h2>
@@ -666,6 +690,8 @@ export function Dashboard() {
             ))}
           </div>
         )}
+      </div>
+        </div>
       </div>
 
       {/* FAB speed dial (mobile only) */}

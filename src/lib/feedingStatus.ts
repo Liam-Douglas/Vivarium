@@ -46,6 +46,17 @@ export function getNextFeedingDue(animal: FeedingSchedule): Date | null {
   return addDays(new Date(animal.last_fed_at), animal.feeding_frequency_days)
 }
 
+/** "4 days overdue", "Due tomorrow", or the status label when untracked. */
+export function describeNextFeeding(animal: FeedingSchedule, now: Date = new Date()): string {
+  const nextDue = getNextFeedingDue(animal)
+  if (!nextDue) return FEEDING_STATUS_META[getFeedingStatus(animal, now)].label
+  const days = differenceInCalendarDays(nextDue, now)
+  if (days < 0) return `${Math.abs(days)} day${days !== -1 ? 's' : ''} overdue`
+  if (days === 0) return 'Due today'
+  if (days === 1) return 'Due tomorrow'
+  return `Due in ${days} days`
+}
+
 /**
  * True when the app has no basis for a due date, so the animal can never
  * appear in a feeding queue. These need setting up, not feeding.

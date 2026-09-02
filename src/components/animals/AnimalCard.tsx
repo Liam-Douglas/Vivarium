@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom'
-import { differenceInCalendarDays } from 'date-fns'
 import type { Animal } from '@/hooks/useAnimals'
-import { getFeedingStatus, getNextFeedingDue, FEEDING_STATUS_META } from '@/lib/feedingStatus'
+import { getFeedingStatus, describeNextFeeding, FEEDING_STATUS_META } from '@/lib/feedingStatus'
 
 interface AnimalCardProps {
   animal: Animal
@@ -15,15 +14,7 @@ export function AnimalCard({ animal, enclosureName }: AnimalCardProps) {
 
   // When the animal is next due, not when it last ate — the same number of days
   // is fine for one animal and overdue for another; only the schedule knows.
-  const nextDue = getNextFeedingDue(animal)
-  const dueLabel = (() => {
-    if (!nextDue) return status.label
-    const days = differenceInCalendarDays(nextDue, new Date())
-    if (days < 0) return `${Math.abs(days)} day${days !== -1 ? 's' : ''} overdue`
-    if (days === 0) return 'Due today'
-    if (days === 1) return 'Due tomorrow'
-    return `Due in ${days} days`
-  })()
+  const dueLabel = describeNextFeeding(animal)
 
   return (
     <Link
