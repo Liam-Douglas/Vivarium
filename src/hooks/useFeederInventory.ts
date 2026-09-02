@@ -17,6 +17,15 @@ export interface FeederItemWithStock extends FeederItem {
   currentStock: number
 }
 
+/**
+ * The threshold rule, in one place. The Expenses page's shopping list and the
+ * dashboard's stock warning must agree on what "low" means, or the dashboard
+ * flags items the list does not offer to buy.
+ */
+export function isLowStock(item: FeederItemWithStock): boolean {
+  return item.currentStock < item.low_stock_threshold
+}
+
 export function useFeederInventory() {
   const { householdId } = useHousehold()
   const [data, setData] = useState<FeederItemWithStock[]>([])

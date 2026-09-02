@@ -8,6 +8,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { AnimalCard } from '@/components/animals/AnimalCard'
 import { AnimalForm } from '@/components/animals/AnimalForm'
+import { BatchFeedForm } from '@/components/feeding/BatchFeedForm'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -16,10 +17,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { AnimalCardSkeleton } from '@/components/ui/LoadingSkeleton'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
-import { logFeeding, createEnclosure, updateEnclosure, deleteEnclosure } from '@/lib/queries'
-import { findMatchingFeeder } from '@/lib/feederMatch'
-import { useFeederInventory } from '@/hooks/useFeederInventory'
-import { dateInputToISO } from '@/lib/dates'
+import { createEnclosure, updateEnclosure, deleteEnclosure } from '@/lib/queries'
 import type { Animal } from '@/hooks/useAnimals'
 
 type SortKey = 'name-asc' | 'name-desc' | 'overdue-first' | 'recently-fed'
@@ -52,7 +50,6 @@ function getAnimalFeedingColor(animal: Animal): string {
 export function Animals() {
   const { data: animals, loading, error, refresh } = useAnimals()
   const { data: enclosures, loading: enclosuresLoading, refresh: refreshEnclosures } = useEnclosures()
-  const { data: feeders, refresh: refreshFeeders } = useFeederInventory()
   const { canAddAnimal, user } = useAuth()
   const { householdId } = useHousehold()
   const { showToast } = useToast()
@@ -77,12 +74,6 @@ export function Animals() {
   // Batch feed state
   const [batchFeedEnclosure, setBatchFeedEnclosure] = useState<Enclosure | null>(null)
   const [batchFeedOpen, setBatchFeedOpen] = useState(false)
-  const [batchFeedDate, setBatchFeedDate] = useState(new Date().toISOString().split('T')[0])
-  const [batchFeedPreyType, setBatchFeedPreyType] = useState('')
-  const [batchFeedPreySize, setBatchFeedPreySize] = useState('')
-  const [batchFeedQuantity, setBatchFeedQuantity] = useState('1')
-  const [batchFeedNotes, setBatchFeedNotes] = useState('')
-  const [batchFeedLoading, setBatchFeedLoading] = useState(false)
 
   const presentCategories = useMemo(() => {
     const seen = new Set(animals.map((a) => categorize(a.species)))
@@ -174,73 +165,10 @@ export function Animals() {
   }
 
   function openBatchFeed(enc: Enclosure) {
+    // BatchFeedForm holds its own field state and the modal unmounts it on
+    // close, so each open starts clean without resetting anything here.
     setBatchFeedEnclosure(enc)
-    setBatchFeedDate(new Date().toISOString().split('T')[0])
-    setBatchFeedPreyType('')
-    setBatchFeedPreySize('')
-    setBatchFeedQuantity('1')
-    setBatchFeedNotes('')
     setBatchFeedOpen(true)
-  }
-
-  async function handleBatchFeed() {
-    if (!user || !householdId || !batchFeedEnclosure) return
-    const enclosureAnimals = animals.filter(a => a.enclosure_id === batchFeedEnclosure.id)
-    if (enclosureAnimals.length === 0) return
-    setBatchFeedLoading(true)
-    try {
-      const fedAt = dateInputToISO(batchFeedDate)
-      const preyType = batchFeedPreyType.trim() || 'Unknown'
-      const preySize = batchFeedPreySize.trim() || undefined
-      const quantity = Math.max(1, parseInt(batchFeedQuantity) || 1)
-      const feeder = findMatchingFeeder(feeders, preyType, preySize)
-
-      // Same atomic path as a single feeding — log, last_fed_at and stock
-      // deduction in one transaction per animal. The previous sequential
-      // createFeedingLog + updateAnimal pair skipped stock entirely, so a
-      // rack feed silently left the inventory untouched.
-      const results = await Promise.allSettled(enclosureAnimals.map((a) =>
-        logFeeding({
-          household_id: householdId,
-          animal_id: a.id,
-          user_id: user.id,
-          fed_at: fedAt,
-          prey_type: preyType,
-          prey_size: preySize,
-          quantity,
-          refused: false,
-          notes: batchFeedNotes.trim() || undefined,
-          feeder_item_id: feeder?.id ?? null,
-          stock_note: `Fed to ${a.name}`,
-        })
-      ))
-
-      const failed = results.filter((r) => r.status === 'rejected').length
-      const fed = enclosureAnimals.length - failed
-      const stockError = results.find(
-        (r): r is PromiseFulfilledResult<{ stockError: string | null }> =>
-          r.status === 'fulfilled' && r.value.stockError !== null
-      )?.value.stockError
-
-      if (feeder) refreshFeeders()
-
-      // Close either way: the successful writes are already committed, so
-      // re-running the batch would feed those animals twice.
-      setBatchFeedOpen(false)
-      refresh()
-
-      if (failed > 0) {
-        showToast(`Fed ${fed} of ${enclosureAnimals.length} — ${failed} failed`, 'error')
-      } else if (stockError) {
-        showToast(`Fed ${fed} animal${fed !== 1 ? 's' : ''} but stock not updated — ${stockError}`, 'error')
-      } else {
-        showToast(`Fed ${fed} animal${fed !== 1 ? 's' : ''}`, 'success')
-      }
-    } catch (e) {
-      showToast(e instanceof Error ? e.message : 'Batch feed failed', 'error')
-    } finally {
-      setBatchFeedLoading(false)
-    }
   }
 
   const hasActiveFilter = search || categoryFilter
@@ -344,7 +272,11 @@ export function Animals() {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {displayed.map((animal) => (
-                <AnimalCard key={animal.id} animal={animal} />
+                <AnimalCard
+                  key={animal.id}
+                  animal={animal}
+                  enclosureName={enclosures.find((e) => e.id === animal.enclosure_id)?.name}
+                />
               ))}
             </div>
           )}
@@ -494,57 +426,11 @@ export function Animals() {
         onClose={() => setBatchFeedOpen(false)}
         title={`Feed all — ${batchFeedEnclosure?.name ?? ''}`}
       >
-        <div className="flex flex-col gap-4">
-          {batchFeedEnclosure && (
-            <p className="text-sm" style={{ color: '#a8a090' }}>
-              Creates a feeding log for each animal in this enclosure (
-              {animals.filter(a => a.enclosure_id === batchFeedEnclosure.id).length} animals).
-            </p>
-          )}
-          <Input
-            label="Date"
-            type="date"
-            value={batchFeedDate}
-            onChange={(e) => setBatchFeedDate(e.target.value)}
-          />
-          <Input
-            label="Prey type"
-            value={batchFeedPreyType}
-            onChange={(e) => setBatchFeedPreyType(e.target.value)}
-            placeholder="e.g. Frozen rat"
-          />
-          <div className="flex gap-3">
-            <Input
-              label="Prey size"
-              value={batchFeedPreySize}
-              onChange={(e) => setBatchFeedPreySize(e.target.value)}
-              placeholder="e.g. Medium"
-            />
-            <Input
-              label="Qty per animal"
-              type="number"
-              min={1}
-              value={batchFeedQuantity}
-              onChange={(e) => setBatchFeedQuantity(e.target.value)}
-              placeholder="1"
-            />
-          </div>
-          <Textarea
-            label="Notes"
-            value={batchFeedNotes}
-            onChange={(e) => setBatchFeedNotes(e.target.value)}
-            placeholder="Optional notes…"
-            rows={2}
-          />
-          <div className="flex gap-2 pt-2">
-            <Button variant="secondary" type="button" onClick={() => setBatchFeedOpen(false)} fullWidth>
-              Cancel
-            </Button>
-            <Button type="button" loading={batchFeedLoading} onClick={handleBatchFeed} fullWidth>
-              Log feeding
-            </Button>
-          </div>
-        </div>
+        <BatchFeedForm
+          animals={animals.filter((a) => a.enclosure_id === batchFeedEnclosure?.id)}
+          onSuccess={() => { setBatchFeedOpen(false); refresh() }}
+          onCancel={() => setBatchFeedOpen(false)}
+        />
       </Modal>
     </div>
   )
