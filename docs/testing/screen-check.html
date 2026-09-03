@@ -1,0 +1,176 @@
+<title>Screen Check Runbook</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f4f5f0; --surface: #fbfbf8;
+    --ink: #22241d; --ink-2: #55594c; --ink-3: #82877a;
+    --accent: #4e7a25; --accent-soft: rgba(78,122,37,0.10);
+    --line: rgba(34,36,29,0.13); --line-soft: rgba(34,36,29,0.07);
+    --warn: #9a5f18; --risk: #a33c3c; --risk-soft: rgba(163,60,60,0.08);
+    --display: 'Playfair Display', Georgia, serif;
+    --body: 'DM Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #1a1a18; --surface: #242420;
+      --ink: #f0ece0; --ink-2: #a8a090; --ink-3: #6a6458;
+      --accent: #8fbe5a; --accent-soft: rgba(143,190,90,0.12);
+      --line: rgba(255,255,255,0.10); --line-soft: rgba(255,255,255,0.055);
+      --warn: #d4924a; --risk: #c45a5a; --risk-soft: rgba(196,90,90,0.09);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #1a1a18; --surface: #242420;
+    --ink: #f0ece0; --ink-2: #a8a090; --ink-3: #6a6458;
+    --accent: #8fbe5a; --accent-soft: rgba(143,190,90,0.12);
+    --line: rgba(255,255,255,0.10); --line-soft: rgba(255,255,255,0.055);
+    --warn: #d4924a; --risk: #c45a5a; --risk-soft: rgba(196,90,90,0.09);
+  }
+  * { box-sizing: border-box; }
+  body { background: var(--ground); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 56px 28px 96px; }
+  h1, h2, h3 { font-family: var(--display); text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  a { color: var(--accent); }
+  code { font-family: var(--mono); font-size: 0.85em; background: var(--accent-soft); padding: 0.1em 0.36em; border-radius: 4px; color: var(--ink); }
+  pre { font-family: var(--mono); font-size: 13px; line-height: 1.65; background: var(--surface); border: 1px solid var(--line);
+        border-radius: 10px; padding: 14px 16px; overflow-x: auto; margin: 14px 0 0; color: var(--ink); }
+  .eyebrow { font-size: 11px; font-weight: 600; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink-3); }
+
+  header { border-bottom: 1px solid var(--line); padding-bottom: 26px; margin-bottom: 38px; }
+  h1 { font-size: 40px; font-weight: 700; line-height: 1.08; margin: 10px 0 0; letter-spacing: -0.015em; }
+  .thesis { font-size: 17px; line-height: 1.55; color: var(--ink-2); margin-top: 13px; max-width: 62ch; }
+
+  .step { display: grid; grid-template-columns: 42px 1fr; gap: 20px; }
+  .spine { display: flex; flex-direction: column; align-items: center; }
+  .num { font-family: var(--mono); font-size: 12px; font-weight: 500; width: 30px; height: 30px; border-radius: 50%;
+         display: flex; align-items: center; justify-content: center; border: 1px solid var(--line);
+         color: var(--ink-2); background: var(--surface); flex-shrink: 0; }
+  .rule { flex: 1; width: 1px; background: var(--line); margin: 9px 0 0; }
+  .step .body { padding-bottom: 38px; min-width: 0; }
+  .step:last-child .body { padding-bottom: 0; }
+  .step h2 { font-size: 21px; font-weight: 600; letter-spacing: -0.01em; }
+  .step p + p, .step ul + p, .step pre + p { margin-top: 12px; }
+  .step p, .step li { color: var(--ink-2); }
+  .step strong { color: var(--ink); font-weight: 500; }
+  ul { margin: 12px 0 0; padding-left: 18px; }
+  li { margin-bottom: 6px; line-height: 1.55; }
+
+  .checks { margin-top: 16px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .w { display: flex; align-items: baseline; gap: 10px; padding: 11px 16px; border-bottom: 1px solid var(--line); }
+  .w b { font-family: var(--mono); font-size: 13px; font-weight: 500; color: var(--ink); }
+  .w span { font-size: 12px; color: var(--ink-3); }
+  .check { display: grid; grid-template-columns: 18px 1fr; gap: 11px; padding: 11px 16px; border-bottom: 1px solid var(--line-soft); }
+  .check:last-child { border-bottom: none; }
+  .box { width: 14px; height: 14px; border: 1px solid var(--ink-3); border-radius: 3px; margin-top: 4px; }
+  .check p { font-size: 14px; line-height: 1.5; }
+  .check .bad { display: block; margin-top: 3px; font-size: 12.5px; color: var(--risk); }
+
+  .warnbox { margin-top: 16px; padding: 16px 18px; border-radius: 10px; background: var(--risk-soft); border: 1px solid rgba(163,60,60,0.28); }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .warnbox { border-color: rgba(196,90,90,0.3); } }
+  :root[data-theme="dark"] .warnbox { border-color: rgba(196,90,90,0.3); }
+  .warnbox p:first-child { font-size: 15px; font-weight: 600; color: var(--risk); }
+  .warnbox p + p { margin-top: 7px; font-size: 14px; }
+
+  footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-3); }
+  @media (max-width: 620px) { .wrap { padding: 34px 18px 60px; } h1 { font-size: 30px; } .step { grid-template-columns: 30px 1fr; gap: 14px; } }
+</style>
+
+<div class="wrap">
+
+<header>
+  <p class="eyebrow">Vivarium · verification</p>
+  <h1>Screen Check Runbook</h1>
+  <p class="thesis">Phase 5 rebuilt every screen's layout and was verified by type-checking and construction, never in a browser — the app needs Supabase credentials to render past sign-in. This is the pass that closes that gap.</p>
+</header>
+
+<div class="step">
+  <div class="spine"><div class="num">1</div><div class="rule"></div></div>
+  <div class="body">
+    <h2>Point it at Supabase</h2>
+    <p>Two variables, read in <code>src/lib/supabase.ts</code>. The app throws on boot without them, so a blank screen here means the file is missing or misnamed.</p>
+<pre># .env.local  — in the repo root
+VITE_SUPABASE_URL=https://&lt;your-project&gt;.supabase.co
+VITE_SUPABASE_ANON_KEY=&lt;your anon/publishable key&gt;</pre>
+    <p><strong>Use <code>.env.local</code>, not <code>.env</code>.</strong> <code>.gitignore</code> covers <code>*.local</code>, so <code>.env.local</code> cannot be committed by accident — a bare <code>.env</code> is not ignored and would be. The anon key is meant to be public, but a service-role key in a committed file is a real incident.</p>
+<pre>npm install
+npm run dev        # http://localhost:5173</pre>
+  </div>
+</div>
+
+<div class="step">
+  <div class="spine"><div class="num">2</div><div class="rule"></div></div>
+  <div class="body">
+    <h2>Seed a collection you can predict</h2>
+    <p>Most of what changed only appears in particular states — an empty account shows almost none of it. Two fixtures generate a collection where every state is reachable, with dates written relative to the day you run them.</p>
+<pre>node scripts/make-test-fixtures.mjs busy
+node scripts/make-test-fixtures.mjs quiet
+# → fixtures/vivarium-busy.xlsx, fixtures/vivarium-quiet.xlsx</pre>
+    <p>Sign up, create a household, then import one at <code>/import</code> (or Settings → Import, or More → Import on a phone). The sheets are named to match the app's own template, so the wizard classifies them without help.</p>
+    <ul>
+      <li><strong>busy</strong> — 2 overdue, 1 due soon, 1 due in two days, 1 on schedule, plus one animal with <em>no feeding schedule</em> and one <em>never fed</em>. Populates the Today queue and the untracked notice.</li>
+      <li><strong>quiet</strong> — nothing due inside three days, so the queue empties and <em>Coming up</em> and <em>Worth a look</em> take over. Import into a second household, or delete the animals between runs.</li>
+    </ul>
+    <p>Three states the importer cannot set, each a couple of clicks if you want them: <strong>a weight</strong> (log one on any animal, then the Overview sparkline and the growth chart appear), <strong>quarantine</strong> (edit an animal, set a quarantine start), and <strong>a medication course</strong> (Health tab → add a schedule with an interval and a start date, which is what puts a blue dose row in the queue).</p>
+  </div>
+</div>
+
+<div class="step">
+  <div class="spine"><div class="num">3</div><div class="rule"></div></div>
+  <div class="body">
+    <h2>Walk the three widths</h2>
+    <p>Devtools responsive mode is enough. Resize rather than reload where you can — the folds are pure CSS, so a layout that only settles after a refresh is itself a finding.</p>
+
+    <div class="checks">
+      <div class="w"><b>390px</b><span>phone</span></div>
+      <div class="check"><span class="box"></span><p>Bottom nav shows five tabs: Home, Animals, Feeding, Stats, More. <strong>Feeding and Stats were unreachable on a phone before this.</strong></p></div>
+      <div class="check"><span class="box"></span><p>More opens a sheet sitting flush on the bar, with Expenses, feeder stock, import and settings.<span class="bad">A gap or overlap here means the safe-area handling is off — this replaced a hardcoded 64px offset.</span></p></div>
+      <div class="check"><span class="box"></span><p>The FAB opens five actions; each opens its modal.</p></div>
+      <div class="check"><span class="box"></span><p>Queue rows are two lines — name and status on the first, last meal and enclosure on the second — with a 44px Feed button.</p></div>
+      <div class="check"><span class="box"></span><p>No horizontal scroll on any screen, including the animal profile's Logs tab.</p></div>
+    </div>
+
+    <div class="checks">
+      <div class="w"><b>768px</b><span>tablet — the md breakpoint</span></div>
+      <div class="check"><span class="box"></span><p>Sidebar replaces the bottom nav, and every destination in that sheet is still reachable.</p></div>
+      <div class="check"><span class="box"></span><p>The FAB is gone and the split button has taken its place, with the same five actions behind the chevron. It closes on Escape and on an outside click.</p></div>
+      <div class="check"><span class="box"></span><p>Rows are still two lines here — columns start at 1024, not 768.</p></div>
+    </div>
+
+    <div class="checks">
+      <div class="w"><b>1440px</b><span>desktop — the lg breakpoint</span></div>
+      <div class="check"><span class="box"></span><p>Queue rows have unfolded into columns and each lines up under its header: Animal, Status, Detail, Where.<span class="bad">Known suspect: in Select mode the 16px checkbox replaces a 10px dot, so the row may shift against the header.</span></p></div>
+      <div class="check"><span class="box"></span><p>Dashboard is two columns — queue on the left, stock and activity in a 380px rail. Content stops at 1240px rather than filling the window.</p></div>
+      <div class="check"><span class="box"></span><p>The animal profile's identity stack is a rail on the left and stays put while the tab content scrolls.<span class="bad">Known suspect: on a short viewport the rail is taller than the window, so sticky has nothing to hold. Check at 1440×700.</span></p></div>
+      <div class="check"><span class="box"></span><p>Quick actions and the vitals grid appear <em>once</em> — in the rail, not also inside Overview.</p></div>
+      <div class="check"><span class="box"></span><p>Logs → Feeding shows prey, size, quantity, result and notes as separate columns.</p></div>
+      <div class="check"><span class="box"></span><p>Animals list mode is a compact table; the grid/list choice survives a reload.</p></div>
+    </div>
+  </div>
+</div>
+
+<div class="step">
+  <div class="spine"><div class="num">4</div></div>
+  <div class="body">
+    <h2>Then the quiet fixture</h2>
+    <p>Import <code>vivarium-quiet.xlsx</code> and check the states that only exist when nothing is due — the case that would otherwise have left the dashboard near-blank.</p>
+    <div class="checks">
+      <div class="w"><b>Quiet collection</b><span>390 and 1440</span></div>
+      <div class="check"><span class="box"></span><p>The greeting reads <em>Nothing due today</em> — and, because two animals are untracked, it says so rather than implying all-clear.</p></div>
+      <div class="check"><span class="box"></span><p><em>Coming up</em> has taken the queue's slot, listing the next seven days with dates instead of Feed buttons.</p></div>
+      <div class="check"><span class="box"></span><p><em>Worth a look</em> leads with the unscheduled animals and shows at most four rows.</p></div>
+      <div class="check"><span class="box"></span><p>Stock reads as a two-week projection rather than a threshold warning.</p></div>
+      <div class="check"><span class="box"></span><p>Re-import the busy fixture: <em>Worth a look</em> disappears entirely. It must yield to a queue.</p></div>
+    </div>
+
+    <div class="warnbox">
+      <p>If the Overdue tile is ever green while an animal has no schedule</p>
+      <p>That is the original false all-clear returning. It should read amber with “of N tracked”, and the untracked notice should name Ivy and Root. Both fixtures include those two animals precisely so this is checkable on every pass.</p>
+    </div>
+  </div>
+</div>
+
+<footer>Fixtures are generated, not committed — regenerate them rather than reusing old files, since the dates are relative to the day they are made.</footer>
+
+</div>

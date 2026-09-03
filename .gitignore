@@ -29,3 +29,6 @@ dist-ssr
 # Seeded design canvas — 2.6MB generated bundle, rebuilt from docs/design/markups/*.dc.html
 docs/design/markups/*.html
 !docs/design/markups/*.dc.html
+
+# Generated test fixtures (dates are relative to when they were made)
+fixtures/
