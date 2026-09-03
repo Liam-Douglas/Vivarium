@@ -15,7 +15,7 @@ coherent if you stop after any of them.
 | ✓ | Surface what already exists | M | shipped |
 | ✓ | Navigation and action parity | S | shipped |
 | ✓ | Make it responsive | L | shipped |
-| 6 | The quiet states | M | 1, 5 |
+| ✓ | The quiet states | M | shipped |
 
 **Phase 2 note.** Folding the Feeding and Vitals tabs into Timeline was dropped: both
 hold charts (per-month feedings, the growth chart with its localStorage target-weight
@@ -51,5 +51,7 @@ No Supabase migration is required. `medication_logs`, `medication_schedules`,
 loops the existing RPC rather than adding `log_feedings` (decision 6); vitest was added
 early, before Phase 3 rather than before Phase 6 (decision 7).
 
-The remaining open question is where the Feeding and Vitals tab charts should live —
-see the Phase 2 note above.
+All six phases are shipped. Two things remain open: where the Feeding and Vitals tab
+charts should live (see the Phase 2 note above), and a browser pass over Phase 5's
+responsive work at 390, 768 and 1440 against a real Supabase environment — that phase
+was verified by construction and type-checking, not visually.

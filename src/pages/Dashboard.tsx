@@ -19,6 +19,10 @@ import { useEnclosures } from '@/hooks/useEnclosures'
 import { useFeederInventory, isLowStock } from '@/hooks/useFeederInventory'
 import { useMedicationSchedules } from '@/hooks/useMedicationSchedules'
 import { useMedicationLogs } from '@/hooks/useMedicationLogs'
+import { useWeightLogs } from '@/hooks/useWeightLogs'
+import { useSheddingLogs } from '@/hooks/useSheddingLogs'
+import { buildAttentionItems } from '@/lib/husbandry'
+import { projectFeederDemand, type UsualMeal } from '@/lib/feederProjection'
 import { AnimalForm } from '@/components/animals/AnimalForm'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -30,6 +34,11 @@ import { useToast } from '@/components/ui/Toast'
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
 
 type ActiveModal = 'animal' | 'feeding' | 'shed' | 'weight' | 'expense' | 'batch' | null
+
+/** Due inside this many days counts as today's work. */
+const DUE_WINDOW_DAYS = 3
+/** How far ahead "Coming up" looks once nothing is due. */
+const QUIET_WINDOW_DAYS = 7
 
 /** A thing due today: a feeding, or a dose from a running medication course. */
 type QueueItem =
@@ -83,6 +92,8 @@ export function Dashboard() {
   const { data: feeders } = useFeederInventory()
   const { data: medSchedules } = useMedicationSchedules()
   const { data: medLogs, refresh: refreshMedLogs } = useMedicationLogs()
+  const { data: allWeightLogs } = useWeightLogs()
+  const { data: allShedLogs } = useSheddingLogs()
   const { showToast } = useToast()
 
   const strikeAnimals = useMemo(() => {
@@ -181,6 +192,7 @@ export function Dashboard() {
   // more time-critical than a feed, and both tables have always existed
   // without ever reaching a screen.
   const queue = useMemo<QueueItem[]>(() => {
+    // Anything landing inside this window is today's work.
     const now = new Date()
     const animalById = new Map(animals.map((a) => [a.id, a]))
 
@@ -195,7 +207,7 @@ export function Dashboard() {
       .filter((item): item is Extract<QueueItem, { kind: 'feeding' }> =>
         item.due !== null && (
           item.status === 'overdue' || item.status === 'due-soon' ||
-          (item.status === 'on-schedule' && differenceInDays(item.due, now) <= 3)))
+          (item.status === 'on-schedule' && differenceInDays(item.due, now) <= DUE_WINDOW_DAYS)))
 
     const doses: QueueItem[] = medSchedules.flatMap((schedule) => {
       const animal = animalById.get(schedule.animal_id)
@@ -212,6 +224,42 @@ export function Dashboard() {
 
   /** Feeder items at or below their configured low-stock threshold. */
   const lowStock = useMemo(() => feeders.filter(isLowStock), [feeders])
+
+  // With nothing due, the queue does not vanish — it widens its horizon. Same
+  // card, same rows, same position; a date replaces the action because nothing
+  // here is actionable yet.
+  const comingUp = useMemo(() => {
+    if (queue.length > 0) return []
+    const now = new Date()
+    return animals
+      .map((animal) => ({ animal, due: getNextFeedingDue(animal) }))
+      .filter((item): item is { animal: Animal; due: Date } =>
+        item.due !== null && differenceInDays(item.due, now) <= QUIET_WINDOW_DAYS)
+      .sort((a, b) => a.due.getTime() - b.due.getTime())
+  }, [animals, queue.length])
+
+  // Husbandry that is always true but never urgent. It yields entirely to a
+  // queue, so it can only ever fill a quiet day.
+  const attention = useMemo(() => {
+    if (queue.length > 0) return []
+    return buildAttentionItems({
+      animals,
+      weights: allWeightLogs.map((w) => ({ animal_id: w.animal_id, at: w.logged_at })),
+      sheds: allShedLogs.map((sh) => ({ animal_id: sh.animal_id, at: sh.shed_at })),
+    })
+  }, [animals, allWeightLogs, allShedLogs, queue.length])
+
+  // Schedules give the burn rate, so stock can answer "will I run out?" rather
+  // than only shouting once it already has.
+  const projection = useMemo(() => {
+    const usualMeals = new Map<string, UsualMeal>()
+    lastMealByAnimal.forEach((meal, animalId) => {
+      if (!meal.refused) {
+        usualMeals.set(animalId, { preyType: meal.prey_type, preySize: meal.prey_size, quantity: meal.quantity })
+      }
+    })
+    return projectFeederDemand({ animals, usualMeals, feeders })
+  }, [animals, lastMealByAnimal, feeders])
 
 
   // Animals with no schedule, or a schedule but no feeding logged, can never
@@ -638,10 +686,93 @@ export function Dashboard() {
           </div>
         </div>
       )}
+      {/* The queue widened rather than emptied: same slot, same rows, a date
+          where the action was. */}
+      {comingUp.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center justify-between gap-2 mb-3">
+            <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Coming up</h2>
+            <span className="text-xs" style={{ color: '#6a6458' }}>Next {QUIET_WINDOW_DAYS} days</span>
+          </div>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {comingUp.map(({ animal, due }, i) => (
+              <Link
+                key={animal.id}
+                to={`/animals/${animal.id}`}
+                className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.02]"
+                style={{ borderBottom: i < comingUp.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+              >
+                <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: '#5a9e6a', opacity: 0.5 }} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{animal.name}</p>
+                  <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>
+                    {animal.species}{enclosureName(animal.enclosure_id) ? ` · ${enclosureName(animal.enclosure_id)}` : ''}
+                  </p>
+                </div>
+                <span className="text-sm shrink-0" style={{ color: '#a8a090' }}>{format(due, 'EEE d MMM')}</span>
+                <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2} className="shrink-0">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            ))}
+            <Link
+              to="/animals"
+              className="flex items-center justify-center h-11 text-sm"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.04)', color: '#a8a090' }}
+            >
+              View all {animals.length} animal{animals.length !== 1 ? 's' : ''} &rarr;
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* Always true, never urgent — so it only ever fills a quiet day. */}
+      {attention.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-base font-semibold mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Worth a look</h2>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {attention.map((item, i) => (
+              <div
+                key={item.id}
+                className="flex items-start gap-3 px-4 py-3"
+                style={{ borderBottom: i < attention.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+              >
+                <span
+                  className="w-1.5 h-1.5 rounded-full shrink-0 mt-1.5"
+                  style={{ backgroundColor: item.tone === 'warn' ? '#d4924a' : item.tone === 'info' ? '#5a8fbe' : '#6a6458' }}
+                />
+                <div className="min-w-0">
+                  <p className="text-sm" style={{ color: '#f0ece0' }}>{item.title}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{item.detail}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
         </div>
         <div className="min-w-0">
-      {/* Feeder stock — needed before you start feeding, not after */}
-      {lowStock.length > 0 && (
+      {/* Projection first: the threshold only fires once you are already
+          short, while the schedules can say whether you will be. */}
+      {!projection.covered ? (
+        <Link
+          to="/expenses"
+          className="block mb-6 rounded-xl p-4"
+          style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.25)' }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: '#d4924a' }}>
+              Stock will not cover the next {projection.days} days
+            </p>
+            <span className="text-xs shrink-0" style={{ color: '#d4924a' }}>Stock &rarr;</span>
+          </div>
+          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+            {projection.short.slice(0, 3).map((s) => `${s.feeder.name} — need ${s.needed}, have ${s.stock}`).join(' · ')}
+            {projection.short.length > 3 && ` · and ${projection.short.length - 3} more`}
+          </p>
+        </Link>
+      ) : lowStock.length > 0 ? (
         <Link
           to="/expenses"
           className="block mb-6 rounded-xl p-4"
@@ -656,7 +787,24 @@ export function Dashboard() {
             {lowStock.length > 3 && ` · and ${lowStock.length - 3} more`}
           </p>
         </Link>
-      )}
+      ) : projection.feeds > 0 ? (
+        <Link
+          to="/expenses"
+          className="block mb-6 rounded-xl p-4"
+          style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+              Feeder stock covers the next {projection.days} days
+            </p>
+            <span className="text-xs shrink-0" style={{ color: '#8fbe5a' }}>Stock &rarr;</span>
+          </div>
+          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+            {projection.feeds} feeding{projection.feeds !== 1 ? 's' : ''} scheduled
+          </p>
+        </Link>
+      ) : null}
+
       {/* Recent activity */}
       <div>
         <h2 className="text-base font-semibold mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Recent activity</h2>
