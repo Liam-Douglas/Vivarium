@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAnimals } from '@/hooks/useAnimals'
-import { getFeedingStatus, FEEDING_STATUS_META, FEEDING_URGENCY } from '@/lib/feedingStatus'
+import { getFeedingStatus, describeNextFeeding, FEEDING_STATUS_META, FEEDING_URGENCY } from '@/lib/feedingStatus'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import type { Enclosure } from '@/hooks/useEnclosures'
 import { useAuth } from '@/context/AuthContext'
@@ -22,6 +22,14 @@ import type { Animal } from '@/hooks/useAnimals'
 
 type SortKey = 'name-asc' | 'name-desc' | 'overdue-first' | 'recently-fed'
 type PageTab = 'animals' | 'enclosures'
+type StatusFilter = 'overdue' | 'due-soon' | 'quarantine' | null
+type Density = 'grid' | 'list'
+
+const DENSITY_KEY = 'vivarium-animals-density'
+
+function inQuarantine(animal: Animal): boolean {
+  return Boolean(animal.quarantine_started_at) && !animal.quarantine_ended_at
+}
 
 const CATEGORIES: { label: string; icon: string; pattern: RegExp }[] = [
   { label: 'Snakes',          icon: '🐍', pattern: /python|boa|corn\s*snake|king\s*snake|milk\s*snake|rat\s*snake|hognose|blood\s*python|vine\s*snake|sand\s*boa|garter|bull\s*snake|pine\s*snake|viper|mamba|cobra|anaconda|ribbon\s*snake|\bsnake\b/ },
@@ -63,6 +71,17 @@ export function Animals() {
   const [search, setSearch] = useState('')
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null)
   const [sort, setSort] = useState<SortKey>('name-asc')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>(null)
+  // The photo grid is the nicer way to enjoy a collection; the list is the way
+  // to work one. Remembered per device.
+  const [density, setDensity] = useState<Density>(() => {
+    try { return localStorage.getItem(DENSITY_KEY) === 'list' ? 'list' : 'grid' } catch { return 'grid' }
+  })
+
+  function chooseDensity(next: Density) {
+    setDensity(next)
+    try { localStorage.setItem(DENSITY_KEY, next) } catch { /* private mode */ }
+  }
 
   // Enclosure form state
   const [enclosureFormOpen, setEnclosureFormOpen] = useState(false)
@@ -74,6 +93,14 @@ export function Animals() {
   // Batch feed state
   const [batchFeedEnclosure, setBatchFeedEnclosure] = useState<Enclosure | null>(null)
   const [batchFeedOpen, setBatchFeedOpen] = useState(false)
+
+  // You can sort by overdue today but not filter to it, and quarantine is
+  // invisible unless you happen to spot a badge.
+  const statusCounts = useMemo(() => ({
+    overdue: animals.filter((a) => getFeedingStatus(a) === 'overdue').length,
+    'due-soon': animals.filter((a) => getFeedingStatus(a) === 'due-soon').length,
+    quarantine: animals.filter(inQuarantine).length,
+  }), [animals])
 
   const presentCategories = useMemo(() => {
     const seen = new Set(animals.map((a) => categorize(a.species)))
@@ -88,7 +115,10 @@ export function Animals() {
         a.name.toLowerCase().includes(search.toLowerCase()) ||
         a.species.toLowerCase().includes(search.toLowerCase())
       const matchesCategory = !categoryFilter || categorize(a.species) === categoryFilter
-      return matchesSearch && matchesCategory
+      const matchesStatus =
+        !statusFilter ||
+        (statusFilter === 'quarantine' ? inQuarantine(a) : getFeedingStatus(a) === statusFilter)
+      return matchesSearch && matchesCategory && matchesStatus
     })
 
     list = [...list].sort((a, b) => {
@@ -104,7 +134,7 @@ export function Animals() {
     })
 
     return list
-  }, [animals, search, categoryFilter, sort])
+  }, [animals, search, categoryFilter, statusFilter, sort])
 
   function handleAddClick() {
     if (!canAddAnimal(animals.length)) setUpgradeOpen(true)
@@ -239,6 +269,37 @@ export function Animals() {
                   <option value="overdue-first">Overdue first</option>
                   <option value="recently-fed">Recently fed</option>
                 </select>
+                <div className="flex gap-0.5 p-0.5 rounded-xl shrink-0" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  {(['grid', 'list'] as const).map((mode) => (
+                    <button
+                      key={mode}
+                      onClick={() => chooseDensity(mode)}
+                      aria-label={mode === 'grid' ? 'Photo grid' : 'Compact list'}
+                      aria-pressed={density === mode}
+                      className="flex items-center justify-center w-9 rounded-[10px] transition-colors"
+                      style={{ backgroundColor: density === mode ? '#2e2e2a' : 'transparent', color: density === mode ? '#8fbe5a' : '#6a6458' }}
+                    >
+                      {mode === 'grid' ? (
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" /></svg>
+                      ) : (
+                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                <Chip label={`All ${animals.length}`} active={statusFilter === null} onClick={() => setStatusFilter(null)} />
+                {statusCounts.overdue > 0 && (
+                  <Chip label={`Overdue ${statusCounts.overdue}`} tone="#c45a5a" active={statusFilter === 'overdue'} onClick={() => setStatusFilter(statusFilter === 'overdue' ? null : 'overdue')} />
+                )}
+                {statusCounts['due-soon'] > 0 && (
+                  <Chip label={`Due soon ${statusCounts['due-soon']}`} tone="#d4924a" active={statusFilter === 'due-soon'} onClick={() => setStatusFilter(statusFilter === 'due-soon' ? null : 'due-soon')} />
+                )}
+                {statusCounts.quarantine > 0 && (
+                  <Chip label={`Quarantine ${statusCounts.quarantine}`} tone="#d4924a" active={statusFilter === 'quarantine'} onClick={() => setStatusFilter(statusFilter === 'quarantine' ? null : 'quarantine')} />
+                )}
               </div>
 
               {presentCategories.length > 1 && (
@@ -269,7 +330,7 @@ export function Animals() {
               description={hasActiveFilter ? 'Try adjusting your search or filter' : 'Add your first animal to get started'}
               action={!hasActiveFilter ? <Button onClick={handleAddClick}>Add your first animal</Button> : undefined}
             />
-          ) : (
+          ) : density === 'grid' ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {displayed.map((animal) => (
                 <AnimalCard
@@ -278,6 +339,39 @@ export function Animals() {
                   enclosureName={enclosures.find((e) => e.id === animal.enclosure_id)?.name}
                 />
               ))}
+            </div>
+          ) : (
+            /* Twelve animals per screen instead of four; the whole rack legible
+               at once. Same fields as the card, minus the photo. */
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              {displayed.map((animal, i) => {
+                const status = getFeedingStatus(animal)
+                const where = enclosures.find((e) => e.id === animal.enclosure_id)?.name
+                return (
+                  <Link
+                    key={animal.id}
+                    to={`/animals/${animal.id}`}
+                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.02]"
+                    style={{ borderBottom: i < displayed.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
+                  >
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FEEDING_STATUS_META[status].color }} />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>
+                        {animal.name}
+                        {inQuarantine(animal) && (
+                          <span className="ml-1.5 text-xs" style={{ color: '#d4924a' }}>· Q</span>
+                        )}
+                      </p>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>
+                        {animal.species}{where ? ` · ${where}` : ''}
+                      </p>
+                    </div>
+                    <span className="text-xs shrink-0 text-right" style={{ color: FEEDING_STATUS_META[status].color }}>
+                      {describeNextFeeding(animal)}
+                    </span>
+                  </Link>
+                )
+              })}
             </div>
           )}
         </>
@@ -436,18 +530,19 @@ export function Animals() {
   )
 }
 
-function Chip({ label, icon, active, onClick }: { label: string; icon: string; active: boolean; onClick: () => void }) {
+function Chip({ label, icon, active, onClick, tone }: { label: string; icon?: string; active: boolean; onClick: () => void; tone?: string }) {
+  const accent = tone ?? '#8fbe5a'
   return (
     <button
       onClick={onClick}
       className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors shrink-0"
       style={{
-        backgroundColor: active ? 'rgba(143,190,90,0.15)' : '#242420',
-        color: active ? '#8fbe5a' : '#a8a090',
-        border: `1px solid ${active ? 'rgba(143,190,90,0.3)' : 'rgba(255,255,255,0.07)'}`,
+        backgroundColor: active ? `${accent}26` : '#242420',
+        color: active ? accent : tone ?? '#a8a090',
+        border: `1px solid ${active ? `${accent}59` : 'rgba(255,255,255,0.07)'}`,
       }}
     >
-      <span>{icon}</span>
+      {icon && <span>{icon}</span>}
       {label}
     </button>
   )

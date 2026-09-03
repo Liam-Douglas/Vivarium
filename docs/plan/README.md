@@ -14,7 +14,7 @@ coherent if you stop after any of them.
 | ✓ | Delete the duplication | M | shipped (`ff7e459`), tab fold withdrawn |
 | ✓ | Surface what already exists | M | shipped |
 | ✓ | Navigation and action parity | S | shipped |
-| 5 | Make it responsive | L | 2 |
+| ✓ | Make it responsive | L | shipped |
 | 6 | The quiet states | M | 1, 5 |
 
 **Phase 2 note.** Folding the Feeding and Vitals tabs into Timeline was dropped: both
