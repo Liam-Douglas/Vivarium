@@ -17,10 +17,18 @@ coherent if you stop after any of them.
 | ✓ | Make it responsive | L | shipped |
 | ✓ | The quiet states | M | shipped |
 
-**Phase 2 note.** Folding the Feeding and Vitals tabs into Timeline was dropped: both
-hold charts (per-month feedings, the growth chart with its localStorage target-weight
-feature, and the shed-interval chart) that Timeline's event filters cannot represent.
-Tabs stay at six pending a decision on where those charts should live.
+**Phase 2 note — resolved.** Folding the Feeding and Vitals tabs into Timeline was
+dropped, and on investigation the premise was wrong twice over. Both tabs hold charts
+Timeline cannot represent (per-month feedings, the growth chart with its
+localStorage target-weight feature, the shed-interval chart) — and, decisively,
+**Timeline has no `RecordActions` at all.** It is read-only. Those tabs are the only
+place in the app a feeding, weight or shed can be edited or deleted, so folding them
+into Timeline would have removed record editing, not a duplicate view.
+
+Instead Feeding merged into Vitals as a third sub-tab, giving one **Logs** tab over
+feeding, weight and shedding: six tabs to five, with every chart, every edit and delete
+control, and the target-weight feature intact. Timeline reads history across types;
+Logs is where a record is corrected.
 
 ## Defects found while planning
 
@@ -51,7 +59,7 @@ No Supabase migration is required. `medication_logs`, `medication_schedules`,
 loops the existing RPC rather than adding `log_feedings` (decision 6); vitest was added
 early, before Phase 3 rather than before Phase 6 (decision 7).
 
-All six phases are shipped. Two things remain open: where the Feeding and Vitals tab
-charts should live (see the Phase 2 note above), and a browser pass over Phase 5's
-responsive work at 390, 768 and 1440 against a real Supabase environment — that phase
-was verified by construction and type-checking, not visually.
+All six phases are shipped and the tab question is resolved (see the Phase 2 note).
+One thing remains open: a browser pass over Phase 5's responsive work at 390, 768 and
+1440 against a real Supabase environment — that phase was verified by construction and
+type-checking, not visually.

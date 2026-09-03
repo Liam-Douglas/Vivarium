@@ -52,7 +52,7 @@ import {
   createExpense,
 } from '@/lib/queries'
 
-type Tab = 'overview' | 'timeline' | 'feeding' | 'vitals' | 'health' | 'records'
+type Tab = 'overview' | 'timeline' | 'logs' | 'health' | 'records'
 
 function RecordActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
   return (
@@ -79,7 +79,7 @@ export function AnimalDetail() {
   const [tab, setTab] = useState<Tab>('overview')
   const [editOpen, setEditOpen] = useState(false)
   const [feedOpen, setFeedOpen] = useState(false)
-  const [vitalsSubTab, setVitalsSubTab] = useState<'weight' | 'shedding'>('weight')
+  const [logsSubTab, setLogsSubTab] = useState<'feeding' | 'weight' | 'shedding'>('feeding')
   const [timelineFilter, setTimelineFilter] = useState<'all' | 'feeding' | 'shed' | 'weight' | 'health'>('all')
   const [timelineShowAll, setTimelineShowAll] = useState(false)
 
@@ -818,8 +818,7 @@ export function AnimalDetail() {
   const tabs: { id: Tab; label: string }[] = [
     { id: 'overview', label: 'Overview' },
     { id: 'timeline', label: 'Timeline' },
-    { id: 'feeding', label: 'Feeding' },
-    { id: 'vitals', label: 'Vitals' },
+    { id: 'logs', label: 'Logs' },
     { id: 'health', label: 'Health' },
     { id: 'records', label: 'Records' },
   ]
@@ -918,7 +917,7 @@ export function AnimalDetail() {
               <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                   <p className="text-xs font-medium" style={{ color: '#a8a090' }}>RECENT FEEDINGS</p>
-                  <button onClick={() => setTab('feeding')} className="text-xs" style={{ color: '#8fbe5a' }}>See all</button>
+                  <button onClick={() => { setTab('logs'); setLogsSubTab('feeding') }} className="text-xs" style={{ color: '#8fbe5a' }}>See all</button>
                 </div>
                 {feedingLogs.slice(0, 3).map((log) => (
                   <div key={log.id} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
@@ -937,7 +936,7 @@ export function AnimalDetail() {
               <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-xs font-medium" style={{ color: '#a8a090' }}>WEIGHT TREND</p>
-                  <button onClick={() => setTab('vitals')} className="text-xs" style={{ color: '#8fbe5a' }}>See full</button>
+                  <button onClick={() => { setTab('logs'); setLogsSubTab('weight') }} className="text-xs" style={{ color: '#8fbe5a' }}>See full</button>
                 </div>
                 <ResponsiveContainer width="100%" height={100}>
                   <LineChart data={chartData}>
@@ -1252,13 +1251,37 @@ export function AnimalDetail() {
           </div>
         )}
 
-        {/* Feeding */}
-        {tab === 'feeding' && (
+
+        {/* Logs — the three log tables under one tab. Timeline reads history
+            across types; this is where a record is corrected or removed, and it
+            holds the only edit and delete controls in the app for feedings,
+            weights and sheds. */}
+        {tab === 'logs' && (
           <div className="pb-24 md:pb-8">
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={() => setFeedOpen(true)}>Log feeding</Button>
+            <div className="flex p-1 gap-1 rounded-xl mb-4" style={{ backgroundColor: '#242420' }}>
+              {([
+                { id: 'feeding', label: '🍖 Feeding' },
+                { id: 'weight', label: '⚖️ Weight' },
+                { id: 'shedding', label: '🐍 Shedding' },
+              ] as const).map((t) => (
+                <button key={t.id} onClick={() => setLogsSubTab(t.id)}
+                  className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
+                  style={{ backgroundColor: logsSubTab === t.id ? 'rgba(143,190,90,0.15)' : 'transparent', color: logsSubTab === t.id ? '#8fbe5a' : '#6a6458' }}>
+                  {t.label}
+                </button>
+              ))}
             </div>
-            {feedingLogs.length === 0 ? (
+            <div className="flex justify-end mb-4">
+              <Button
+                size="sm"
+                onClick={logsSubTab === 'feeding' ? () => setFeedOpen(true) : logsSubTab === 'weight' ? openAddWeight : openAddShed}
+              >
+                Log {logsSubTab === 'feeding' ? 'feeding' : logsSubTab === 'weight' ? 'weight' : 'shed'}
+              </Button>
+            </div>
+
+            {logsSubTab === 'feeding' && (
+            feedingLogs.length === 0 ? (
               <EmptyState icon="🍖" title="No feedings logged" description="Tap 'Log feeding' to record the first meal." />
             ) : (
               <div className="flex flex-col gap-4">
@@ -1324,29 +1347,11 @@ export function AnimalDetail() {
                   ))}
                 </div>
               </div>
+            )
             )}
-          </div>
-        )}
 
-        {/* Vitals */}
-        {tab === 'vitals' && (
-          <div className="pb-24 md:pb-8">
-            <div className="flex p-1 gap-1 rounded-xl mb-4" style={{ backgroundColor: '#242420' }}>
-              {(['weight', 'shedding'] as const).map((t) => (
-                <button key={t} onClick={() => setVitalsSubTab(t)}
-                  className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-                  style={{ backgroundColor: vitalsSubTab === t ? 'rgba(143,190,90,0.15)' : 'transparent', color: vitalsSubTab === t ? '#8fbe5a' : '#6a6458' }}>
-                  {t === 'weight' ? '⚖️ Weight' : '🐍 Shedding'}
-                </button>
-              ))}
-            </div>
-            <div className="flex justify-end mb-4">
-              <Button size="sm" onClick={vitalsSubTab === 'weight' ? openAddWeight : openAddShed}>
-                Log {vitalsSubTab === 'weight' ? 'weight' : 'shed'}
-              </Button>
-            </div>
 
-            {vitalsSubTab === 'weight' && (
+            {logsSubTab === 'weight' && (
               weightLogs.length === 0 ? (
                 <EmptyState icon="⚖️" title="No weights logged" description="Tap 'Log weight' to start tracking growth." />
               ) : (
@@ -1414,7 +1419,7 @@ export function AnimalDetail() {
               )
             )}
 
-            {vitalsSubTab === 'shedding' && (
+            {logsSubTab === 'shedding' && (
               sheddingLogs.length === 0 ? (
                 <EmptyState icon="🐍" title="No sheds logged" description="Tap 'Log shed' to record a shedding event." />
               ) : (
