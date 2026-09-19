@@ -8,7 +8,7 @@ own pull request and stands alone.
 |---|---|---|---|
 | ✓ | Password reset, deep-link 404s, sign-up captcha, CI | M | shipped (`5c47414`) |
 | ✓ | Pending household members | S | shipped (`2974799`) |
-| 1 | Data integrity — row caps and a destructive repair | M | no |
+| ✓ | Data integrity — row caps and a destructive repair | M | shipped (`f4d07f1`, `c990ebb`) |
 | 2 | Accessibility | M | one colour sign-off |
 | 3 | Security — RLS and storage | M | applying the SQL |
 | 4 | Small correctness batch | S | no |
@@ -58,6 +58,11 @@ merely inactive.
 
 Decision 2: the colour change ships with before/after screenshots for sign-off; the
 structural work does not wait on it.
+
+Removing `maximum-scale` has a companion change. iOS zooms the page when a control
+whose text is under 16px takes focus, and these are 14px — which is the annoyance
+`maximum-scale` was suppressing. Sizing the controls to 16px on small screens removes
+the cause, so zoom can stay available without the side effect.
 
 ## Phase 3 — Security
 
