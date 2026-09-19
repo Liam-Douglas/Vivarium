@@ -2,8 +2,11 @@
 
 These SQL files were authored during the security review. The repo had no
 migrations checked in, so **they are inferred from the client code and must be
-reviewed against your live schema before running.** Apply them in order in the
-Supabase SQL editor (or via the CLI).
+reviewed against your live schema before running.**
+
+**Read `ROLLOUT.md` before applying any of them.** They do not go in numeric
+order: `0002` makes the photo bucket private and has to wait for a client
+change, or every photo in the app breaks.
 
 | File | What it does |
 |------|--------------|

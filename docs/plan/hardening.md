@@ -9,8 +9,8 @@ own pull request and stands alone.
 | ✓ | Password reset, deep-link 404s, sign-up captcha, CI | M | shipped (`5c47414`) |
 | ✓ | Pending household members | S | shipped (`2974799`) |
 | ✓ | Data integrity — row caps and a destructive repair | M | shipped (`f4d07f1`, `c990ebb`) |
-| 2 | Accessibility | M | one colour sign-off |
-| 3 | Security — RLS and storage | M | applying the SQL |
+| ~ | Accessibility | M | structural shipped (`2d994cf`); colour awaiting sign-off |
+| ~ | Security — RLS and storage | M | SQL prepared; awaiting the apply |
 | 4 | Small correctness batch | S | no |
 
 ## Phase 1 — Data integrity

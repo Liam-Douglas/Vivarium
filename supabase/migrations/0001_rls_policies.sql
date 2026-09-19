@@ -81,13 +81,41 @@ create policy households_select on public.households for select to authenticated
 
 -- ── household_members ────────────────────────────────────────────────────────
 -- A user may read membership rows for households they belong to, and read their
--- own row. Inserts/updates/deletes are handled by the SECURITY DEFINER RPCs
--- (approve/deny/remove/set_member_role), which check that the caller is owner.
+-- own row. Owner-side changes (approve/deny/remove/set_member_role) go through
+-- SECURITY DEFINER RPCs, which check that the caller is the owner.
+--
+-- Two operations are NOT owner-side and are done directly by the client, so
+-- they need policies of their own or the feature stops working the moment this
+-- file is applied: asking to join a household, and leaving one.
 alter table public.household_members enable row level security;
 
 drop policy if exists household_members_select on public.household_members;
 create policy household_members_select on public.household_members for select to authenticated
   using (user_id = auth.uid() or public.app_is_household_member(household_id));
+
+-- Asking to join (joinHouseholdByCode). The row must be the caller's own, and
+-- it must be a REQUEST: pinning status and role here is the whole point of the
+-- policy. Without those two clauses a tampered client could insert itself
+-- straight in as an active owner of any household whose id it could name,
+-- which would make the owner's approval step decorative.
+drop policy if exists household_members_insert_self on public.household_members;
+create policy household_members_insert_self on public.household_members for insert to authenticated
+  with check (
+    user_id = auth.uid()
+    and status = 'pending'
+    and role = 'member'
+  );
+
+-- Leaving, or withdrawing a request (leaveHousehold). Only ever your own row —
+-- removing somebody else stays with the owner-only RPC.
+drop policy if exists household_members_delete_self on public.household_members;
+create policy household_members_delete_self on public.household_members for delete to authenticated
+  using (user_id = auth.uid());
+
+-- A second request to the same household would otherwise stack up duplicate
+-- pending rows, which the approve RPC then has to disambiguate.
+create unique index if not exists household_members_household_user_key
+  on public.household_members (household_id, user_id);
 
 -- ── profiles ─────────────────────────────────────────────────────────────────
 -- A user may read/update only their own profile, plus read profiles of people
