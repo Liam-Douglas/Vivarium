@@ -1,5 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useState, useRef, type FormEvent } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -12,14 +13,32 @@ export function SignIn() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(searchParams.get('error'))
   const [googleLoading, setGoogleLoading] = useState(false)
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null)
+  const captchaRef = useRef<HCaptcha>(null)
+
+  // Supabase's captcha protection covers sign-in alongside sign-up and
+  // recovery — one switch for all three. Sign-up and recovery already send a
+  // token, so with this missing, turning that switch on would have left
+  // sign-in as the one door that stopped opening.
+  const siteKey = import.meta.env.VITE_HCAPTCHA_SITE_KEY as string
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (siteKey && !captchaToken) {
+      setError('Please complete the captcha')
+      return
+    }
     setLoading(true)
     setError(null)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+      ...(captchaToken ? { options: { captchaToken } } : {}),
+    })
     if (error) {
       setError(error.message)
+      captchaRef.current?.resetCaptcha()
+      setCaptchaToken(null)
       setLoading(false)
     } else {
       navigate('/')
@@ -88,7 +107,20 @@ export function SignIn() {
                 Forgot password?
               </Link>
             </div>
-            <Button type="submit" loading={loading} fullWidth>
+
+            {siteKey && (
+              <div className="flex justify-center">
+                <HCaptcha
+                  ref={captchaRef}
+                  sitekey={siteKey}
+                  onVerify={setCaptchaToken}
+                  onExpire={() => setCaptchaToken(null)}
+                  theme="dark"
+                />
+              </div>
+            )}
+
+            <Button type="submit" loading={loading} fullWidth disabled={!!siteKey && !captchaToken}>
               Sign in
             </Button>
           </form>

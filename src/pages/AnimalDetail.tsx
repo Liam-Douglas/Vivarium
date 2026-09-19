@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
+import { readPositiveNumber, writeJson, remove as removeStored } from '@/lib/localStore'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { AnimalForm } from '@/components/animals/AnimalForm'
@@ -67,6 +68,8 @@ function RecordActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () 
   )
 }
 
+const targetWeightKey = (animalId: string) => `vivarium-target-weight-${animalId}`
+
 export function AnimalDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -102,15 +105,13 @@ export function AnimalDetail() {
   const [weightNotes, setWeightNotes] = useState('')
   const [savingWeight, setSavingWeight] = useState(false)
   const [targetWeightInput, setTargetWeightInput] = useState('')
-  const [targetWeight, setTargetWeight] = useState<number | null>(() => {
-    if (!id) return null
-    const stored = localStorage.getItem(`vivarium-target-weight-${id}`)
-    return stored ? Number(stored) : null
-  })
+  const [targetWeight, setTargetWeight] = useState<number | null>(
+    () => (id ? readPositiveNumber(targetWeightKey(id)) : null)
+  )
   function saveTargetWeight() {
     const val = Number(targetWeightInput)
-    if (!id || !val || val <= 0) return
-    localStorage.setItem(`vivarium-target-weight-${id}`, String(val))
+    if (!id || !Number.isFinite(val) || val <= 0) return
+    writeJson(targetWeightKey(id), val)
     setTargetWeight(val)
     setTargetWeightInput('')
   }
@@ -1381,7 +1382,7 @@ export function AnimalDetail() {
                         />
                         <button onClick={saveTargetWeight} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>Set</button>
                         {targetWeight && (
-                          <button onClick={() => { localStorage.removeItem(`vivarium-target-weight-${id}`); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>Clear</button>
+                          <button onClick={() => { if (id) removeStored(targetWeightKey(id)); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>Clear</button>
                         )}
                       </div>
                       {(() => {
