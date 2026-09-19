@@ -83,6 +83,11 @@ export function SignIn() {
               autoComplete="current-password"
               placeholder="••••••••"
             />
+            <div className="-mt-1 text-right">
+              <Link to="/auth/forgot-password" className="text-xs font-medium" style={{ color: '#8fbe5a' }}>
+                Forgot password?
+              </Link>
+            </div>
             <Button type="submit" loading={loading} fullWidth>
               Sign in
             </Button>

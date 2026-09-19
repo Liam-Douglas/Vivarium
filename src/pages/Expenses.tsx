@@ -9,7 +9,7 @@ import {
   createFeederItem, createFeederStockEvent, getFeederStockEvents, updateFeederItem, deleteFeederItem,
 } from '@/lib/queries'
 import type { Expense } from '@/hooks/useExpenses'
-import { useFeederInventory, isLowStock } from '@/hooks/useFeederInventory'
+import { useFeederInventory, isLowStock, type FeederStockEvent } from '@/hooks/useFeederInventory'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -122,7 +122,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
   const [addStockOpen, setAddStockOpen] = useState<string | null>(null)
   const [historyOpen, setHistoryOpen] = useState<string | null>(null)
   const [shoppingOpen, setShoppingOpen] = useState(false)
-  const [history, setHistory] = useState<any[]>([])
+  const [history, setHistory] = useState<FeederStockEvent[]>([])
   const [editFeeder, setEditFeeder] = useState<typeof feeders[number] | null>(null)
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
 
@@ -318,7 +318,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
   async function openHistory(feederId: string) {
     if (!householdId) return
     const events = await getFeederStockEvents(householdId, feederId)
-    setHistory(events); setHistoryOpen(feederId)
+    setHistory(events as FeederStockEvent[]); setHistoryOpen(feederId)
   }
 
   async function handleReceiptFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -782,7 +782,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
         <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
           {history.length === 0 ? (
             <p className="text-sm text-center py-6" style={{ color: '#6a6458' }}>No history</p>
-          ) : history.map((ev: any) => (
+          ) : history.map((ev) => (
             <div key={ev.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
               <div>
                 <p className="text-sm" style={{ color: '#f0ece0' }}>{ev.event_type === 'purchase' ? '+' : ''}{ev.quantity_delta}</p>

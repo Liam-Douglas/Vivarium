@@ -13,6 +13,8 @@ import { useOverdueNotification } from '@/hooks/useOverdueNotification'
 import { SignIn } from '@/pages/auth/SignIn'
 import { SignUp } from '@/pages/auth/SignUp'
 import { AuthCallback } from '@/pages/auth/AuthCallback'
+import { ForgotPassword } from '@/pages/auth/ForgotPassword'
+import { ResetPassword } from '@/pages/auth/ResetPassword'
 import { OnboardingHousehold } from '@/pages/auth/OnboardingHousehold'
 
 // App pages
@@ -115,6 +117,8 @@ export default function App() {
               <Route path="/auth/signin" element={<SignIn />} />
               <Route path="/auth/signup" element={<SignUp />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+              <Route path="/auth/reset" element={<ResetPassword />} />
 
               {/* All other routes require auth */}
               <Route path="/*" element={<RequireAuth />} />

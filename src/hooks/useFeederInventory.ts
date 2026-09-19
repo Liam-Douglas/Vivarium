@@ -17,6 +17,20 @@ export interface FeederItemWithStock extends FeederItem {
   currentStock: number
 }
 
+/** A row of feeder_stock_events — a purchase, or an adjustment from a feeding. */
+export interface FeederStockEvent {
+  id: string
+  household_id: string
+  feeder_item_id: string
+  user_id: string
+  event_type: string
+  quantity_delta: number
+  unit_cost: number | null
+  source_ref_id: string | null
+  notes: string | null
+  created_at: string
+}
+
 /**
  * The threshold rule, in one place. The Expenses page's shopping list and the
  * dashboard's stock warning must agree on what "low" means, or the dashboard
