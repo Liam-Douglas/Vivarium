@@ -10,6 +10,7 @@ import {
 } from '@/lib/queries'
 import type { Expense } from '@/hooks/useExpenses'
 import { useFeederInventory, isLowStock, type FeederStockEvent } from '@/hooks/useFeederInventory'
+import { readJson, writeJson } from '@/lib/localStore'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
@@ -78,6 +79,8 @@ interface ExpensesProps {
   initialTab?: 'expenses' | 'feeders'
 }
 
+const budgetsKey = (householdId: string | null) => `vivarium-budgets-${householdId}`
+
 export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
   const [activeTab, setActiveTab] = useState<'expenses' | 'feeders'>(initialTab)
 
@@ -101,10 +104,12 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
   const [expenseDate, setExpenseDate] = useState(new Date().toISOString().split('T')[0])
   const [saving, setSaving] = useState(false)
 
-  const [budgets, setBudgets] = useState<Record<string, number>>(() => {
-    const stored = localStorage.getItem(`vivarium-budgets-${householdId ?? 'default'}`)
-    return stored ? (JSON.parse(stored) as Record<string, number>) : {}
-  })
+  // This screen only ever mounts inside RequireHousehold, so householdId is
+  // set by now. JSON.parse was unguarded, though, and a corrupt value threw
+  // during render — which the error boundary turns into a blank page.
+  const [budgets, setBudgets] = useState<Record<string, number>>(
+    () => readJson<Record<string, number>>(budgetsKey(householdId), {})
+  )
   const [editingBudget, setEditingBudget] = useState<string | null>(null)
   const [budgetInput, setBudgetInput] = useState('')
 
@@ -179,9 +184,11 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
   function saveBudget(cat: string) {
     const val = Number(budgetInput)
     const updated = { ...budgets }
-    if (val > 0) updated[cat] = val; else delete updated[cat]
+    if (Number.isFinite(val) && val > 0) updated[cat] = val; else delete updated[cat]
     setBudgets(updated)
-    localStorage.setItem(`vivarium-budgets-${householdId ?? 'default'}`, JSON.stringify(updated))
+    if (!writeJson(budgetsKey(householdId), updated)) {
+      showToast('Budget saved for this session only — storage is unavailable', 'info')
+    }
     setEditingBudget(null); setBudgetInput('')
   }
 

@@ -11,7 +11,7 @@ own pull request and stands alone.
 | ✓ | Data integrity — row caps and a destructive repair | M | shipped (`f4d07f1`, `c990ebb`) |
 | ~ | Accessibility | M | structural shipped (`2d994cf`); colour awaiting sign-off |
 | ~ | Security — RLS and storage | M | SQL prepared; awaiting the apply |
-| 4 | Small correctness batch | S | no |
+| ✓ | Small correctness batch | S | shipped |
 
 ## Phase 1 — Data integrity
 
@@ -82,11 +82,13 @@ the bucket private and existing rows would 401.
 
 - `last_fed_at` disagrees with itself about refusals: the `log_feeding` RPC filters
   `refused = false`, both client recalculators do not, so a refusal can mark an animal
-  fed. Related: `handleBatchFeed` in `pages/Animals.tsx` still uses the legacy write
-  pair (already noted in `README.md`).
-- `Expenses.tsx` reads `localStorage` outside a try/catch, and its lazy initialiser
-  runs before `householdId` resolves, so budgets are saved under a `default` key and
-  then never read back. `AnimalDetail.tsx` has the same unguarded read.
+  fed. (The related batch-feed defect listed in `README.md` is stale — `handleBatchFeed`
+  is gone and `BatchFeedForm` goes through the RPC.)
+- `Expenses.tsx` reads `localStorage` outside a try/catch, so a corrupt value throws
+  during render and the error boundary replaces the page. `AnimalDetail.tsx` has the
+  same unguarded read. (The `?? 'default'` key fallback in `Expenses` is unreachable:
+  `RequireHousehold` guards both its routes, so `householdId` is always set by the
+  time it mounts.)
 - Sign-in is the only auth entry point without captcha support; enabling captcha
   protection in Supabase would break `signInWithPassword` while sign-up and recovery
   keep working.

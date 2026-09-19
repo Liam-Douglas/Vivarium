@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/Badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Modal } from '@/components/ui/Modal'
 import { useVetContacts } from '@/hooks/useVetContacts'
+import { requestNotificationPermission, notificationPermission } from '@/hooks/useOverdueNotification'
 import type { VetContact } from '@/hooks/useVetContacts'
 
 interface SettingsProps {
@@ -44,6 +45,9 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   const [scanResult, setScanResult] = useState<{ orphanedCount: number; onArchivedCount: number; dupGroups: number; dupExtra: number } | null>(null)
   const [removingDups, setRemovingDups] = useState(false)
   const [recalculating, setRecalculating] = useState(false)
+  // Read once on mount: the browser only changes this in response to the
+  // prompt we raise below, so it cannot go stale behind our back.
+  const [notifyPermission, setNotifyPermission] = useState(notificationPermission)
 
   // Vet contacts
   const { data: vetContacts, refresh: refreshVets } = useVetContacts()
@@ -350,6 +354,12 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
     }
   }
 
+  async function handleEnableNotifications() {
+    // Requested from this click and nowhere else. Asking on page load is what
+    // browsers suppress, and it is why this never reliably worked before.
+    setNotifyPermission(await requestNotificationPermission())
+  }
+
   async function handleSignOut() {
     await supabase.auth.signOut()
     navigate('/auth/signin')
@@ -545,6 +555,28 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
       </Section>
 
       {/* Legal */}
+      <Section title="Notifications">
+        <p className="text-sm mb-3" style={{ color: '#a8a090' }}>
+          A reminder when animals are overdue a feed, shown while the app is open.
+        </p>
+        {notifyPermission === 'unsupported' && (
+          <p className="text-sm" style={{ color: '#a8a090' }}>This browser doesn't support notifications.</p>
+        )}
+        {notifyPermission === 'granted' && (
+          <p className="text-sm" style={{ color: '#5a9e6a' }}>Notifications are on.</p>
+        )}
+        {notifyPermission === 'denied' && (
+          <p className="text-sm" style={{ color: '#a8a090' }}>
+            Blocked for this site. Your browser's site settings are the only place that can undo it.
+          </p>
+        )}
+        {notifyPermission === 'default' && (
+          <Button variant="secondary" size="sm" onClick={handleEnableNotifications}>
+            Turn on notifications
+          </Button>
+        )}
+      </Section>
+
       <Section title="Legal">
         <div className="flex flex-col gap-2">
           <Link to="/terms" className="text-sm" style={{ color: '#a8a090' }}>Terms of Service</Link>

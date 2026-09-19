@@ -112,6 +112,10 @@ export async function recalculateLastFedAt(householdId: string) {
       .from('feeding_logs')
       .select('fed_at')
       .eq('animal_id', animal.id)
+      // Refusals are not meals. The log_feeding RPC has always filtered them
+      // out here; these two client recalculators did not, so whichever wrote
+      // last decided whether a refused feeding counted as "fed".
+      .eq('refused', false)
       .order('fed_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -238,6 +242,9 @@ export async function recalculateAnimalLastFedAt(animalId: string) {
     .from('feeding_logs')
     .select('fed_at')
     .eq('animal_id', animalId)
+    // Matches log_feeding: last_fed_at is the last time the animal ate, not
+    // the last time it was offered something.
+    .eq('refused', false)
     .order('fed_at', { ascending: false })
     .limit(1)
     .maybeSingle()
