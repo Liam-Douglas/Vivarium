@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { fetchAllRows } from './pagination'
 
 // Strip ownership/identity columns from a caller-supplied update payload so a
 // tampered client can't reassign a record to another household or user, or
@@ -323,13 +324,14 @@ export async function deleteWeightLog(id: string) {
 
 // ─── Health events ───────────────────────────────────────────────────────────
 
-export async function getHealthEvents(householdId: string, animalId: string) {
-  const { data, error } = await supabase
+export async function getHealthEvents(householdId: string, animalId?: string) {
+  let query = supabase
     .from('health_events')
     .select('*')
     .eq('household_id', householdId)
-    .eq('animal_id', animalId)
     .order('event_date', { ascending: false })
+  if (animalId) query = query.eq('animal_id', animalId)
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -361,8 +363,10 @@ export async function createHealthEvent(event: {
 
 // ─── Acquisition records ─────────────────────────────────────────────────────
 
-export async function getAcquisitionRecords(householdId: string, animalId: string) {
-  const { data, error } = await supabase.from('acquisition_records').select('*').eq('household_id', householdId).eq('animal_id', animalId).order('acquired_at', { ascending: false })
+export async function getAcquisitionRecords(householdId: string, animalId?: string) {
+  let query = supabase.from('acquisition_records').select('*').eq('household_id', householdId).order('acquired_at', { ascending: false })
+  if (animalId) query = query.eq('animal_id', animalId)
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -381,8 +385,10 @@ export async function deleteAcquisitionRecord(id: string) {
 
 // ─── Exit records ─────────────────────────────────────────────────────────────
 
-export async function getExitRecords(householdId: string, animalId: string) {
-  const { data, error } = await supabase.from('exit_records').select('*').eq('household_id', householdId).eq('animal_id', animalId).order('exited_at', { ascending: false })
+export async function getExitRecords(householdId: string, animalId?: string) {
+  let query = supabase.from('exit_records').select('*').eq('household_id', householdId).order('exited_at', { ascending: false })
+  if (animalId) query = query.eq('animal_id', animalId)
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -401,8 +407,10 @@ export async function deleteExitRecord(id: string) {
 
 // ─── Breeding records ─────────────────────────────────────────────────────────
 
-export async function getBreedingRecords(householdId: string, animalId: string) {
-  const { data, error } = await supabase.from('breeding_records').select('*').eq('household_id', householdId).eq('animal_id', animalId).order('pairing_date', { ascending: false })
+export async function getBreedingRecords(householdId: string, animalId?: string) {
+  let query = supabase.from('breeding_records').select('*').eq('household_id', householdId).order('pairing_date', { ascending: false })
+  if (animalId) query = query.eq('animal_id', animalId)
+  const { data, error } = await query
   if (error) throw error
   return data
 }
@@ -565,6 +573,62 @@ export async function softDeleteExpense(id: string) {
     .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
   if (error) throw error
+}
+
+// ─── Complete reads ──────────────────────────────────────────────────────────
+// Every read below pages to the end of the table. They exist for the export and
+// the data-repair tools, where a truncated answer is worse than a slow one:
+// an export that quietly stops at 1000 rows hands someone a file they believe
+// is their collection, and a duplicate guard built from a truncated set lets
+// duplicates straight back in.
+
+export async function getAllFeedingLogs(householdId: string) {
+  return fetchAllRows<Record<string, unknown>>((from, to) =>
+    supabase.from('feeding_logs').select('*, animals(name)')
+      .eq('household_id', householdId).order('fed_at', { ascending: false }).range(from, to))
+}
+
+export async function getAllSheddingLogs(householdId: string) {
+  return fetchAllRows<Record<string, unknown>>((from, to) =>
+    supabase.from('shedding_logs').select('*, animals(name)')
+      .eq('household_id', householdId).order('shed_at', { ascending: false }).range(from, to))
+}
+
+export async function getAllWeightLogs(householdId: string) {
+  return fetchAllRows<Record<string, unknown>>((from, to) =>
+    supabase.from('weight_logs').select('*')
+      .eq('household_id', householdId).order('logged_at', { ascending: false }).range(from, to))
+}
+
+export async function getAllExpensesComplete(householdId: string) {
+  return fetchAllRows<Record<string, unknown>>((from, to) =>
+    supabase.from('expenses').select('*').eq('household_id', householdId)
+      .is('deleted_at', null).order('expense_date', { ascending: false }).range(from, to))
+}
+
+export async function getAllMedicationLogs(householdId: string) {
+  return fetchAllRows<Record<string, unknown>>((from, to) =>
+    supabase.from('medication_logs').select('*')
+      .eq('household_id', householdId).order('given_at', { ascending: false }).range(from, to))
+}
+
+export async function getAllFeederStockEvents(householdId: string) {
+  return fetchAllRows<Record<string, unknown>>((from, to) =>
+    supabase.from('feeder_stock_events').select('*')
+      .eq('household_id', householdId).order('created_at', { ascending: false }).range(from, to))
+}
+
+/** Just the columns the duplicate guard keys on, paged to the end. */
+export async function getAllFeedingKeys(householdId: string) {
+  return fetchAllRows<{ animal_id: string; fed_at: string; prey_type: string; refused: boolean }>(
+    (from, to) => supabase.from('feeding_logs').select('animal_id, fed_at, prey_type, refused')
+      .eq('household_id', householdId).order('fed_at', { ascending: true }).range(from, to))
+}
+
+export async function getAllShedKeys(householdId: string) {
+  return fetchAllRows<{ animal_id: string; shed_at: string }>(
+    (from, to) => supabase.from('shedding_logs').select('animal_id, shed_at')
+      .eq('household_id', householdId).order('shed_at', { ascending: true }).range(from, to))
 }
 
 // ─── Profiles ────────────────────────────────────────────────────────────────
