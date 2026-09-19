@@ -35,12 +35,16 @@ function parseDate(raw: unknown): string | null {
   try {
     const iso = parseISO(trimmed)
     if (isValid(iso)) return iso.toISOString()
-  } catch {}
+  } catch {
+    // Not ISO — fall through to the explicit formats below.
+  }
   for (const fmt of formats) {
     try {
       const d = parse(trimmed, fmt, new Date())
       if (isValid(d)) return d.toISOString()
-    } catch {}
+    } catch {
+      // This format doesn't match — try the next one.
+    }
   }
   return null
 }
