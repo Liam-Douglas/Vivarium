@@ -86,23 +86,36 @@ begin;
 rollback;
 ```
 
-Expect `ERROR: new row violates row-level security policy`. If it reports
-success, a competing insert policy is still present — go back to the listing
-above. Do not read "Success. No rows returned" as a pass: that is the rollback
-talking, and it is what a successful escalation looks like.
+Expect `ERROR: new row violates row-level security policy`.
 
-**A genuine request must still succeed**, or joining is broken:
+**This is the one check where an error is the pass and success is the failure.**
+The editor reports "Success. No rows returned" when the last statement is the
+rollback, so that message means the escalation was *accepted* — go back to the
+policy listing above and find the competing insert policy. Read the error text,
+not the absence of one: every other check here reports a number precisely so
+this is the only place that distinction matters.
+
+**A genuine request must still succeed**, or joining is broken. This one ends
+in a count rather than leaving you to read the absence of an error, because
+"Success. No rows returned" is ambiguous enough to misread when tired:
 
 ```sql
 begin;
   set local role authenticated;
   set local request.jwt.claims = '{"sub":"USER_UUID","role":"authenticated"}';
+
   insert into household_members (household_id, user_id, role, status)
   values ('HOUSEHOLD_UUID', 'USER_UUID', 'member', 'pending');
+
+  select count(*) as should_be_one
+  from household_members
+  where user_id = 'USER_UUID'
+    and household_id = 'HOUSEHOLD_UUID'
+    and status = 'pending';
 rollback;
 ```
 
-Expect `INSERT 0 1`.
+Expect `should_be_one = 1`.
 
 **Cross-household reads must come back empty, and their own must not** — the
 second query is the control that proves the policy is scoping rather than
@@ -129,7 +142,8 @@ begin;
 rollback;
 ```
 
-Expect `UPDATE 0`.
+Expect `UPDATE 0`. Zero rows affected is the pass: the row exists and is the
+caller's, so a policy that let the reassignment through would report `UPDATE 1`.
 
 Finally, exercise joining and leaving in the app itself. Those two are the
 flows the added policies exist to protect and the ones most likely to regress.
