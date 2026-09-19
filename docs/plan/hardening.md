@@ -9,7 +9,7 @@ own pull request and stands alone.
 | ✓ | Password reset, deep-link 404s, sign-up captcha, CI | M | shipped (`5c47414`) |
 | ✓ | Pending household members | S | shipped (`2974799`) |
 | ✓ | Data integrity — row caps and a destructive repair | M | shipped (`f4d07f1`, `c990ebb`) |
-| ~ | Accessibility | M | structural shipped (`2d994cf`); colour awaiting sign-off |
+| ✓ | Accessibility | M | shipped (`2d994cf`, colour follows) |
 | ~ | Security — RLS and storage | M | SQL prepared; awaiting the apply |
 | ✓ | Small correctness batch | S | shipped |
 
@@ -57,7 +57,11 @@ merely inactive.
   body size. Raising that one token to about `#8a8272` clears AA.
 
 Decision 2: the colour change ships with before/after screenshots for sign-off; the
-structural work does not wait on it.
+structural work does not wait on it. Signed off on `#9f9684`, the lightest value that
+clears 4.5:1 on all three surfaces — page, card and modal. The `#8a8272` first proposed
+was measured against the page background alone and fails on the other two (4.09 and
+3.58), which is the mistake worth not repeating: most muted text in this app sits on a
+card, not on the page.
 
 Removing `maximum-scale` has a companion change. iOS zooms the page when a control
 whose text is under 16px takes focus, and these are 14px — which is the annoyance

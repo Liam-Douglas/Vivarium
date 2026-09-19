@@ -157,7 +157,7 @@ export function SignUp() {
 
           <div className="flex items-center gap-3 my-4">
             <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
-            <span className="text-xs" style={{ color: '#6a6458' }}>or</span>
+            <span className="text-xs" style={{ color: '#9f9684' }}>or</span>
             <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
           </div>
 
@@ -172,14 +172,14 @@ export function SignUp() {
           </Button>
         </div>
 
-        <p className="text-center text-xs mt-4 leading-relaxed" style={{ color: '#6a6458' }}>
+        <p className="text-center text-xs mt-4 leading-relaxed" style={{ color: '#9f9684' }}>
           By signing up you agree to our{' '}
           <Link to="/terms" style={{ color: '#a8a090' }}>Terms</Link>{' '}
           and{' '}
           <Link to="/privacy" style={{ color: '#a8a090' }}>Privacy Policy</Link>
         </p>
 
-        <p className="text-center text-sm mt-3" style={{ color: '#6a6458' }}>
+        <p className="text-center text-sm mt-3" style={{ color: '#9f9684' }}>
           Already have an account?{' '}
           <Link to="/auth/signin" className="font-medium" style={{ color: '#8fbe5a' }}>
             Sign in

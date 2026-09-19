@@ -410,7 +410,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
-              color: activeTab === tab ? '#8fbe5a' : '#6a6458',
+              color: activeTab === tab ? '#8fbe5a' : '#9f9684',
               border: activeTab === tab ? '1px solid rgba(143,190,90,0.25)' : '1px solid transparent',
             }}
           >
@@ -437,23 +437,23 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
           <div className="rounded-xl p-5 mb-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs mb-1" style={{ color: '#6a6458' }}>Total this month</p>
+                <p className="text-xs mb-1" style={{ color: '#9f9684' }}>Total this month</p>
                 <p className="text-3xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
                   ${(totalCents / 100).toFixed(2)}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>AUD</p>
+                <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>AUD</p>
               </div>
               {/* Category breakdown pills */}
               {byCategory.length > 0 && (
                 <div className="flex flex-col items-end gap-1">
                   {byCategory.slice(0, 3).map(({ cat, total }) => (
                     <div key={cat} className="flex items-center gap-1.5">
-                      <span className="text-xs" style={{ color: '#6a6458' }}>{CATEGORY_ICONS[cat] ?? '📦'}</span>
+                      <span className="text-xs" style={{ color: '#9f9684' }}>{CATEGORY_ICONS[cat] ?? '📦'}</span>
                       <span className="text-xs" style={{ color: '#a8a090' }}>${(total / 100).toFixed(0)}</span>
                     </div>
                   ))}
                   {byCategory.length > 3 && (
-                    <span className="text-xs" style={{ color: '#6a6458' }}>+{byCategory.length - 3} more</span>
+                    <span className="text-xs" style={{ color: '#9f9684' }}>+{byCategory.length - 3} more</span>
                   )}
                 </div>
               )}
@@ -515,12 +515,12 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                               <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
                             </div>
                           </div>
-                          <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{f.unit_label}</p>
+                          <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{f.unit_label}</p>
                         </div>
                       )
                     })}
                     {feeders.length > 5 && (
-                      <button onClick={() => setActiveTab('feeders')} className="text-center py-2 text-xs" style={{ color: '#6a6458' }}>
+                      <button onClick={() => setActiveTab('feeders')} className="text-center py-2 text-xs" style={{ color: '#9f9684' }}>
                         +{feeders.length - 5} more feeders
                       </button>
                     )}
@@ -539,13 +539,13 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                     </div>
                     <div className="flex items-center gap-2">
                       {budgets[cat] && (
-                        <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#c45a5a' : '#6a6458' }}>/ ${budgets[cat].toFixed(2)}</span>
+                        <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#c45a5a' : '#9f9684' }}>/ ${budgets[cat].toFixed(2)}</span>
                       )}
                       <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>${(total / 100).toFixed(2)}</span>
                       <button
                         onClick={() => { setEditingBudget(editingBudget === cat ? null : cat); setBudgetInput(budgets[cat] ? String(budgets[cat]) : '') }}
                         className="w-6 h-6 rounded flex items-center justify-center text-xs"
-                        style={{ color: '#6a6458' }} title="Set budget"
+                        style={{ color: '#9f9684' }} title="Set budget"
                       >🎯</button>
                     </div>
                   </div>
@@ -559,7 +559,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                         style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
                       />
                       <button onClick={() => saveBudget(cat)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>Set</button>
-                      {budgets[cat] && <button onClick={() => { setBudgetInput(''); saveBudget(cat) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>Clear</button>}
+                      {budgets[cat] && <button onClick={() => { setBudgetInput(''); saveBudget(cat) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#9f9684' }}>Clear</button>}
                     </div>
                   )}
                   <div className="mx-4 mb-3">
@@ -568,7 +568,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                         <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
                           <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (total / 100 / budgets[cat]) * 100)}%`, backgroundColor: total / 100 > budgets[cat] ? '#c45a5a' : total / 100 > budgets[cat] * 0.8 ? '#d4924a' : '#8fbe5a' }} />
                         </div>
-                        <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                        <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
                           {total / 100 > budgets[cat] ? `$${((total / 100) - budgets[cat]).toFixed(2)} over budget` : `$${(budgets[cat] - total / 100).toFixed(2)} remaining`}
                         </p>
                       </div>
@@ -582,13 +582,13 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                     <div key={expense.id} className="px-4 py-2 flex items-center justify-between gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm truncate" style={{ color: '#a8a090' }}>{expense.description}</p>
-                        <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(expense.expense_date), 'MMM d')}</p>
+                        <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(expense.expense_date), 'MMM d')}</p>
                       </div>
                       <p className="text-sm shrink-0" style={{ color: '#f0ece0' }}>${(expense.amount_cents / 100).toFixed(2)}</p>
-                      <button onClick={() => openEdit(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#6a6458' }}>
+                      <button onClick={() => openEdit(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       </button>
-                      <button onClick={() => handleDelete(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#6a6458' }}>
+                      <button onClick={() => handleDelete(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
@@ -645,12 +645,12 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                           <p className="text-2xl font-bold leading-tight" style={{ color, fontFamily: 'Playfair Display, serif' }}>{f.currentStock}</p>
                         </button>
                       )}
-                      <p className="text-xs truncate mt-0.5" style={{ color: '#6a6458' }}>{f.unit_label}</p>
+                      <p className="text-xs truncate mt-0.5" style={{ color: '#9f9684' }}>{f.unit_label}</p>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2 mb-1.5">
                         <h3 className="font-semibold text-sm truncate" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{f.name}</h3>
-                        <span className="text-xs shrink-0" style={{ color: '#6a6458' }}>/{f.low_stock_threshold}</span>
+                        <span className="text-xs shrink-0" style={{ color: '#9f9684' }}>/{f.low_stock_threshold}</span>
                       </div>
                       <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
                         <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
@@ -662,13 +662,13 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                         className="px-3 py-1.5 rounded-lg text-xs font-semibold"
                         style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}
                       >+ Stock</button>
-                      <button onClick={() => openHistory(f.id)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#6a6458' }}>
+                      <button onClick={() => openHistory(f.id)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       </button>
-                      <button onClick={() => openEditFeeder(f)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#6a6458' }}>
+                      <button onClick={() => openEditFeeder(f)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       </button>
-                      <button onClick={() => handleDeleteFeeder(f)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#6a6458' }}>
+                      <button onClick={() => handleDeleteFeeder(f)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
@@ -756,11 +756,11 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
         <div className="flex flex-col gap-4">
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
             <button type="button" onClick={() => setStockMode('add')} className="flex-1 py-2 text-sm font-medium transition-colors"
-              style={{ backgroundColor: stockMode === 'add' ? 'rgba(143,190,90,0.2)' : 'transparent', color: stockMode === 'add' ? '#8fbe5a' : '#6a6458' }}>
+              style={{ backgroundColor: stockMode === 'add' ? 'rgba(143,190,90,0.2)' : 'transparent', color: stockMode === 'add' ? '#8fbe5a' : '#9f9684' }}>
               Add quantity
             </button>
             <button type="button" onClick={() => setStockMode('set')} className="flex-1 py-2 text-sm font-medium transition-colors"
-              style={{ backgroundColor: stockMode === 'set' ? 'rgba(212,146,74,0.2)' : 'transparent', color: stockMode === 'set' ? '#d4924a' : '#6a6458', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
+              style={{ backgroundColor: stockMode === 'set' ? 'rgba(212,146,74,0.2)' : 'transparent', color: stockMode === 'set' ? '#d4924a' : '#9f9684', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
               Set exact amount
             </button>
           </div>
@@ -772,7 +772,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
           ) : (
             <div>
               <Input label="Set stock to" type="number" min={0} value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder={`Currently ${stockFeederCurrentStock}`} />
-              <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Current: {stockFeederCurrentStock} — saves a correction event to history</p>
+              <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Current: {stockFeederCurrentStock} — saves a correction event to history</p>
             </div>
           )}
           <Textarea label="Notes" value={stockNotes} onChange={(e) => setStockNotes(e.target.value)} rows={2} placeholder={stockMode === 'set' ? 'Reason for correction (optional)' : 'Where purchased, etc.'} />
@@ -788,14 +788,14 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
       <Modal open={!!historyOpen} onClose={() => setHistoryOpen(null)} title="Stock history">
         <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
           {history.length === 0 ? (
-            <p className="text-sm text-center py-6" style={{ color: '#6a6458' }}>No history</p>
+            <p className="text-sm text-center py-6" style={{ color: '#9f9684' }}>No history</p>
           ) : history.map((ev) => (
             <div key={ev.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
               <div>
                 <p className="text-sm" style={{ color: '#f0ece0' }}>{ev.event_type === 'purchase' ? '+' : ''}{ev.quantity_delta}</p>
-                <p className="text-xs" style={{ color: '#6a6458' }}>{ev.notes ?? ev.event_type}</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>{ev.notes ?? ev.event_type}</p>
               </div>
-              <p className="text-xs" style={{ color: '#6a6458' }}>{new Date(ev.created_at).toLocaleDateString()}</p>
+              <p className="text-xs" style={{ color: '#9f9684' }}>{new Date(ev.created_at).toLocaleDateString()}</p>
             </div>
           ))}
         </div>
@@ -807,7 +807,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
           <Input label="Unit label" value={editUnitLabel} onChange={(e) => setEditUnitLabel(e.target.value)} placeholder="e.g. insects, mice" />
           <div>
             <Input label="Current stock" type="number" min={0} value={editCurrentStock} onChange={(e) => setEditCurrentStock(e.target.value)} />
-            <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Set the actual count — saves an adjustment to history</p>
+            <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Set the actual count — saves an adjustment to history</p>
           </div>
           <Input label="Low stock threshold" type="number" min={0} value={editThreshold} onChange={(e) => setEditThreshold(e.target.value)} />
           <div className="flex gap-2">
@@ -823,7 +823,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
             <div key={f.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div>
                 <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{f.name}</p>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Stock: {f.currentStock} / threshold: {f.low_stock_threshold}</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Stock: {f.currentStock} / threshold: {f.low_stock_threshold}</p>
               </div>
               <p className="text-sm font-semibold" style={{ color: '#d4924a' }}>
                 Buy ~{Math.max(f.low_stock_threshold * 2 - f.currentStock, 0)}
@@ -846,7 +846,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                   <div className="flex items-center gap-2">
                     <Input label="Qty" type="number" min={1} value={item.editedQty} onChange={(e) => updateReceiptItem(item._id, { editedQty: e.target.value })} disabled={!item.selected} />
                     {item.unit_price_cents > 0 && (
-                      <p className="text-xs whitespace-nowrap" style={{ color: '#6a6458' }}>${(item.unit_price_cents / 100).toFixed(2)} ea</p>
+                      <p className="text-xs whitespace-nowrap" style={{ color: '#9f9684' }}>${(item.unit_price_cents / 100).toFixed(2)} ea</p>
                     )}
                   </div>
                 </div>

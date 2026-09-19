@@ -1,7 +1,7 @@
 export function Terms() {
   const headingStyle = { color: '#f0ece0' }
   const bodyStyle = { color: '#a8a090' }
-  const mutedStyle = { color: '#6a6458' }
+  const mutedStyle = { color: '#9f9684' }
 
   return (
     <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-2xl mx-auto w-full">

@@ -16,7 +16,7 @@ const CATEGORY_COLORS: Record<string, string> = {
   enclosure: '#5a8ebe',
   acquisition: '#d4924a',
   supplies: '#a87ac4',
-  misc: '#6a6458',
+  misc: '#9f9684',
 }
 
 const ANIMAL_CATEGORY_COLORS = [
@@ -158,7 +158,7 @@ export function Stats() {
         <Section title="Monthly feedings">
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={monthlyFeedingData} barCategoryGap="30%">
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
               <YAxis hide allowDecimals={false} />
               <Tooltip
                 contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
@@ -199,7 +199,7 @@ export function Stats() {
           <div className="flex flex-col gap-2">
             {topStreaks.map(({ name, streak }, i) => (
               <div key={name} className="flex items-center gap-3">
-                <span className="text-xs font-semibold w-4 text-right" style={{ color: '#6a6458' }}>{i + 1}</span>
+                <span className="text-xs font-semibold w-4 text-right" style={{ color: '#9f9684' }}>{i + 1}</span>
                 <div className="flex-1">
                   <div className="flex justify-between text-xs mb-1">
                     <span style={{ color: '#f0ece0' }}>{name}</span>
@@ -224,9 +224,9 @@ export function Stats() {
 function StatCard({ label, value, color, note }: { label: string; value: number | string; color?: string; note?: string }) {
   return (
     <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <p className="text-xs mb-1" style={{ color: '#6a6458' }}>{label}</p>
+      <p className="text-xs mb-1" style={{ color: '#9f9684' }}>{label}</p>
       <p className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: color ?? '#f0ece0' }}>{value}</p>
-      {note && <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{note}</p>}
+      {note && <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>{note}</p>}
     </div>
   )
 }
@@ -234,7 +234,7 @@ function StatCard({ label, value, color, note }: { label: string; value: number 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-5">
-      <p className="text-xs font-semibold tracking-wider mb-2" style={{ color: '#6a6458' }}>{title.toUpperCase()}</p>
+      <p className="text-xs font-semibold tracking-wider mb-2" style={{ color: '#9f9684' }}>{title.toUpperCase()}</p>
       <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
         {children}
       </div>

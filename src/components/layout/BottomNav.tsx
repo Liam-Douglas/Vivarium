@@ -100,9 +100,9 @@ export function BottomNav() {
               >
                 <span className="flex-1 min-w-0">
                   <span className="block text-[15px]" style={{ color: '#f0ece0' }}>{link.label}</span>
-                  <span className="block text-xs mt-0.5" style={{ color: '#6a6458' }}>{link.detail}</span>
+                  <span className="block text-xs mt-0.5" style={{ color: '#9f9684' }}>{link.detail}</span>
                 </span>
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2} className="shrink-0">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9f9684" strokeWidth={2} className="shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>

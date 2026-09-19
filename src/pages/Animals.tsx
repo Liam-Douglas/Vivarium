@@ -236,7 +236,7 @@ export function Animals() {
             className="flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-colors"
             style={{
               backgroundColor: pageTab === tab ? '#242420' : 'transparent',
-              color: pageTab === tab ? '#f0ece0' : '#6a6458',
+              color: pageTab === tab ? '#f0ece0' : '#9f9684',
             }}
           >
             {tab === 'animals' ? `🐾 Animals` : `🏠 Enclosures`}
@@ -277,7 +277,7 @@ export function Animals() {
                       aria-label={mode === 'grid' ? 'Photo grid' : 'Compact list'}
                       aria-pressed={density === mode}
                       className="flex items-center justify-center w-9 rounded-[10px] transition-colors"
-                      style={{ backgroundColor: density === mode ? '#2e2e2a' : 'transparent', color: density === mode ? '#8fbe5a' : '#6a6458' }}
+                      style={{ backgroundColor: density === mode ? '#2e2e2a' : 'transparent', color: density === mode ? '#8fbe5a' : '#9f9684' }}
                     >
                       {mode === 'grid' ? (
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" /></svg>
@@ -362,7 +362,7 @@ export function Animals() {
                           <span className="ml-1.5 text-xs" style={{ color: '#d4924a' }}>· Q</span>
                         )}
                       </p>
-                      <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>
+                      <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>
                         {animal.species}{where ? ` · ${where}` : ''}
                       </p>
                     </div>
@@ -453,13 +453,13 @@ export function Animals() {
                       </button>
                     </>
                   ) : (
-                    <p className="text-xs mt-1" style={{ color: '#6a6458' }}>
+                    <p className="text-xs mt-1" style={{ color: '#9f9684' }}>
                       No animals assigned. Edit an animal to assign it to this enclosure.
                     </p>
                   )}
 
                   {enc.notes && (
-                    <p className="text-xs mt-3 pt-3" style={{ color: '#6a6458', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                    <p className="text-xs mt-3 pt-3" style={{ color: '#9f9684', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
                       {enc.notes}
                     </p>
                   )}

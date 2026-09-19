@@ -37,7 +37,7 @@ export function AuthCallback() {
         <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg animate-pulse" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
           V
         </div>
-        <p className="text-sm" style={{ color: '#6a6458' }}>Signing you in…</p>
+        <p className="text-sm" style={{ color: '#9f9684' }}>Signing you in…</p>
       </div>
     </div>
   )

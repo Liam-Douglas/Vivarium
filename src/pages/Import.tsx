@@ -524,7 +524,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
               className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold"
               style={{
                 backgroundColor: step >= s ? '#8fbe5a' : 'rgba(255,255,255,0.06)',
-                color: step >= s ? '#1a1a18' : '#6a6458',
+                color: step >= s ? '#1a1a18' : '#9f9684',
               }}
             >
               {s}
@@ -532,7 +532,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
             {s < 4 && <div className="flex-1 h-px w-8" style={{ backgroundColor: step > s ? '#8fbe5a' : 'rgba(255,255,255,0.06)' }} />}
           </div>
         ))}
-        <div className="ml-2 text-xs" style={{ color: '#6a6458' }}>
+        <div className="ml-2 text-xs" style={{ color: '#9f9684' }}>
           {['Upload', 'Map', 'Preview', 'Result'][step - 1]}
         </div>
       </div>
@@ -567,7 +567,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                 <p className="text-sm font-medium mb-1" style={{ color: '#f0ece0' }}>
                   {dragOver ? 'Drop to upload' : 'Drop your file here or tap to browse'}
                 </p>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Supports .csv and .xlsx</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Supports .csv and .xlsx</p>
               </>
             )}
             <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
@@ -602,8 +602,8 @@ export function Import({ embedded }: { embedded?: boolean }) {
             ].map(({ icon, label, count }) => (
               <div key={label} className="rounded-xl p-4 text-center" style={{ backgroundColor: '#242420', border: `1px solid ${count > 0 ? 'rgba(143,190,90,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
                 <div className="text-2xl mb-1">{icon}</div>
-                <p className="text-xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: count > 0 ? '#8fbe5a' : '#6a6458' }}>{count}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{label}</p>
+                <p className="text-xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: count > 0 ? '#8fbe5a' : '#9f9684' }}>{count}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>{label}</p>
               </div>
             ))}
           </div>
@@ -623,8 +623,8 @@ export function Import({ embedded }: { embedded?: boolean }) {
                   <div key={m.importName} className="px-4 py-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
                     <div className="flex items-center gap-2 mb-2.5">
                       <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{m.importName}</span>
-                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                      <span className="text-sm" style={{ color: '#a8a090' }}>{m.existing.name} <span style={{ color: '#6a6458' }}>({m.existing.species})</span></span>
+                      <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#9f9684" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                      <span className="text-sm" style={{ color: '#a8a090' }}>{m.existing.name} <span style={{ color: '#9f9684' }}>({m.existing.species})</span></span>
                       {!m.existing.is_active && (
                         <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a' }}>inactive — will reactivate</span>
                       )}
@@ -636,7 +636,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                         style={{
                           backgroundColor: decision === 'merge' ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.04)',
                           border: `1px solid ${decision === 'merge' ? 'rgba(143,190,90,0.4)' : 'rgba(255,255,255,0.08)'}`,
-                          color: decision === 'merge' ? '#8fbe5a' : '#6a6458',
+                          color: decision === 'merge' ? '#8fbe5a' : '#9f9684',
                         }}
                       >
                         ✓ Same animal — merge logs
@@ -647,7 +647,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                         style={{
                           backgroundColor: decision === 'new' ? 'rgba(196,90,90,0.12)' : 'rgba(255,255,255,0.04)',
                           border: `1px solid ${decision === 'new' ? 'rgba(196,90,90,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                          color: decision === 'new' ? '#c45a5a' : '#6a6458',
+                          color: decision === 'new' ? '#c45a5a' : '#9f9684',
                         }}
                       >
                         + Import as new animal
@@ -662,7 +662,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
           {/* Unmatched animals — manual link */}
           {unmatchedAnimals.length > 0 && allAnimals.length > 0 && (
             <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: '#6a6458', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: '#9f9684', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 No match found — link manually or import as new
               </p>
               {unmatchedAnimals.map((a, i) => {
@@ -671,7 +671,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                 return (
                   <div key={i} className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: i < unmatchedAnimals.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                     <span className="text-sm shrink-0" style={{ color: '#f0ece0' }}>{String(a.name)}</span>
-                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#6a6458" strokeWidth={2} className="shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
+                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#9f9684" strokeWidth={2} className="shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                     <select
                       value={linkedId}
                       onChange={(e) => setManualLinks((prev) => ({ ...prev, [key]: e.target.value }))}
@@ -692,18 +692,18 @@ export function Import({ embedded }: { embedded?: boolean }) {
           {/* Animal name preview */}
           {importData.animals.length > 0 && (
             <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: '#6a6458', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: '#9f9684', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 Animals detected
               </p>
               {importData.animals.slice(0, 5).map((a, i) => (
                 <div key={i} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: i < Math.min(importData.animals.length, 5) - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}>
                   <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: '#8fbe5a' }} />
                   <span className="text-sm" style={{ color: '#f0ece0' }}>{String(a.name)}</span>
-                  <span className="text-xs ml-auto" style={{ color: '#6a6458' }}>{String(a.species)}</span>
+                  <span className="text-xs ml-auto" style={{ color: '#9f9684' }}>{String(a.species)}</span>
                 </div>
               ))}
               {importData.animals.length > 5 && (
-                <p className="px-4 py-2.5 text-xs" style={{ color: '#6a6458' }}>+{importData.animals.length - 5} more animals…</p>
+                <p className="px-4 py-2.5 text-xs" style={{ color: '#9f9684' }}>+{importData.animals.length - 5} more animals…</p>
               )}
             </div>
           )}
@@ -737,7 +737,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                 <thead>
                   <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                     {['Name', 'Species', 'Morph', 'Sex'].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 font-medium" style={{ color: '#6a6458' }}>{h}</th>
+                      <th key={h} className="text-left px-3 py-2 font-medium" style={{ color: '#9f9684' }}>{h}</th>
                     ))}
                   </tr>
                 </thead>
@@ -751,7 +751,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                     </tr>
                   ))}
                   {importData.animals.length > 5 && (
-                    <tr><td colSpan={4} className="px-3 py-2 text-center" style={{ color: '#6a6458' }}>+{importData.animals.length - 5} more…</td></tr>
+                    <tr><td colSpan={4} className="px-3 py-2 text-center" style={{ color: '#9f9684' }}>+{importData.animals.length - 5} more…</td></tr>
                   )}
                 </tbody>
               </table>
@@ -831,12 +831,12 @@ export function Import({ embedded }: { embedded?: boolean }) {
                   )}
                   <div className="pt-2 flex flex-col gap-1" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                     <div className="flex justify-between text-xs">
-                      <span style={{ color: '#6a6458' }}>Shed records in DB before import</span>
-                      <span style={{ color: '#6a6458' }}>{result.shedsInDbBefore}</span>
+                      <span style={{ color: '#9f9684' }}>Shed records in DB before import</span>
+                      <span style={{ color: '#9f9684' }}>{result.shedsInDbBefore}</span>
                     </div>
                     <div className="flex justify-between text-xs">
-                      <span style={{ color: '#6a6458' }}>Shed records in DB after import</span>
-                      <span style={{ color: '#6a6458' }}>{result.shedsInDbAfter}</span>
+                      <span style={{ color: '#9f9684' }}>Shed records in DB after import</span>
+                      <span style={{ color: '#9f9684' }}>{result.shedsInDbAfter}</span>
                     </div>
                   </div>
                 </div>
