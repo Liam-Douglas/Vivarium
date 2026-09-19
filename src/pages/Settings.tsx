@@ -5,7 +5,16 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile, removeMember, setMemberRole, getAnimals, getFeedingLogs, getSheddingLogs, getAllExpenses, detectOrphanedFeedingLogs, repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords, createVetContact, updateVetContact, deleteVetContact, recalculateLastFedAt } from '@/lib/queries'
+import {
+  approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile,
+  removeMember, setMemberRole, getAnimals, detectOrphanedFeedingLogs,
+  repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords,
+  createVetContact, updateVetContact, deleteVetContact, recalculateLastFedAt,
+  getAllFeedingLogs, getAllSheddingLogs, getAllWeightLogs, getAllExpensesComplete,
+  getAllMedicationLogs, getAllFeederStockEvents, getHealthEvents,
+  getAcquisitionRecords, getExitRecords, getBreedingRecords,
+  getMedicationSchedules, getFeederItems, getVetContacts, getEnclosures,
+} from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
@@ -83,40 +92,138 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
     setExporting(true)
     try {
       const { utils, writeFile } = await import('xlsx')
-      const [animals, feedingLogs, sheddingLogs, expenses] = await Promise.all([
+      // Every read here pages to the end. The export used to take the first
+      // 1000 rows of each table and hand them over as "your data", and to leave
+      // out most of what the app tracks entirely.
+      const [
+        animals, feedingLogs, sheddingLogs, weightLogs, expenses,
+        healthEvents, acquisitions, exits, breeding,
+        medSchedules, medLogs, feederItems, stockEvents, vets, enclosures,
+      ] = await Promise.all([
         getAnimals(householdId),
-        getFeedingLogs(householdId),
-        getSheddingLogs(householdId),
-        getAllExpenses(householdId),
+        getAllFeedingLogs(householdId),
+        getAllSheddingLogs(householdId),
+        getAllWeightLogs(householdId),
+        getAllExpensesComplete(householdId),
+        getHealthEvents(householdId),
+        getAcquisitionRecords(householdId),
+        getExitRecords(householdId),
+        getBreedingRecords(householdId),
+        getMedicationSchedules(householdId),
+        getAllMedicationLogs(householdId),
+        getFeederItems(householdId),
+        getAllFeederStockEvents(householdId),
+        getVetContacts(householdId),
+        getEnclosures(householdId),
       ])
+
+      // Most tables carry animal_id rather than a name; resolve from the
+      // animals we already have rather than asking the database to join.
+      const nameById = new Map((animals ?? []).map((a) => [a.id as string, a.name as string]))
+      const animalName = (row: Record<string, unknown>) =>
+        nameById.get(row.animal_id as string) ?? (row.animal_id as string) ?? ''
+      const money = (cents: unknown) =>
+        typeof cents === 'number' ? (cents / 100).toFixed(2) : ''
+
       const wb = utils.book_new()
-      utils.book_append_sheet(wb, utils.json_to_sheet(animals.map((a) => ({
+      const sheet = (rows: Record<string, unknown>[], name: string) => {
+        // A sheet with no rows loses its headers, so skip rather than ship a blank.
+        if (rows.length === 0) return
+        utils.book_append_sheet(wb, utils.json_to_sheet(rows), name)
+      }
+
+      sheet((animals ?? []).map((a) => ({
         Name: a.name, Species: a.species, Morph: a.morph ?? '', Sex: a.sex ?? '',
         DOB: a.date_of_birth ?? '', 'Weight (g)': a.weight_grams ?? '', Notes: a.notes ?? '',
         'Feeding frequency (days)': a.feeding_frequency_days ?? '', 'Last fed': a.last_fed_at ?? '',
-      }))), 'Animals')
-      utils.book_append_sheet(wb, utils.json_to_sheet(feedingLogs.map((l) => ({
-        Animal: (l.animals as { name: string } | null)?.name ?? l.animal_id,
+        Active: a.is_active ? 'Yes' : 'No',
+      })), 'Animals')
+
+      sheet(feedingLogs.map((l) => ({
+        Animal: (l.animals as { name: string } | null)?.name ?? animalName(l),
         Date: l.fed_at, 'Prey type': l.prey_type, Size: l.prey_size ?? '',
         Quantity: l.quantity, Refused: l.refused ? 'Yes' : 'No', Notes: l.notes ?? '',
-      }))), 'Feeding log')
-      utils.book_append_sheet(wb, utils.json_to_sheet(sheddingLogs.map((l) => ({
-        Animal: (l.animals as { name: string } | null)?.name ?? l.animal_id,
+      })), 'Feeding log')
+
+      sheet(sheddingLogs.map((l) => ({
+        Animal: (l.animals as { name: string } | null)?.name ?? animalName(l),
         Date: l.shed_at, Complete: l.complete ? 'Yes' : 'No', Notes: l.notes ?? '',
-      }))), 'Shedding log')
-      utils.book_append_sheet(wb, utils.json_to_sheet(expenses.map((e) => ({
+      })), 'Shedding log')
+
+      sheet(weightLogs.map((l) => ({
+        Animal: animalName(l), Date: l.logged_at,
+        'Weight (g)': l.weight_grams, Notes: l.notes ?? '',
+      })), 'Weight log')
+
+      sheet((healthEvents ?? []).map((e) => ({
+        Animal: animalName(e), Date: e.event_date, Type: e.event_type,
+        Title: e.title, 'Cost (AUD)': money(e.cost_cents), Notes: e.notes ?? '',
+      })), 'Health')
+
+      sheet((acquisitions ?? []).map((r) => ({
+        Animal: animalName(r), Date: r.acquired_at, Source: r.source ?? '',
+        From: r.source_name ?? '', 'Price (AUD)': money(r.price_cents), Notes: r.notes ?? '',
+      })), 'Acquisition')
+
+      sheet((exits ?? []).map((r) => ({
+        Animal: animalName(r), Date: r.exited_at, Reason: r.reason,
+        'Price (AUD)': money(r.price_cents), Notes: r.notes ?? '',
+      })), 'Exit')
+
+      sheet((breeding ?? []).map((r) => ({
+        Animal: animalName(r), 'Pairing date': r.pairing_date,
+        'Paired with': r.paired_with_name ?? '', Outcome: r.outcome ?? '',
+        'Clutch size': r.clutch_size ?? '', 'Eggs fertile': r.eggs_fertile ?? '',
+        'Hatch date': r.hatch_date ?? '', Notes: r.notes ?? '',
+      })), 'Breeding')
+
+      sheet((medSchedules ?? []).map((m) => ({
+        Animal: animalName(m), Medication: m.name, Dosage: m.dosage ?? '',
+        'Every (days)': m.frequency_days ?? '', Start: m.start_date ?? '',
+        End: m.end_date ?? '', Notes: m.notes ?? '',
+      })), 'Medication schedules')
+
+      sheet(medLogs.map((l) => ({
+        Animal: animalName(l), Given: l.given_at, Notes: l.notes ?? '',
+      })), 'Medication log')
+
+      sheet(expenses.map((e) => ({
         Date: e.expense_date, Category: e.category,
-        'Amount (AUD)': (e.amount_cents / 100).toFixed(2),
-        Description: e.description, 'Animal ID': e.animal_id ?? '',
-      }))), 'Expenses')
+        'Amount (AUD)': money(e.amount_cents),
+        Description: e.description,
+        Animal: e.animal_id ? animalName(e) : '',
+      })), 'Expenses')
+
+      sheet((feederItems ?? []).map((f) => ({
+        Name: f.name, Type: f.feeder_type, Unit: f.unit_label,
+        'Low stock threshold': f.low_stock_threshold,
+      })), 'Feeder inventory')
+
+      sheet(stockEvents.map((e) => ({
+        Date: e.created_at, Event: e.event_type, Change: e.quantity_delta,
+        'Unit cost (AUD)': money(e.unit_cost), Notes: e.notes ?? '',
+      })), 'Feeder stock events')
+
+      sheet((vets ?? []).map((v) => ({
+        Name: v.name, Clinic: v.clinic_name ?? '', Phone: v.phone ?? '',
+        Email: v.email ?? '', Address: v.address ?? '', Notes: v.notes ?? '',
+      })), 'Vet contacts')
+
+      sheet((enclosures ?? []).map((e) => ({
+        Name: e.name, Notes: e.notes ?? '',
+      })), 'Enclosures')
+
       writeFile(wb, `vivarium-export-${new Date().toISOString().slice(0, 10)}.xlsx`)
       showToast('Export downloaded', 'success')
-    } catch {
-      showToast('Export failed', 'error')
+    } catch (e) {
+      // Say what went wrong: a silent "Export failed" on someone's only copy of
+      // their records is not a useful thing to be told.
+      showToast(e instanceof Error ? `Export failed — ${e.message}` : 'Export failed', 'error')
     } finally {
       setExporting(false)
     }
   }
+
   const [confirmDialog, setConfirmDialog] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null)
   function requestConfirm(title: string, message: string, onConfirm: () => void) {
     setConfirmDialog({ title, message, onConfirm })
