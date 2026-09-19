@@ -8,7 +8,7 @@ import { useToast } from '@/components/ui/Toast'
 import {
   approveHouseholdRequest, denyHouseholdRequest, leaveHousehold, updateProfile,
   removeMember, setMemberRole, getAnimals, detectOrphanedFeedingLogs,
-  repairOrphanedFeedingLogs, detectDuplicateRecords, removeDuplicateRecords,
+  detectDuplicateRecords, removeDuplicateRecords,
   createVetContact, updateVetContact, deleteVetContact, recalculateLastFedAt,
   getAllFeedingLogs, getAllSheddingLogs, getAllWeightLogs, getAllExpensesComplete,
   getAllMedicationLogs, getAllFeederStockEvents, getHealthEvents,
@@ -41,8 +41,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   const [copied, setCopied] = useState(false)
   const [exporting, setExporting] = useState(false)
   const [scanning, setScanning] = useState(false)
-  const [scanResult, setScanResult] = useState<{ orphanedCount: number; fixableCount: number; dupGroups: number; dupExtra: number } | null>(null)
-  const [repairing, setRepairing] = useState(false)
+  const [scanResult, setScanResult] = useState<{ orphanedCount: number; onArchivedCount: number; dupGroups: number; dupExtra: number } | null>(null)
   const [removingDups, setRemovingDups] = useState(false)
   const [recalculating, setRecalculating] = useState(false)
 
@@ -316,25 +315,11 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
         detectOrphanedFeedingLogs(householdId),
         detectDuplicateRecords(householdId),
       ])
-      setScanResult({ orphanedCount: orphans.orphanedCount, fixableCount: orphans.fixableCount, dupGroups: dups.groupCount, dupExtra: dups.extraCount })
+      setScanResult({ orphanedCount: orphans.orphanedCount, onArchivedCount: orphans.onArchivedCount, dupGroups: dups.groupCount, dupExtra: dups.extraCount })
     } catch {
       showToast('Scan failed', 'error')
     } finally {
       setScanning(false)
-    }
-  }
-
-  async function handleRepair() {
-    if (!householdId) return
-    setRepairing(true)
-    try {
-      const { fixed } = await repairOrphanedFeedingLogs(householdId)
-      setScanResult((r) => r ? { ...r, fixableCount: 0, orphanedCount: r.orphanedCount - fixed } : null)
-      showToast(`Fixed ${fixed} feeding record${fixed !== 1 ? 's' : ''}`, 'success')
-    } catch {
-      showToast('Repair failed', 'error')
-    } finally {
-      setRepairing(false)
     }
   }
 
@@ -517,20 +502,24 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
             <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>DATA REPAIR</p>
             <p className="text-xs mb-3" style={{ color: '#6a6458' }}>
-              Detects broken animal links (records missing from profiles) and duplicate entries (same animal, same day, same type).
+              Detects feeding records pointing at an animal that no longer exists, and duplicate entries (same animal, same day, same type). Archived animals keep their history and are not a problem.
             </p>
             {scanResult && (
               <div className="flex flex-col gap-2 mb-3">
                 {/* Orphaned links */}
-                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.fixableCount > 0 ? 'rgba(212,146,74,0.08)' : 'rgba(90,158,106,0.08)', border: `1px solid ${scanResult.fixableCount > 0 ? 'rgba(212,146,74,0.2)' : 'rgba(90,158,106,0.2)'}` }}>
+                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.orphanedCount > 0 ? 'rgba(212,146,74,0.08)' : 'rgba(90,158,106,0.08)', border: `1px solid ${scanResult.orphanedCount > 0 ? 'rgba(212,146,74,0.2)' : 'rgba(90,158,106,0.2)'}` }}>
                   <p className="text-xs font-medium mb-0.5" style={{ color: '#a8a090' }}>BROKEN LINKS</p>
-                  {scanResult.fixableCount > 0 ? (
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm" style={{ color: '#d4924a' }}>{scanResult.fixableCount} record{scanResult.fixableCount !== 1 ? 's' : ''} can be re-linked</p>
-                      <Button size="sm" onClick={handleRepair} loading={repairing}>Fix</Button>
-                    </div>
+                  {scanResult.orphanedCount > 0 ? (
+                    <p className="text-sm" style={{ color: '#d4924a' }}>
+                      {scanResult.orphanedCount} feeding record{scanResult.orphanedCount !== 1 ? 's point' : ' points'} at an animal that no longer exists. They can't be re-linked automatically — the name went with the animal.
+                    </p>
                   ) : (
-                    <p className="text-sm" style={{ color: '#5a9e6a' }}>{scanResult.orphanedCount === 0 ? 'All clear' : `${scanResult.orphanedCount} orphaned (names don't match any active animal)`}</p>
+                    <p className="text-sm" style={{ color: '#5a9e6a' }}>All clear</p>
+                  )}
+                  {scanResult.onArchivedCount > 0 && (
+                    <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+                      {scanResult.onArchivedCount} record{scanResult.onArchivedCount !== 1 ? 's belong' : ' belongs'} to archived animals. That's normal — their history stays with them.
+                    </p>
                   )}
                 </div>
                 {/* Duplicates */}

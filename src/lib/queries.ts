@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { fetchAllRows } from './pagination'
+import { classifyFeedingLogs } from './orphans'
 
 // Strip ownership/identity columns from a caller-supplied update payload so a
 // tampered client can't reassign a record to another household or user, or
@@ -953,50 +954,44 @@ export async function batchInsertFeedingLogs(logs: Record<string, unknown>[]) {
 // ─── Data repair ─────────────────────────────────────────────────────────────
 
 export async function detectOrphanedFeedingLogs(householdId: string) {
-  const { data: activeAnimals, error: animalsErr } = await supabase
-    .from('animals')
-    .select('id, name')
-    .eq('household_id', householdId)
-    .eq('is_active', true)
-  if (animalsErr) throw animalsErr
+  // Every animal, active or not. Archiving is a soft delete, so an archived
+  // animal still owns its history — treating those logs as orphaned is what
+  // let the old repair move a dead animal's feeding record onto whichever
+  // living animal happened to share its name.
+  const animals = await fetchAllRows<{ id: string; name: string; is_active: boolean }>(
+    (from, to) => supabase.from('animals').select('id, name, is_active')
+      .eq('household_id', householdId).order('name').range(from, to))
 
-  const activeIds = new Set((activeAnimals ?? []).map((a) => a.id))
+  const logs = await fetchAllRows<{ id: string; animal_id: string | null }>(
+    (from, to) => supabase.from('feeding_logs').select('id, animal_id')
+      .eq('household_id', householdId).order('fed_at').range(from, to))
 
-  const { data: logs, error: logsErr } = await supabase
-    .from('feeding_logs')
-    .select('id, animal_id, animals(id, name)')
-    .eq('household_id', householdId)
-  if (logsErr) throw logsErr
+  const { orphaned, onArchived } = classifyFeedingLogs(animals, logs)
 
-  type LogRow = { id: string; animal_id: string; animals: { id: string; name: string } | null }
-  const orphaned = ((logs as unknown) as LogRow[] ?? []).filter((l) => l.animal_id && !activeIds.has(l.animal_id))
-
-  const fixable = orphaned.filter((l) => {
-    const name = l.animals?.name
-    return name && (activeAnimals ?? []).some((a) => a.name.toLowerCase() === name.toLowerCase())
-  })
-
-  return { orphanedCount: orphaned.length, fixableCount: fixable.length, fixable, activeAnimals: activeAnimals ?? [] }
-}
-
-export async function repairOrphanedFeedingLogs(householdId: string): Promise<{ fixed: number }> {
-  const { fixable, activeAnimals } = await detectOrphanedFeedingLogs(householdId)
-  let fixed = 0
-  for (const log of fixable) {
-    const name = log.animals?.name
-    const correct = activeAnimals.find((a) => a.name.toLowerCase() === name?.toLowerCase())
-    if (!correct) continue
-    const { error } = await supabase.from('feeding_logs').update({ animal_id: correct.id }).eq('id', log.id)
-    if (!error) fixed++
+  return {
+    orphanedCount: orphaned.length,
+    onArchivedCount: onArchived.length,
+    orphaned,
   }
-  return { fixed }
 }
+
+type FeedRow = { id: string; animal_id: string; fed_at: string; prey_type: string; refused: boolean }
+type ShedRow = { id: string; animal_id: string; shed_at: string }
+type WeightRow = { id: string; animal_id: string; logged_at: string; weight_grams: number }
 
 export async function detectDuplicateRecords(householdId: string) {
-  const [feedRes, shedRes, weightRes] = await Promise.all([
-    supabase.from('feeding_logs').select('id, animal_id, fed_at, prey_type, refused, animals(name)').eq('household_id', householdId).order('fed_at'),
-    supabase.from('shedding_logs').select('id, animal_id, shed_at, animals(name)').eq('household_id', householdId).order('shed_at'),
-    supabase.from('weight_logs').select('id, animal_id, logged_at, weight_grams, animals(name)').eq('household_id', householdId).order('logged_at'),
+  // Paged: a scan that reads the first 1000 rows reports duplicates it happens
+  // to have seen, which is worse than not scanning — it reads as a clean bill.
+  const [feedRows, shedRows, weightRows] = await Promise.all([
+    fetchAllRows<FeedRow>((from, to) => supabase.from('feeding_logs')
+      .select('id, animal_id, fed_at, prey_type, refused')
+      .eq('household_id', householdId).order('fed_at').range(from, to)),
+    fetchAllRows<ShedRow>((from, to) => supabase.from('shedding_logs')
+      .select('id, animal_id, shed_at')
+      .eq('household_id', householdId).order('shed_at').range(from, to)),
+    fetchAllRows<WeightRow>((from, to) => supabase.from('weight_logs')
+      .select('id, animal_id, logged_at, weight_grams')
+      .eq('household_id', householdId).order('logged_at').range(from, to)),
   ])
 
   function groupDuplicates<T extends { id: string }>(rows: T[], key: (r: T) => string) {
@@ -1010,13 +1005,9 @@ export async function detectDuplicateRecords(householdId: string) {
     return [...map.values()].filter((g) => g.length > 1)
   }
 
-  type FeedRow = { id: string; animal_id: string; fed_at: string; prey_type: string; refused: boolean; animals: { name: string } | null }
-  type ShedRow = { id: string; animal_id: string; shed_at: string; animals: { name: string } | null }
-  type WeightRow = { id: string; animal_id: string; logged_at: string; weight_grams: number; animals: { name: string } | null }
-
-  const feeding = groupDuplicates((feedRes.data as unknown as FeedRow[]) ?? [], (r) => `${r.animal_id}|${r.fed_at.slice(0, 10)}|${r.prey_type}|${r.refused}`)
-  const shedding = groupDuplicates((shedRes.data as unknown as ShedRow[]) ?? [], (r) => `${r.animal_id}|${r.shed_at.slice(0, 10)}`)
-  const weight = groupDuplicates((weightRes.data as unknown as WeightRow[]) ?? [], (r) => `${r.animal_id}|${r.logged_at.slice(0, 10)}`)
+  const feeding = groupDuplicates(feedRows, (r) => `${r.animal_id}|${r.fed_at.slice(0, 10)}|${r.prey_type}|${r.refused}`)
+  const shedding = groupDuplicates(shedRows, (r) => `${r.animal_id}|${r.shed_at.slice(0, 10)}`)
+  const weight = groupDuplicates(weightRows, (r) => `${r.animal_id}|${r.logged_at.slice(0, 10)}`)
 
   const extraCount = [...feeding, ...shedding, ...weight].reduce((s, g) => s + g.length - 1, 0)
 
