@@ -61,7 +61,7 @@ export function AnimalCard({ animal, enclosureName }: AnimalCardProps) {
           {dueLabel}
         </p>
         {enclosureName && (
-          <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>{enclosureName}</p>
+          <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{enclosureName}</p>
         )}
       </div>
     </Link>

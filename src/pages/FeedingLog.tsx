@@ -96,7 +96,7 @@ export function FeedingLog() {
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               backgroundColor: tab === t ? 'rgba(143,190,90,0.15)' : 'transparent',
-              color: tab === t ? '#8fbe5a' : '#6a6458',
+              color: tab === t ? '#8fbe5a' : '#9f9684',
               border: tab === t ? '1px solid rgba(143,190,90,0.25)' : '1px solid transparent',
             }}
           >
@@ -115,7 +115,7 @@ export function FeedingLog() {
                 value={selectedAnimalId ?? ''}
                 onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
                 className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
-                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#6a6458' }}
+                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#9f9684' }}
               >
                 <option value="">All animals</option>
                 {animals.map((a) => (
@@ -152,9 +152,9 @@ export function FeedingLog() {
                         {!selectedAnimalId && a?.name ? `${a.name} — ` : ''}
                         {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                       </p>
-                      {log.notes && <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>{log.notes}</p>}
+                      {log.notes && <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{log.notes}</p>}
                     </div>
-                    <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+                    <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
                   </div>
                 )
               })}
@@ -180,7 +180,7 @@ export function FeedingLog() {
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-              <div key={d} className="text-center text-xs py-1" style={{ color: '#6a6458' }}>{d}</div>
+              <div key={d} className="text-center text-xs py-1" style={{ color: '#9f9684' }}>{d}</div>
             ))}
           </div>
 
@@ -218,7 +218,7 @@ export function FeedingLog() {
                         />
                       ))}
                       {dayLogs.length > 6 && (
-                        <span className="text-xs" style={{ color: '#6a6458', fontSize: 8 }}>+{dayLogs.length - 6}</span>
+                        <span className="text-xs" style={{ color: '#9f9684', fontSize: 8 }}>+{dayLogs.length - 6}</span>
                       )}
                     </div>
                   )}
@@ -234,16 +234,16 @@ export function FeedingLog() {
           <div className="flex gap-4 mb-4 flex-wrap">
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8fbe5a' }} />
-              <span className="text-xs" style={{ color: '#6a6458' }}>Fed</span>
+              <span className="text-xs" style={{ color: '#9f9684' }}>Fed</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#c45a5a' }} />
-              <span className="text-xs" style={{ color: '#6a6458' }}>Refused</span>
+              <span className="text-xs" style={{ color: '#9f9684' }}>Refused</span>
             </div>
             {animals.slice(0, 5).map((a, i) => (
               <div key={a.id} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ANIMAL_COLORS[i % ANIMAL_COLORS.length] }} />
-                <span className="text-xs" style={{ color: '#6a6458' }}>{a.name}</span>
+                <span className="text-xs" style={{ color: '#9f9684' }}>{a.name}</span>
               </div>
             ))}
           </div>
@@ -253,7 +253,7 @@ export function FeedingLog() {
             <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-sm font-medium mb-3" style={{ color: '#f0ece0' }}>{format(selectedDay, 'EEEE, MMMM d')}</p>
               {selectedDayLogs.length === 0 ? (
-                <p className="text-sm" style={{ color: '#6a6458' }}>No feedings on this day</p>
+                <p className="text-sm" style={{ color: '#9f9684' }}>No feedings on this day</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {selectedDayLogs.map((log) => {
@@ -263,11 +263,11 @@ export function FeedingLog() {
                         <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : (animalColorMap.get(log.animal_id) ?? '#8fbe5a') }} />
                         <div className="flex-1">
                           <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{animal?.name ?? 'Unknown'}</span>
-                          <span className="text-xs ml-2" style={{ color: '#6a6458' }}>
+                          <span className="text-xs ml-2" style={{ color: '#9f9684' }}>
                             {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                           </span>
                         </div>
-                        <span className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(log.fed_at), 'h:mm a')}</span>
+                        <span className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'h:mm a')}</span>
                       </div>
                     )
                   })}
@@ -284,19 +284,19 @@ export function FeedingLog() {
                 <p className="text-lg font-bold" style={{ color: '#8fbe5a', fontFamily: 'Playfair Display, serif' }}>
                   {logsInMonth.filter((l) => !l.refused).length}
                 </p>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Feedings</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Feedings</p>
               </div>
               <div>
                 <p className="text-lg font-bold" style={{ color: '#c45a5a', fontFamily: 'Playfair Display, serif' }}>
                   {logsInMonth.filter((l) => l.refused).length}
                 </p>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Refused</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Refused</p>
               </div>
               <div>
                 <p className="text-lg font-bold" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>
                   {new Set(logsInMonth.filter((l) => !l.refused).map((l) => format(new Date(l.fed_at), 'yyyy-MM-dd'))).size}
                 </p>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Active days</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Active days</p>
               </div>
             </div>
           </div>

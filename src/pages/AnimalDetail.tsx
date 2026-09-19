@@ -736,7 +736,7 @@ export function AnimalDetail() {
     return (
           <div className={`grid grid-cols-2 gap-3 ${className}`}>
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#6a6458' }}>Last fed</p>
+              <p className="text-xs" style={{ color: '#9f9684' }}>Last fed</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: feedingStatusColor }}>
                 {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'MMM d') : '—'}
               </p>
@@ -747,7 +747,7 @@ export function AnimalDetail() {
               )}
             </div>
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#6a6458' }}>Next feeding</p>
+              <p className="text-xs" style={{ color: '#9f9684' }}>Next feeding</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: nextFeedColor }}>
                 {nextFeedingDue ? format(nextFeedingDue, 'MMM d') : '—'}
               </p>
@@ -760,11 +760,11 @@ export function AnimalDetail() {
                 </p>
               )}
               {!nextFeedingDue && animal.feeding_frequency_days && (
-                <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>every {animal.feeding_frequency_days}d</p>
+                <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>every {animal.feeding_frequency_days}d</p>
               )}
             </div>
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#6a6458' }}>Current weight</p>
+              <p className="text-xs" style={{ color: '#9f9684' }}>Current weight</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
                 {animal.weight_grams ? `${animal.weight_grams}g` : '—'}
                 {weightTrend !== null && (
@@ -788,23 +788,23 @@ export function AnimalDetail() {
               )}
             </div>
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#6a6458' }}>Last shed</p>
+              <p className="text-xs" style={{ color: '#9f9684' }}>Last shed</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
                 {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—'}
               </p>
               {predictedNextShed && (
-                <p className="text-xs mt-0.5" style={{ color: predictedNextShed < new Date() ? '#d4924a' : '#6a6458' }}>
+                <p className="text-xs mt-0.5" style={{ color: predictedNextShed < new Date() ? '#d4924a' : '#9f9684' }}>
                   Next ~{format(predictedNextShed, 'MMM d')}
                 </p>
               )}
             </div>
             {feedResponse && (
               <div className="rounded-xl p-3 col-span-2" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs" style={{ color: '#6a6458' }}>Takes food</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Takes food</p>
                 <p className="text-base font-semibold mt-0.5" style={{ color: feedResponse.color }}>
                   {feedResponse.taken} of last {feedResponse.total}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
                   {feedResponse.lastRefusedAt
                     ? `Last refused ${format(feedResponse.lastRefusedAt, 'MMM d, yyyy')}`
                     : 'No refusals on record'}
@@ -857,7 +857,7 @@ export function AnimalDetail() {
             {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex.charAt(0).toUpperCase() + animal.sex.slice(1)}` : ''}{age ? ` · ${age}` : ''}
           </p>
           {enclosure && (
-            <p className="text-xs mt-1.5 inline-flex items-center gap-1.5" style={{ color: '#6a6458' }}>
+            <p className="text-xs mt-1.5 inline-flex items-center gap-1.5" style={{ color: '#9f9684' }}>
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="shrink-0">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -876,7 +876,7 @@ export function AnimalDetail() {
         <div className="flex gap-1 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {tabs.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} className="px-3 py-1.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
-              style={{ backgroundColor: tab === t.id ? 'rgba(143,190,90,0.15)' : 'transparent', color: tab === t.id ? '#8fbe5a' : '#6a6458' }}>
+              style={{ backgroundColor: tab === t.id ? 'rgba(143,190,90,0.15)' : 'transparent', color: tab === t.id ? '#8fbe5a' : '#9f9684' }}>
               {t.label}
             </button>
           ))}
@@ -927,7 +927,7 @@ export function AnimalDetail() {
                     <p className="flex-1 text-sm" style={{ color: log.refused ? '#a8a090' : '#f0ece0' }}>
                       {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                     </p>
-                    <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+                    <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
                   </div>
                 ))}
               </div>
@@ -942,7 +942,7 @@ export function AnimalDetail() {
                 </div>
                 <ResponsiveContainer width="100%" height={100}>
                   <LineChart data={chartData}>
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
                     <YAxis hide domain={['auto', 'auto']} />
                     <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} />
                     <Line type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} dot={false} />
@@ -1024,13 +1024,13 @@ export function AnimalDetail() {
             <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs font-medium" style={{ color: '#a8a090' }}>PHOTOS{animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}</p>
-                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? '#6a6458' : '#8fbe5a' }} disabled={photoUploading}>
+                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? '#9f9684' : '#8fbe5a' }} disabled={photoUploading}>
                   {photoUploading ? 'Uploading…' : '+ Add'}
                 </button>
                 <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddPhoto(f); e.target.value = '' }} />
               </div>
               {animalPhotos.length === 0 ? (
-                <p className="px-4 py-3 text-xs" style={{ color: '#6a6458' }}>No additional photos yet. Tap "+ Add" to upload.</p>
+                <p className="px-4 py-3 text-xs" style={{ color: '#9f9684' }}>No additional photos yet. Tap "+ Add" to upload.</p>
               ) : (
                 <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {animalPhotos.map((photo) => (
@@ -1098,7 +1098,7 @@ export function AnimalDetail() {
                   {/* Header with event count */}
                   <div className="flex items-baseline justify-between mb-3">
                     <p className="text-xs font-medium" style={{ color: '#a8a090' }}>ACTIVITY</p>
-                    <p className="text-xs" style={{ color: '#6a6458' }}>
+                    <p className="text-xs" style={{ color: '#9f9684' }}>
                       {yearTotal} event{yearTotal !== 1 ? 's' : ''} in the past year
                     </p>
                   </div>
@@ -1108,7 +1108,7 @@ export function AnimalDetail() {
                     <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 18, gap: 2, flexShrink: 0 }}>
                       {dayLabels.map((label, i) => (
                         <div key={i} style={{ height: 11, display: 'flex', alignItems: 'center' }}>
-                          <span style={{ fontSize: 9, color: '#6a6458', lineHeight: 1, whiteSpace: 'nowrap' }}>{label}</span>
+                          <span style={{ fontSize: 9, color: '#9f9684', lineHeight: 1, whiteSpace: 'nowrap' }}>{label}</span>
                         </div>
                       ))}
                     </div>
@@ -1122,7 +1122,7 @@ export function AnimalDetail() {
                             return (
                               <div key={wi} style={{ width: 11, position: 'relative', flexShrink: 0 }}>
                                 {showLabel && (
-                                  <span style={{ position: 'absolute', left: 0, top: 0, fontSize: 9, color: '#6a6458', whiteSpace: 'nowrap', lineHeight: '14px' }}>
+                                  <span style={{ position: 'absolute', left: 0, top: 0, fontSize: 9, color: '#9f9684', whiteSpace: 'nowrap', lineHeight: '14px' }}>
                                     {format(week[0], 'MMM')}
                                   </span>
                                 )}
@@ -1161,7 +1161,7 @@ export function AnimalDetail() {
                     ].map(({ label, color }) => (
                       <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <div style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: color }} />
-                        <span style={{ fontSize: 10, color: '#6a6458' }}>{label}</span>
+                        <span style={{ fontSize: 10, color: '#9f9684' }}>{label}</span>
                       </div>
                     ))}
                   </div>
@@ -1184,7 +1184,7 @@ export function AnimalDetail() {
                   className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors"
                   style={{
                     backgroundColor: timelineFilter === id ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.05)',
-                    color: timelineFilter === id ? '#8fbe5a' : '#6a6458',
+                    color: timelineFilter === id ? '#8fbe5a' : '#9f9684',
                     border: `1px solid ${timelineFilter === id ? 'rgba(143,190,90,0.3)' : 'transparent'}`,
                   }}
                 >
@@ -1216,9 +1216,9 @@ export function AnimalDetail() {
                   {visibleGroups.map((group) => (
                     <div key={group.month} className="mb-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <p className="text-xs font-semibold tracking-wider" style={{ color: '#6a6458' }}>{group.month.toUpperCase()}</p>
+                        <p className="text-xs font-semibold tracking-wider" style={{ color: '#9f9684' }}>{group.month.toUpperCase()}</p>
                         <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
-                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#6a6458' }}>{group.events.length}</span>
+                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#9f9684' }}>{group.events.length}</span>
                       </div>
                       <div className="flex flex-col">
                         {group.events.map((ev, i) => (
@@ -1229,9 +1229,9 @@ export function AnimalDetail() {
                             <div className="flex-1 min-w-0 -mt-0.5">
                               <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.label}</p>
-                                <p className="text-xs shrink-0" style={{ color: '#6a6458' }}>{format(ev.date, 'MMM d')}</p>
+                                <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(ev.date, 'MMM d')}</p>
                               </div>
-                              {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: '#6a6458' }}>{ev.detail}</p>}
+                              {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: '#9f9684' }}>{ev.detail}</p>}
                             </div>
                           </div>
                         ))}
@@ -1275,7 +1275,7 @@ export function AnimalDetail() {
                         { label: 'Success rate', value: `${rate}%`, color: rate >= 80 ? '#8fbe5a' : rate >= 50 ? '#d4924a' : '#c45a5a' },
                       ].map((s) => (
                         <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                          <p className="text-xs" style={{ color: '#6a6458' }}>{s.label}</p>
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{s.label}</p>
                           <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? '#f0ece0' }}>{s.value}</p>
                         </div>
                       ))}
@@ -1287,7 +1287,7 @@ export function AnimalDetail() {
                     <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>FEEDINGS PER MONTH</p>
                     <ResponsiveContainer width="100%" height={140}>
                       <BarChart data={feedingMonthlyData} barCategoryGap="30%">
-                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
                         <YAxis hide allowDecimals={false} />
                         <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} />
                         <Bar dataKey="fed" name="Fed" stackId="a" fill="#5a9e6a" radius={[0, 0, 0, 0]} />
@@ -1316,10 +1316,10 @@ export function AnimalDetail() {
                           {log.refused ? 'Refused' : 'Taken'}
                         </p>
                         {log.notes
-                          ? <p className="text-xs truncate lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#6a6458' }}>{log.notes}</p>
-                          : <p className="hidden lg:block lg:flex-1 lg:min-w-0 text-sm" style={{ color: '#6a6458' }}>—</p>}
+                          ? <p className="text-xs truncate lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#9f9684' }}>{log.notes}</p>
+                          : <p className="hidden lg:block lg:flex-1 lg:min-w-0 text-sm" style={{ color: '#9f9684' }}>—</p>}
                       </div>
-                      <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: '#6a6458' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+                      <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
                       <RecordActions onEdit={() => openEditFeed(log)} onDelete={() => handleDeleteFeed(log)} />
                     </div>
                   ))}
@@ -1336,7 +1336,7 @@ export function AnimalDetail() {
               {(['weight', 'shedding'] as const).map((t) => (
                 <button key={t} onClick={() => setVitalsSubTab(t)}
                   className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-                  style={{ backgroundColor: vitalsSubTab === t ? 'rgba(143,190,90,0.15)' : 'transparent', color: vitalsSubTab === t ? '#8fbe5a' : '#6a6458' }}>
+                  style={{ backgroundColor: vitalsSubTab === t ? 'rgba(143,190,90,0.15)' : 'transparent', color: vitalsSubTab === t ? '#8fbe5a' : '#9f9684' }}>
                   {t === 'weight' ? '⚖️ Weight' : '🐍 Shedding'}
                 </button>
               ))}
@@ -1363,7 +1363,7 @@ export function AnimalDetail() {
                               <stop offset="95%" stopColor="#8fbe5a" stopOpacity={0} />
                             </linearGradient>
                           </defs>
-                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
                           <YAxis hide domain={['auto', 'auto']} />
                           <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v}g`, 'Weight']} />
                           <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
@@ -1382,7 +1382,7 @@ export function AnimalDetail() {
                         />
                         <button onClick={saveTargetWeight} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>Set</button>
                         {targetWeight && (
-                          <button onClick={() => { if (id) removeStored(targetWeightKey(id)); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#6a6458' }}>Clear</button>
+                          <button onClick={() => { if (id) removeStored(targetWeightKey(id)); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#9f9684' }}>Clear</button>
                         )}
                       </div>
                       {(() => {
@@ -1391,9 +1391,9 @@ export function AnimalDetail() {
                         const gain = last.weight_grams - first.weight_grams
                         return (
                           <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                            <div className="text-center"><p className="text-xs" style={{ color: '#6a6458' }}>Start</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{first.weight_grams}g</p></div>
-                            <div className="text-center"><p className="text-xs" style={{ color: '#6a6458' }}>Total gain</p><p className="text-sm font-semibold" style={{ color: gain >= 0 ? '#8fbe5a' : '#c45a5a' }}>{gain >= 0 ? '+' : ''}{gain}g</p></div>
-                            <div className="text-center"><p className="text-xs" style={{ color: '#6a6458' }}>Latest</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{last.weight_grams}g</p></div>
+                            <div className="text-center"><p className="text-xs" style={{ color: '#9f9684' }}>Start</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{first.weight_grams}g</p></div>
+                            <div className="text-center"><p className="text-xs" style={{ color: '#9f9684' }}>Total gain</p><p className="text-sm font-semibold" style={{ color: gain >= 0 ? '#8fbe5a' : '#c45a5a' }}>{gain >= 0 ? '+' : ''}{gain}g</p></div>
+                            <div className="text-center"><p className="text-xs" style={{ color: '#9f9684' }}>Latest</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{last.weight_grams}g</p></div>
                           </div>
                         )
                       })()}
@@ -1404,9 +1404,9 @@ export function AnimalDetail() {
                       <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <div className="flex-1">
                           <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{log.weight_grams}g</p>
-                          {log.notes && <p className="text-xs" style={{ color: '#6a6458' }}>{log.notes}</p>}
+                          {log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}
                         </div>
-                        <p className="text-xs shrink-0 mr-1" style={{ color: '#6a6458' }}>{format(new Date(log.logged_at), 'MMM d, yyyy')}</p>
+                        <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>{format(new Date(log.logged_at), 'MMM d, yyyy')}</p>
                         <RecordActions onEdit={() => openEditWeight(log)} onDelete={() => handleDeleteWeight(log)} />
                       </div>
                     ))}
@@ -1434,7 +1434,7 @@ export function AnimalDetail() {
                           { label: 'Avg interval', value: avgInterval != null ? `${avgInterval}d` : '—' },
                         ].map((s) => (
                           <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <p className="text-xs" style={{ color: '#6a6458' }}>{s.label}</p>
+                            <p className="text-xs" style={{ color: '#9f9684' }}>{s.label}</p>
                             <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? '#f0ece0' }}>{s.value}</p>
                           </div>
                         ))}
@@ -1444,10 +1444,10 @@ export function AnimalDetail() {
                   {sheddingIntervalData.length > 1 && (
                     <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>SHED INTERVALS (days)</p>
-                      <p className="text-xs mb-3" style={{ color: '#6a6458' }}>Days between consecutive sheds — green = complete, amber = incomplete</p>
+                      <p className="text-xs mb-3" style={{ color: '#9f9684' }}>Days between consecutive sheds — green = complete, amber = incomplete</p>
                       <ResponsiveContainer width="100%" height={130}>
                         <BarChart data={sheddingIntervalData} barCategoryGap="25%">
-                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#6a6458' }} axisLine={false} tickLine={false} />
+                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
                           <YAxis hide />
                           <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v} days`, 'Interval']} />
                           <Bar dataKey="days" radius={[4, 4, 0, 0]}>
@@ -1463,8 +1463,8 @@ export function AnimalDetail() {
                     {sheddingLogs.map((log) => (
                       <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <Badge status={log.complete ? 'green' : 'amber'}>{log.complete ? 'Complete' : 'Incomplete'}</Badge>
-                        <div className="flex-1">{log.notes && <p className="text-xs" style={{ color: '#6a6458' }}>{log.notes}</p>}</div>
-                        <p className="text-xs shrink-0 mr-1" style={{ color: '#6a6458' }}>{format(new Date(log.shed_at), 'MMM d, yyyy')}</p>
+                        <div className="flex-1">{log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}</div>
+                        <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>{format(new Date(log.shed_at), 'MMM d, yyyy')}</p>
                         <RecordActions onEdit={() => openEditShed(log)} onDelete={() => handleDeleteShed(log)} />
                       </div>
                     ))}
@@ -1485,7 +1485,7 @@ export function AnimalDetail() {
                 <Button size="sm" onClick={openAddMed}>Add</Button>
               </div>
               {medicationSchedules.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No medication schedules yet.</p>
+                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No medication schedules yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {medicationSchedules.map((med) => {
@@ -1496,10 +1496,10 @@ export function AnimalDetail() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{med.name}</p>
-                              {!med.is_active && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#6a6458' }}>Archived</span>}
+                              {!med.is_active && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#9f9684' }}>Archived</span>}
                             </div>
                             {med.dosage && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{med.dosage}</p>}
-                            <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                            <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
                               {lastDose ? `Last: ${format(new Date(lastDose), 'MMM d')}` : 'No doses logged'}
                               {med.frequency_days ? ` · every ${med.frequency_days}d` : ''}
                               {med.end_date ? ` · ends ${format(new Date(med.end_date), 'MMM d')}` : ''}
@@ -1534,11 +1534,11 @@ export function AnimalDetail() {
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs" style={{ color: '#6a6458' }}>Total events</p>
+                    <p className="text-xs" style={{ color: '#9f9684' }}>Total events</p>
                     <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>{healthEvents.length}</p>
                   </div>
                   <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs" style={{ color: '#6a6458' }}>Total cost</p>
+                    <p className="text-xs" style={{ color: '#9f9684' }}>Total cost</p>
                     <p className="text-base font-semibold mt-0.5" style={{ color: totalHealthCost > 0 ? '#d4924a' : '#f0ece0' }}>
                       {totalHealthCost > 0 ? `$${(totalHealthCost / 100).toFixed(2)}` : '—'}
                     </p>
@@ -1564,10 +1564,10 @@ export function AnimalDetail() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.title}</p>
                           <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{ev.event_type.replace('_', ' ')}</p>
-                          {ev.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{ev.notes}</p>}
+                          {ev.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{ev.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(ev.event_date), 'MMM d, yyyy')}</p>
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(ev.event_date), 'MMM d, yyyy')}</p>
                           {ev.cost_cents != null && <p className="text-xs mt-0.5" style={{ color: '#d4924a' }}>${(ev.cost_cents / 100).toFixed(2)}</p>}
                         </div>
                         <RecordActions onEdit={() => openEditHealth(ev)} onDelete={() => handleDeleteHealth(ev)} />
@@ -1591,7 +1591,7 @@ export function AnimalDetail() {
                 <Button size="sm" onClick={openAddAcquisition}>Add</Button>
               </div>
               {acquisitionRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No acquisition records yet.</p>
+                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No acquisition records yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {acquisitionRecords.map((r) => (
@@ -1600,10 +1600,10 @@ export function AnimalDetail() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{r.source_name ?? r.source ?? 'Unknown source'}</p>
                           {r.source && <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{r.source.replace('_', ' ')}</p>}
-                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.acquired_at), 'MMM d, yyyy')}</p>
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.acquired_at), 'MMM d, yyyy')}</p>
                           {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
                         </div>
                         <RecordActions onEdit={() => openEditAcquisition(r)} onDelete={() => handleDeleteAcquisition(r)} />
@@ -1623,7 +1623,7 @@ export function AnimalDetail() {
                 <Button size="sm" onClick={openAddExit}>Add</Button>
               </div>
               {exitRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No exit records yet.</p>
+                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No exit records yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {exitRecords.map((r) => (
@@ -1631,10 +1631,10 @@ export function AnimalDetail() {
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium capitalize" style={{ color: '#f0ece0' }}>{r.reason.replace('_', ' ')}</p>
-                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.exited_at), 'MMM d, yyyy')}</p>
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.exited_at), 'MMM d, yyyy')}</p>
                           {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
                         </div>
                         <RecordActions onEdit={() => openEditExit(r)} onDelete={() => handleDeleteExit(r)} />
@@ -1654,7 +1654,7 @@ export function AnimalDetail() {
                 <Button size="sm" onClick={openAddBreeding}>Add</Button>
               </div>
               {breedingRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#6a6458' }}>No breeding records yet.</p>
+                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No breeding records yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {breedingRecords.map((r) => (
@@ -1669,11 +1669,11 @@ export function AnimalDetail() {
                             {r.clutch_size != null && <span className="text-xs" style={{ color: '#a8a090' }}>{r.clutch_size} eggs</span>}
                             {r.eggs_fertile != null && <span className="text-xs" style={{ color: '#8fbe5a' }}>{r.eggs_fertile} fertile</span>}
                           </div>
-                          {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#6a6458' }}>Hatch: {format(new Date(r.hatch_date), 'MMM d, yyyy')}</p>}
-                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#6a6458' }}>{r.notes}</p>}
+                          {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Hatch: {format(new Date(r.hatch_date), 'MMM d, yyyy')}</p>}
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#6a6458' }}>{format(new Date(r.pairing_date), 'MMM d, yyyy')}</p>
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.pairing_date), 'MMM d, yyyy')}</p>
                         </div>
                         <RecordActions onEdit={() => openEditBreeding(r)} onDelete={() => handleDeleteBreeding(r)} />
                       </div>
@@ -1820,9 +1820,9 @@ export function AnimalDetail() {
           )}
           <div className="text-center">
             <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{animal?.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>{animal?.species}{animal?.morph ? ` · ${animal.morph}` : ''}</p>
+            <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>{animal?.species}{animal?.morph ? ` · ${animal.morph}` : ''}</p>
           </div>
-          <p className="text-xs text-center" style={{ color: '#6a6458' }}>Print or screenshot this QR code to label an enclosure. Scanning it will open the animal's profile.</p>
+          <p className="text-xs text-center" style={{ color: '#9f9684' }}>Print or screenshot this QR code to label an enclosure. Scanning it will open the animal's profile.</p>
           <Button variant="secondary" fullWidth onClick={() => {
             const a = document.createElement('a')
             a.href = qrDataUrl

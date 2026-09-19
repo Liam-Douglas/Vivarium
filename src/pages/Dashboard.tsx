@@ -520,10 +520,10 @@ export function Dashboard() {
             <div className="hidden lg:flex items-center gap-3 px-4 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <span className="w-2.5 shrink-0" aria-hidden="true" />
               <div className="flex-1 min-w-0 flex items-center gap-4">
-                <span className="w-52 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Animal</span>
-                <span className="w-32 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Status</span>
-                <span className="flex-1 min-w-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Detail</span>
-                <span className="w-28 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#6a6458' }}>Where</span>
+                <span className="w-52 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Animal</span>
+                <span className="w-32 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Status</span>
+                <span className="flex-1 min-w-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Detail</span>
+                <span className="w-28 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Where</span>
               </div>
               <span className="shrink-0" style={{ width: 62 }} aria-hidden="true" />
             </div>
@@ -580,16 +580,16 @@ export function Dashboard() {
                         {animal.name}
                         <span className="font-normal lg:hidden" style={{ color: tone }}> · {when}</span>
                       </p>
-                      <p className="hidden lg:block text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>
+                      <p className="hidden lg:block text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>
                         {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}
                       </p>
                     </div>
                     <p className="hidden lg:block lg:w-32 lg:shrink-0 text-sm truncate" style={{ color: tone }}>{when}</p>
-                    <p className="text-xs mt-0.5 truncate lg:mt-0 lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#6a6458' }}>
+                    <p className="text-xs mt-0.5 truncate lg:mt-0 lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#9f9684' }}>
                       {detail}
                       <span className="lg:hidden">{where ? ` · ${where}` : ''}</span>
                     </p>
-                    <p className="hidden lg:block lg:w-28 lg:shrink-0 text-sm truncate" style={{ color: '#6a6458' }}>{where ?? '—'}</p>
+                    <p className="hidden lg:block lg:w-28 lg:shrink-0 text-sm truncate" style={{ color: '#9f9684' }}>{where ?? '—'}</p>
                   </div>
                   {!selectMode && (
                     item.kind === 'dose' ? (
@@ -682,7 +682,7 @@ export function Dashboard() {
                   <p className="text-sm" style={{ color: '#f0ece0' }}>
                     <strong>{item.animalName}</strong> — {item.detail}
                   </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#6a6458' }}>
+                  <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
                     by {item.loggedBy} · {format(new Date(item.timestamp), 'MMM d, h:mm a')}
                   </p>
                 </div>

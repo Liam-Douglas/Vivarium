@@ -74,7 +74,7 @@ export function Sidebar() {
           </div>
           <div>
             <div className="font-semibold text-sm" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Vivarium</div>
-            {householdName && <div className="text-xs" style={{ color: '#6a6458' }}>{householdName}</div>}
+            {householdName && <div className="text-xs" style={{ color: '#9f9684' }}>{householdName}</div>}
           </div>
         </div>
       </div>
@@ -90,7 +90,7 @@ export function Sidebar() {
               `flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-colors text-sm font-medium ${
                 isActive
                   ? 'text-[#f0ece0]'
-                  : 'text-[#6a6458] hover:text-[#a8a090] hover:bg-white/5'
+                  : 'text-[#9f9684] hover:text-[#a8a090] hover:bg-white/5'
               }`
             }
             style={({ isActive }) => isActive ? { backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a' } : {}}
@@ -118,7 +118,7 @@ export function Sidebar() {
             <div className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>
               {profile?.full_name ?? 'User'}
             </div>
-            <div className="text-xs truncate" style={{ color: '#6a6458' }}>
+            <div className="text-xs truncate" style={{ color: '#9f9684' }}>
               {user?.email}
             </div>
           </div>

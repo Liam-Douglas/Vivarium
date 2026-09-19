@@ -378,7 +378,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
-              color: activeTab === tab ? '#8fbe5a' : '#6a6458',
+              color: activeTab === tab ? '#8fbe5a' : '#9f9684',
               border: activeTab === tab ? '1px solid rgba(143,190,90,0.25)' : '1px solid transparent',
             }}
           >
@@ -403,7 +403,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={handleSaveName} loading={savingName}>Save</Button>
           </div>
-          <p className="text-xs" style={{ color: '#6a6458' }}>{user?.email}</p>
+          <p className="text-xs" style={{ color: '#9f9684' }}>{user?.email}</p>
         </div>
       </Section>
 
@@ -413,7 +413,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
           <div className="flex flex-col gap-4">
             <div>
               <p className="text-sm font-medium mb-0.5" style={{ color: '#f0ece0' }}>{householdName}</p>
-              <p className="text-xs" style={{ color: '#6a6458' }}>
+              <p className="text-xs" style={{ color: '#9f9684' }}>
                 Your role: {currentUserRole === 'owner' ? 'Owner' : 'Member'}
               </p>
             </div>
@@ -433,7 +433,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                     {copied ? '✓ Copied' : 'Copy'}
                   </Button>
                 </div>
-                <p className="text-xs mt-1.5" style={{ color: '#6a6458' }}>Share this code so your partner can join</p>
+                <p className="text-xs mt-1.5" style={{ color: '#9f9684' }}>Share this code so your partner can join</p>
               </div>
             )}
 
@@ -511,7 +511,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
           <Button variant="secondary" size="sm" onClick={handleExport} loading={exporting}>Export collection</Button>
           <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
             <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>DATA REPAIR</p>
-            <p className="text-xs mb-3" style={{ color: '#6a6458' }}>
+            <p className="text-xs mb-3" style={{ color: '#9f9684' }}>
               Detects feeding records pointing at an animal that no longer exists, and duplicate entries (same animal, same day, same type). Archived animals keep their history and are not a problem.
             </p>
             {scanResult && (
@@ -588,7 +588,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
       <Section title="Vet Contacts">
         <div className="flex flex-col gap-3">
           {vetContacts.length === 0 ? (
-            <p className="text-sm" style={{ color: '#6a6458' }}>No vet contacts saved yet.</p>
+            <p className="text-sm" style={{ color: '#9f9684' }}>No vet contacts saved yet.</p>
           ) : (
             vetContacts.map((vet) => (
               <div key={vet.id} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -603,7 +603,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                       <a href={`mailto:${vet.email}`} className="text-xs" style={{ color: '#8fbe5a' }}>{vet.email}</a>
                     )}
                   </div>
-                  {vet.address && <p className="text-xs mt-0.5 truncate" style={{ color: '#6a6458' }}>{vet.address}</p>}
+                  {vet.address && <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{vet.address}</p>}
                 </div>
                 <div className="flex gap-1 shrink-0">
                   <button onClick={() => openEditVet(vet)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a' }}>
@@ -659,7 +659,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
-      <p className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#6a6458' }}>{title.toUpperCase()}</p>
+      <p className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#9f9684' }}>{title.toUpperCase()}</p>
       <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
         {children}
       </div>

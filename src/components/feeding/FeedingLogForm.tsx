@@ -151,7 +151,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
               if (items.length === 0) return null
               return (
                 <div key={cat.category}>
-                  <div className="px-3 py-1.5 text-xs font-semibold" style={{ color: '#6a6458' }}>{cat.category}</div>
+                  <div className="px-3 py-1.5 text-xs font-semibold" style={{ color: '#9f9684' }}>{cat.category}</div>
                   {items.map((item) => (
                     <button
                       key={item.name}

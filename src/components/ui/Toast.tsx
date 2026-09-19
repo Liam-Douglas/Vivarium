@@ -71,7 +71,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
           {toast.action.label}
         </button>
       )}
-      <button onClick={onDismiss} aria-label="Dismiss" style={{ color: '#6a6458' }}>
+      <button onClick={onDismiss} aria-label="Dismiss" style={{ color: '#9f9684' }}>
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
