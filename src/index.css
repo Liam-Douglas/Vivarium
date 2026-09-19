@@ -67,3 +67,16 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--bg-elevated);
   border-radius: 6px;
 }
+
+/* Pinch-zoom is a right, not a preference (WCAG 1.4.4). The viewport meta used
+   to carry maximum-scale=1.0, which switched it off for everyone in order to
+   stop one specific annoyance: iOS zooms the page when you focus a control
+   whose text is under 16px, and these are 14px. Sizing the controls up on
+   small screens fixes that annoyance directly, so zoom can stay available. */
+@media (max-width: 640px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
