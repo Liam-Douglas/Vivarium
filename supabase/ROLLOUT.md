@@ -32,29 +32,107 @@ Until then the bucket stays public, so anyone holding an object URL can read
 that photo. EXIF GPS is already stripped before upload (`src/lib/image.ts`), so
 the location leak that would make this urgent is already closed.
 
+## Before you apply: see what is already there
+
+These files were written from the client code, on the assumption of a clean
+slate. That assumption was wrong once already and cost a live vulnerability, so
+look first:
+
+```sql
+select tablename, policyname, cmd, roles, qual, with_check
+from pg_policies
+where schemaname = 'public'
+order by tablename, cmd, policyname;
+```
+
+Read the `with_check` column on every INSERT row. **Permissive policies on the
+same command are OR'd**: a caller has to satisfy only one of them. So a single
+loose policy defeats every careful one beside it, and a policy listing that
+contains the careful one looks reassuring while the hole stays open.
+
+The live database carried `members_insert_self`, whose entire check was
+`user_id = auth.uid()`. That constrains who the row is about and says nothing
+about what it says, so any user could insert themselves as
+`role = 'owner', status = 'active'` into any household whose id they could
+name — the approval flow bypassed completely. `0001` now sweeps competing
+insert policies on `household_members` before adding its own.
+
 ## Verifying 0001
 
-Two accounts in two different households, H1 and H2. Signed in as H1:
+**The SQL editor connects as `postgres`, which bypasses RLS, and `auth.uid()`
+is null there.** A query run plainly in the editor tests nothing: it will
+succeed whatever the policies say. Every check below therefore impersonates a
+real user inside a transaction that is rolled back.
 
-- `select * from animals where household_id = '<H2>'` → 0 rows.
-- `update animals set name = 'x' where id = '<an H2 animal>'` → 0 rows affected.
-- `delete from feeding_logs where id = '<an H2 log>'` → 0 rows affected.
-- `update animals set household_id = '<H2>' where id = '<an H1 animal>'` →
-  rejected by the `WITH CHECK` clause. This is the mass-assignment case: a
-  tampered client trying to push its own row into someone else's household.
+Take a `(household, user)` pair where the user has **no existing row** for that
+household — otherwise the unique index below fires first and you get a
+constraint error that looks like an RLS rejection but is not:
 
-Then the two flows that the policies added for this rollout exist to protect,
-which are the ones most likely to regress:
+```sql
+select h.id as household_id, h.name, hm.user_id, hm.role, hm.status
+from households h
+left join household_members hm on hm.household_id = h.id
+order by h.name;
+```
 
-- **Joining.** Sign up a third account, enter H1's invite code. The row should
-  insert and land as `pending`, and the app should show the waiting screen.
-- **Self-approval must fail.** As that pending user:
-  `insert into household_members (household_id, user_id, role, status)
-   values ('<H1>', auth.uid(), 'owner', 'active')` → rejected. If this
-  succeeds, stop and re-check the insert policy: it means anyone with an
-  invite code can let themselves in as an owner.
-- **Leaving.** As an active member, leave the collection. The row should
-  delete. As the same user, try to delete another member's row → 0 rows.
+**The escalation must be rejected.** This is the check that matters most:
+
+```sql
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"USER_UUID","role":"authenticated"}';
+  insert into household_members (household_id, user_id, role, status)
+  values ('HOUSEHOLD_UUID', 'USER_UUID', 'owner', 'active');
+rollback;
+```
+
+Expect `ERROR: new row violates row-level security policy`. If it reports
+success, a competing insert policy is still present — go back to the listing
+above. Do not read "Success. No rows returned" as a pass: that is the rollback
+talking, and it is what a successful escalation looks like.
+
+**A genuine request must still succeed**, or joining is broken:
+
+```sql
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"USER_UUID","role":"authenticated"}';
+  insert into household_members (household_id, user_id, role, status)
+  values ('HOUSEHOLD_UUID', 'USER_UUID', 'member', 'pending');
+rollback;
+```
+
+Expect `INSERT 0 1`.
+
+**Cross-household reads must come back empty, and their own must not** — the
+second query is the control that proves the policy is scoping rather than
+simply blocking everything:
+
+```sql
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"USER_UUID","role":"authenticated"}';
+  select count(*) as must_be_zero from animals where household_id = 'A_HOUSEHOLD_THEY_ARE_NOT_IN';
+  select count(*) as must_be_real from animals where household_id = 'THEIR_OWN_HOUSEHOLD';
+rollback;
+```
+
+**Mass assignment must be refused** — a tampered client pushing its own row
+into someone else's household:
+
+```sql
+begin;
+  set local role authenticated;
+  set local request.jwt.claims = '{"sub":"USER_UUID","role":"authenticated"}';
+  update animals set household_id = 'A_HOUSEHOLD_THEY_ARE_NOT_IN'
+  where id = 'ONE_OF_THEIR_ANIMALS';
+rollback;
+```
+
+Expect `UPDATE 0`.
+
+Finally, exercise joining and leaving in the app itself. Those two are the
+flows the added policies exist to protect and the ones most likely to regress.
 
 ## Coverage
 

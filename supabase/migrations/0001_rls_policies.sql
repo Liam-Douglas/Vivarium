@@ -98,6 +98,35 @@ create policy household_members_select on public.household_members for select to
 -- policy. Without those two clauses a tampered client could insert itself
 -- straight in as an active owner of any household whose id it could name,
 -- which would make the owner's approval step decorative.
+--
+-- Permissive policies on the same command are OR'd, so ANY other insert policy
+-- on this table defeats the pins above — a caller only has to satisfy one of
+-- them. This is not hypothetical: the live database carried a hand-written
+-- `members_insert_self` whose only check was `user_id = auth.uid()`, which
+-- constrained who the row was about and nothing about what it said. Adding the
+-- policy below without removing that one would have left the escalation wide
+-- open while looking, in a policy listing, as though it had been fixed.
+--
+-- So: clear out every competing insert policy first, by name or otherwise.
+-- Only INSERT is swept. The update and delete policies on this table may be
+-- load-bearing elsewhere and are left for a human to review.
+do $$
+declare
+  p record;
+begin
+  for p in
+    select policyname
+    from pg_policies
+    where schemaname = 'public'
+      and tablename = 'household_members'
+      and cmd = 'INSERT'
+      and policyname <> 'household_members_insert_self'
+  loop
+    raise notice 'dropping competing insert policy: %', p.policyname;
+    execute format('drop policy %I on public.household_members;', p.policyname);
+  end loop;
+end $$;
+
 drop policy if exists household_members_insert_self on public.household_members;
 create policy household_members_insert_self on public.household_members for insert to authenticated
   with check (
