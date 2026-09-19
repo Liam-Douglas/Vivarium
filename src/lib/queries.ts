@@ -615,6 +615,61 @@ export async function getHouseholdForUser(userId: string) {
   }
 }
 
+export type MembershipStatus = 'pending' | 'active' | 'rejected'
+
+export interface Membership {
+  household_id: string
+  household_name: string | null
+  invite_code: string | null
+  role: 'owner' | 'member'
+  status: MembershipStatus
+}
+
+// The caller's membership, whatever state it is in.
+//
+// The RPC above is the primary source, but it lives in the database rather
+// than this repo, so we cannot assume it surfaces anything other than active
+// membership. If it hides a pending request, that request is indistinguishable
+// from having no household at all — which is exactly what used to drop a
+// waiting member into the app with every query denied. So when the RPC comes
+// back empty, look for the caller's own non-active row before concluding there
+// is no membership. Reading your own row is what the household_members select
+// policy allows; the household itself is not readable until you are active, so
+// no name or invite code comes back on that path. If the query is refused we
+// return null, which is the behaviour this function replaces.
+export async function getMembershipForUser(userId: string): Promise<Membership | null> {
+  const viaRpc = await getHouseholdForUser(userId)
+  if (viaRpc) {
+    return {
+      household_id: viaRpc.household_id,
+      household_name: viaRpc.households?.name ?? null,
+      invite_code: viaRpc.households?.invite_code ?? null,
+      role: viaRpc.role as 'owner' | 'member',
+      status: (viaRpc.status ?? 'active') as MembershipStatus,
+    }
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from('household_members')
+      .select('household_id, role, status')
+      .eq('user_id', userId)
+      .neq('status', 'active')
+      .limit(1)
+    if (error || !data?.length) return null
+    const row = data[0]
+    return {
+      household_id: row.household_id as string,
+      household_name: null,
+      invite_code: null,
+      role: row.role as 'owner' | 'member',
+      status: row.status as MembershipStatus,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function getHouseholdMembers(householdId: string) {
   const { data, error } = await supabase
     .rpc('get_household_members', { p_household_id: householdId })

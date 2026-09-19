@@ -2,24 +2,37 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { createHousehold, joinHouseholdByCode } from '@/lib/queries'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { useToast } from '@/components/ui/Toast'
 import { useHousehold } from '@/context/HouseholdContext'
 
 export function OnboardingHousehold() {
   const navigate = useNavigate()
   const { user } = useAuth()
-  const { refresh } = useHousehold()
-  const { householdId } = useHousehold()
-  const [mode, setMode] = useState<'choice' | 'create' | 'join' | 'pending'>('choice')
+  const { householdId, membershipStatus, refresh } = useHousehold()
+  const { showToast } = useToast()
+  const [mode, setMode] = useState<'choice' | 'create' | 'join'>('choice')
 
+  // Approval lands here: the household context picks the change up over
+  // realtime, householdId becomes set, and the app opens on its own.
   useEffect(() => {
     if (householdId) navigate('/', { replace: true })
   }, [householdId, navigate])
+
   const [collectionName, setCollectionName] = useState('Our Collection')
   const [inviteCode, setInviteCode] = useState('')
   const [loading, setLoading] = useState(false)
+  const [checking, setChecking] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Held locally as well as in the context so the waiting screen still shows
+  // immediately after requesting, even if the membership row is not yet
+  // readable back.
+  const [justRequested, setJustRequested] = useState(false)
+  const awaitingApproval = membershipStatus === 'pending' || justRequested
+  const wasRejected = membershipStatus === 'rejected' && !justRequested
 
   async function handleCreate() {
     if (!user) return
@@ -41,7 +54,8 @@ export function OnboardingHousehold() {
     setError(null)
     try {
       await joinHouseholdByCode(inviteCode, user.id)
-      setMode('pending')
+      setJustRequested(true)
+      await refresh()
     } catch (e) {
       setError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Invalid invite code')
     } finally {
@@ -49,27 +63,75 @@ export function OnboardingHousehold() {
     }
   }
 
-  if (mode === 'pending') {
+  // Realtime can be missed, so the waiting screen can always ask directly.
+  async function handleCheckAgain() {
+    setChecking(true)
+    try {
+      await refresh()
+      showToast('Still waiting on the owner to approve', 'info')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+    navigate('/auth/signin', { replace: true })
+  }
+
+  if (awaitingApproval) {
     return (
-      <div className="min-h-screen flex items-center justify-center px-4" style={{ backgroundColor: '#1a1a18' }}>
+      <Shell>
         <div className="w-full max-w-sm text-center">
           <div className="text-4xl mb-4">⏳</div>
           <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
-            Request sent
+            Waiting for approval
+          </h2>
+          <p className="text-sm mb-2" style={{ color: '#a8a090' }}>
+            Your request to join the collection has been sent. The owner needs to approve it before you can see any of the animals.
+          </p>
+          <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+            This page opens the collection by itself the moment they do — you can leave it open.
+          </p>
+          <div className="flex flex-col gap-2">
+            <Button fullWidth onClick={handleCheckAgain} loading={checking}>
+              Check again
+            </Button>
+            <Button variant="secondary" fullWidth onClick={handleSignOut}>
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </Shell>
+    )
+  }
+
+  if (wasRejected) {
+    return (
+      <Shell>
+        <div className="w-full max-w-sm text-center">
+          <div className="text-4xl mb-4">🚫</div>
+          <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+            Request declined
           </h2>
           <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
-            Your request to join the collection has been sent. You'll gain access once the owner approves it.
+            The owner didn't approve your request to join. You can try a different invite code, or start a collection of your own.
           </p>
-          <Button variant="secondary" onClick={() => navigate('/auth/signin')}>
-            Back to sign in
-          </Button>
+          <div className="flex flex-col gap-2">
+            <Button fullWidth onClick={() => { setMode('choice'); setError(null) }}>
+              Try again
+            </Button>
+            <Button variant="secondary" fullWidth onClick={handleSignOut}>
+              Sign out
+            </Button>
+          </div>
         </div>
-      </div>
+      </Shell>
     )
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
+    <Shell>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl mx-auto mb-4" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
@@ -161,6 +223,14 @@ export function OnboardingHousehold() {
           </div>
         )}
       </div>
+    </Shell>
+  )
+}
+
+function Shell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
+      {children}
     </div>
   )
 }

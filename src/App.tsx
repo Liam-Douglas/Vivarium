@@ -63,9 +63,16 @@ function OverdueWatcher() {
 
 // Main app layout
 function AppShell() {
+  const { householdId } = useHousehold()
+  // Every destination in the nav is household-scoped, so it has nothing to
+  // offer someone who isn't in a household yet. Onboarding and the waiting
+  // screen used to render a full nav bar whose every link bounced straight
+  // back here.
+  const showNav = !!householdId
+
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#1a1a18' }}>
-      <Sidebar />
+      {showNav && <Sidebar />}
       <main className="flex-1 flex flex-col min-w-0">
         <Routes>
           <Route element={<RequireHousehold />}>
@@ -85,7 +92,7 @@ function AppShell() {
           <Route path="/onboarding" element={<OnboardingHousehold />} />
         </Routes>
       </main>
-      <BottomNav />
+      {showNav && <BottomNav />}
     </div>
   )
 }
