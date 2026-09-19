@@ -5,7 +5,7 @@ import { parseISO, parse, isValid } from 'date-fns'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
-import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching, reactivateAnimal, recalculateLastFedAt } from '@/lib/queries'
+import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, getAllAnimalsForMatching, reactivateAnimal, recalculateLastFedAt, getAllFeedingKeys, getAllShedKeys } from '@/lib/queries'
 import { supabase } from '@/lib/supabase'
 import { importAnimalSchema, importFeedingSchema, importShedSchema, partitionValid } from '@/lib/validation'
 import { Header } from '@/components/layout/Header'
@@ -341,19 +341,21 @@ export function Import({ embedded }: { embedded?: boolean }) {
         .filter(([, count]) => count > 1)
         .map(([name]) => name)
 
-      // Fetch existing feeding and shedding keys to avoid duplicates
-      const [existingFeedingsRes, existingShedsRes] = await Promise.all([
-        supabase.from('feeding_logs').select('animal_id, fed_at, prey_type, refused').eq('household_id', householdId),
-        supabase.from('shedding_logs').select('animal_id, shed_at').eq('household_id', householdId),
+      // Paged. These two reads are the duplicate guard, and they were capped at
+      // the first 1000 rows — so past that, re-importing a file the collection
+      // already held inserted every row a second time.
+      const [existingFeedings, existingSheds] = await Promise.all([
+        getAllFeedingKeys(householdId),
+        getAllShedKeys(householdId),
       ])
       const existingFeedingKeys = new Set(
-        (existingFeedingsRes.data ?? []).map(
+        existingFeedings.map(
           (r) => `${r.animal_id}|${r.fed_at.slice(0, 10)}|${r.prey_type}|${r.refused}`
         )
       )
-      const shedsInDbBefore = existingShedsRes.data?.length ?? 0
+      const shedsInDbBefore = existingSheds.length
       const existingShedKeys = new Set(
-        (existingShedsRes.data ?? []).map((r) => `${r.animal_id}|${r.shed_at.slice(0, 10)}`)
+        existingSheds.map((r) => `${r.animal_id}|${r.shed_at.slice(0, 10)}`)
       )
 
       // Insert feedings (skip unknown animals and existing duplicates)
