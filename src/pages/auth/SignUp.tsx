@@ -24,7 +24,9 @@ export function SignUp() {
 
   async function handleSignUp(e: FormEvent) {
     e.preventDefault()
-    if (!captchaToken) {
+    // Only gate on the captcha when one is actually configured — otherwise no
+    // widget renders, no token can ever exist, and sign-up is a dead end.
+    if (siteKey && !captchaToken) {
       setError('Please complete the captcha')
       return
     }
