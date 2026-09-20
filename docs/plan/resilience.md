@@ -12,7 +12,7 @@ by how hard it is to fix. Each phase lands as its own pull request and stands al
 | ✓ | 2 — The last silent truncations | S | shipped |
 | ✓ | 3 — The cache forgets | S | shipped |
 | ✓ | 4 — Small correctness batch | XS | shipped |
-| | 5 — AnimalDetail, in slices | L | no |
+| ◐ | 5 — AnimalDetail, in slices | L | slice 1 shipped |
 
 ## Phase 1 — Failures say so
 
@@ -139,8 +139,10 @@ by `log.fed_at.split('T')[0]` — a UTC clock that drops the time on save.
 
 Slices, smallest first, each its own pull request:
 
-1. Adopt `FeedingEditForm`, deleting the inline editor and its seven state variables.
-   This fixes the UTC bug as a side effect, which is the point of going first.
+1. ✓ Adopt `FeedingEditForm`, deleting the inline editor and its seven state
+   variables. This fixed the UTC bug as a side effect, which was the point of going
+   first. It also restored the time-of-day field: the inline editor offered a date
+   picker only, so every edit silently moved the feeding to noon.
 2. Extract the weight section, chart included.
 3. Extract shedding, then health, then the remaining record types.
 
