@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { fetchAllRows } from './pagination'
+import { PHOTO_BUCKET } from './photoPaths'
 import { classifyFeedingLogs } from './orphans'
 
 // Strip ownership/identity columns from a caller-supplied update payload so a
@@ -919,10 +920,11 @@ export async function uploadAnimalPhoto(
 ): Promise<string> {
   const ext = file.name.split('.').pop()
   const path = `${householdId}/${animalId}/${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from('animal-photos').upload(path, file, { upsert: true })
+  const { error } = await supabase.storage.from(PHOTO_BUCKET).upload(path, file, { upsert: true })
   if (error) throw error
-  const { data } = supabase.storage.from('animal-photos').getPublicUrl(path)
-  return data.publicUrl
+  // The storage path, not a URL. A public URL stops resolving the moment the
+  // bucket goes private, and it is the stored value that would be wrong.
+  return path
 }
 
 // ─── Batch import ─────────────────────────────────────────────────────────────
@@ -1122,13 +1124,38 @@ export async function deleteAnimalPhotoRecord(id: string) {
   if (error) throw error
 }
 
+/**
+ * Signed URLs for a batch of storage paths.
+ *
+ * Batched because a collection screen renders one photo per animal, and a
+ * round trip each would be a request storm on a page that used to need none.
+ * A path that cannot be signed is omitted rather than throwing: one broken
+ * photo should not empty the grid.
+ */
+export async function createSignedPhotoUrls(
+  paths: string[],
+  expiresInSeconds: number
+): Promise<Map<string, string>> {
+  const signed = new Map<string, string>()
+  if (paths.length === 0) return signed
+
+  const { data, error } = await supabase.storage
+    .from(PHOTO_BUCKET)
+    .createSignedUrls(paths, expiresInSeconds)
+  if (error) throw error
+
+  for (const entry of data ?? []) {
+    if (entry.signedUrl && entry.path) signed.set(entry.path, entry.signedUrl)
+  }
+  return signed
+}
+
 export async function uploadAdditionalPhoto(householdId: string, animalId: string, file: File): Promise<string> {
   const ext = file.name.split('.').pop()
   const path = `${householdId}/${animalId}/gallery/${Date.now()}.${ext}`
-  const { error } = await supabase.storage.from('animal-photos').upload(path, file, { upsert: false })
+  const { error } = await supabase.storage.from(PHOTO_BUCKET).upload(path, file, { upsert: false })
   if (error) throw error
-  const { data } = supabase.storage.from('animal-photos').getPublicUrl(path)
-  return data.publicUrl
+  return path
 }
 
 // ─── Medication schedules ─────────────────────────────────────────────────────

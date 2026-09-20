@@ -14,6 +14,7 @@ import {
 } from '@/lib/queries'
 import { processImage } from '@/lib/image'
 import { LoadError } from '@/components/ui/LoadError'
+import { useSignedPhotoUrls } from '@/hooks/useSignedPhotoUrls'
 import { FeedingEditForm } from '@/components/feeding/FeedingEditForm'
 import { dateInputToISO, daysSince } from '@/lib/dates'
 import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
@@ -98,6 +99,12 @@ export function AnimalDetail() {
   const { data: exitRecords, refresh: refreshExit } = useExitRecords(id)
   const { data: breedingRecords, refresh: refreshBreeding } = useBreedingRecords(id)
   const { data: animalPhotos, refresh: refreshPhotos } = useAnimalPhotos(id)
+  // Hero and gallery signed together: they are the same bucket and often the
+  // same photo, and one call beats one per thumbnail.
+  const photoUrls = useSignedPhotoUrls([
+    animal?.photo_url,
+    ...animalPhotos.map((p) => p.url),
+  ])
   const { data: medicationSchedules, refresh: refreshMedications } = useMedicationSchedules(id)
 
   // ── Weight state ──────────────────────────────────────────────────────────
@@ -831,8 +838,8 @@ export function AnimalDetail() {
       <aside className="lg:sticky lg:top-6">
       {/* Hero */}
       <div className="relative h-52 sm:h-64 lg:h-60 lg:rounded-xl lg:overflow-hidden" style={{ backgroundColor: '#1a1a18' }}>
-        {animal.photo_url ? (
-          <img src={animal.photo_url} alt={animal.name} className="w-full h-full object-cover" />
+        {animal.photo_url && photoUrls.get(animal.photo_url) ? (
+          <img src={photoUrls.get(animal.photo_url)} alt={animal.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">🦎</div>
         )}
@@ -1033,7 +1040,7 @@ export function AnimalDetail() {
                 <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {animalPhotos.map((photo) => (
                     <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
-                      <img src={photo.url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photo.url)} />
+                      <img src={photoUrls.get(photo.url)} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photoUrls.get(photo.url) ?? null)} />
                       <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#f0ece0' }}>×</button>
                     </div>
                   ))}

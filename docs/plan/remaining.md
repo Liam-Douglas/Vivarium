@@ -7,7 +7,7 @@ original build order, then the refactor that has been deferred twice on purpose.
 
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
-| | 1 — Signed photo URLs, then `0002` | M | **yes — applies `0002` by hand, after deploy** |
+| ◐ | 1 — Signed photo URLs, then `0002` | M | **client shipped; `0002` awaits deploy** |
 | | 2 — The quiet states | M | no |
 | | 3 — AnimalDetail, slices 2 and 3 | L | no |
 
@@ -48,7 +48,9 @@ story:
 its gallery and lightbox (`:1036`), and `AnimalForm`'s preview (`:39`).
 
 **Ordering, which is the part that bites.** The client change must be merged
-*and deployed* before `0002` is applied. Apply it first and every photo breaks
+*and deployed* before `0002` is applied. Signing works on a public bucket, so
+the client change is safe to ship on its own and the two steps genuinely can be
+separated. Apply it first and every photo breaks
 until the deploy lands. The phase therefore ends with a step only Liam can take,
 and the migration must not be pasted early.
 

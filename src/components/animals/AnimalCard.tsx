@@ -6,9 +6,14 @@ interface AnimalCardProps {
   animal: Animal
   /** Resolved by the parent, which already holds the enclosure list. */
   enclosureName?: string | null
+  /**
+   * Signed by the parent, for the same reason: a grid of twenty cards each
+   * signing its own photo is twenty round trips for one screen.
+   */
+  photoUrl?: string | null
 }
 
-export function AnimalCard({ animal, enclosureName }: AnimalCardProps) {
+export function AnimalCard({ animal, enclosureName, photoUrl }: AnimalCardProps) {
   const feedingStatus = getFeedingStatus(animal)
   const status = FEEDING_STATUS_META[feedingStatus]
 
@@ -24,8 +29,8 @@ export function AnimalCard({ animal, enclosureName }: AnimalCardProps) {
     >
       {/* Photo */}
       <div className="w-full h-40 relative" style={{ backgroundColor: '#1a1a18' }}>
-        {animal.photo_url ? (
-          <img src={animal.photo_url} alt={animal.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
+        {photoUrl ? (
+          <img src={photoUrl} alt={animal.name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-4xl opacity-30">🦎</div>
         )}

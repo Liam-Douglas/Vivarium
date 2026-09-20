@@ -7,6 +7,7 @@ import type { Enclosure } from '@/hooks/useEnclosures'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { AnimalCard } from '@/components/animals/AnimalCard'
+import { useSignedPhotoUrls } from '@/hooks/useSignedPhotoUrls'
 import { AnimalForm } from '@/components/animals/AnimalForm'
 import { BatchFeedForm } from '@/components/feeding/BatchFeedForm'
 import { Modal } from '@/components/ui/Modal'
@@ -57,6 +58,8 @@ function getAnimalFeedingColor(animal: Animal): string {
 
 export function Animals() {
   const { data: animals, loading, error, refresh } = useAnimals()
+  // Signed in one call for the whole grid rather than one per card.
+  const photoUrls = useSignedPhotoUrls(animals.map((a) => a.photo_url))
   const { data: enclosures, loading: enclosuresLoading, refresh: refreshEnclosures } = useEnclosures()
   const { canAddAnimal, user } = useAuth()
   const { householdId } = useHousehold()
@@ -337,6 +340,7 @@ export function Animals() {
                   key={animal.id}
                   animal={animal}
                   enclosureName={enclosures.find((e) => e.id === animal.enclosure_id)?.name}
+                  photoUrl={animal.photo_url ? photoUrls.get(animal.photo_url) : null}
                 />
               ))}
             </div>
