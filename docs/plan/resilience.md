@@ -10,8 +10,8 @@ by how hard it is to fix. Each phase lands as its own pull request and stands al
 |---|---|---|---|
 | ✓ | 1 — Failures say so | M | shipped (`9d9fd47`) |
 | ✓ | 2 — The last silent truncations | S | shipped |
-| | 3 — The cache forgets | S | no |
-| | 4 — Small correctness batch | XS | no |
+| ✓ | 3 — The cache forgets | S | shipped |
+| ✓ | 4 — Small correctness batch | XS | shipped |
 | | 5 — AnimalDetail, in slices | L | no |
 
 ## Phase 1 — Failures say so

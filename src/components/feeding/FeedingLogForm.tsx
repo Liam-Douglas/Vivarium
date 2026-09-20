@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAnimals } from '@/hooks/useAnimals'
 import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
@@ -22,6 +23,7 @@ interface FeedingLogFormProps {
 }
 
 export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCancel }: FeedingLogFormProps) {
+  const navigate = useNavigate()
   const { user } = useAuth()
   const { householdId } = useHousehold()
   const { showToast } = useToast()
@@ -107,10 +109,12 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
         refreshFeeders()
         if (stockError) showToast(`Feeding saved but stock not updated — ${stockError}`, 'error')
       } else if (!parsed.data.refused) {
+        // The handler here was an empty comment: the toast rendered, the
+        // button was tappable, and nothing happened.
         showToast(
           `Track ${preyType} in feeder inventory?`,
           'info',
-          { label: 'Add', onClick: () => { /* navigate to feeders */ } }
+          { label: 'Add', onClick: () => navigate('/feeders') }
         )
       }
 

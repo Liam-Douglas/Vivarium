@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { createHousehold, joinHouseholdByCode } from '@/lib/queries'
-import { supabase } from '@/lib/supabase'
+import { signOutAndClearCaches } from '@/lib/session'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
@@ -75,7 +75,7 @@ export function OnboardingHousehold() {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut()
+    await signOutAndClearCaches()
     navigate('/auth/signin', { replace: true })
   }
 

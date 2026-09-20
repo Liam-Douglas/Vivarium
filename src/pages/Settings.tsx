@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Import } from '@/pages/Import'
-import { supabase } from '@/lib/supabase'
+import { signOutAndClearCaches } from '@/lib/session'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
@@ -361,7 +361,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut()
+    await signOutAndClearCaches()
     navigate('/auth/signin')
   }
 
