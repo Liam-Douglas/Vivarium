@@ -2,8 +2,9 @@
 
 > **Status — 20 September 2026.** `0001`, `0003` and `0004` are applied to the
 > production project. `0002` is not, and should not be until the client moves to
-> signed URLs (see *Before 0002*). `0005` is a repair for the medication tables
-> and is not applied yet. Everything below still applies to any other
+> signed URLs (see *Before 0002*). `0005` repairs the medication tables and is
+> applied — verified by reading the resulting columns back, which for a schema
+> change is the whole claim. Everything below still applies to any other
 > environment, and to re-running these files after a schema change.
 >
 > `0001` and `0003` were verified against production as a signed-in user.
@@ -37,7 +38,11 @@ database has `medication_name`, `frequency` (text) and `administered_at`. Every
 insert and every select failed, and the failures were swallowed until the
 Dashboard started surfacing load errors. Both tables were empty — which is itself
 the evidence that nothing ever saved — so the migration renames and retypes rather
-than converting. **Not yet applied.**
+than converting.
+
+Applied 20 September 2026. The column listing came back as expected: `given_at`
+with no `administered_at`, and `name`, `frequency_days` as integer, `updated_at`
+not null, `start_date` nullable, `is_active` not null, no `frequency`.
 
 `migrations/0004_care_tasks.sql` sits outside this order: it creates two new
 tables for the Reminders page and depends only on `app_is_household_member()`
