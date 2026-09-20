@@ -7,11 +7,10 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { animalColor } from '@/lib/animalColors'
 
-const ANIMAL_COLORS = [
-  '#8fbe5a', '#d4924a', '#5a8ebe', '#c45a5a', '#a87ac4',
-  '#5abeaa', '#be5a8f', '#8e8e5a', '#5a8e8e', '#be8f5a',
-]
+/** Legend entries shown before collapsing the rest into a count. */
+const LEGEND_LIMIT = 6
 
 export function FeedingLog() {
   const { data: animals } = useAnimals()
@@ -34,13 +33,6 @@ export function FeedingLog() {
     () => selectedAnimalId ? allLogs.filter((l) => l.animal_id === selectedAnimalId) : allLogs,
     [allLogs, selectedAnimalId]
   )
-
-  // Calendar derived data
-  const animalColorMap = useMemo(() => {
-    const map = new Map<string, string>()
-    animals.forEach((a, i) => map.set(a.id, ANIMAL_COLORS[i % ANIMAL_COLORS.length]))
-    return map
-  }, [animals])
 
   const monthStart = startOfMonth(new Date(year, month))
   const monthEnd = endOfMonth(monthStart)
@@ -65,6 +57,15 @@ export function FeedingLog() {
     })
     return map
   }, [logsInMonth])
+
+  // The legend names the animals actually on the grid this month, not the first
+  // five of the collection: a coloured dot with no legend entry explains nothing.
+  // Refused feedings draw red rather than the animal's colour, so they are not
+  // what puts an animal in the legend.
+  const animalsInMonth = useMemo(() => {
+    const ids = new Set(logsInMonth.filter((l) => !l.refused).map((l) => l.animal_id))
+    return animals.filter((a) => ids.has(a.id))
+  }, [logsInMonth, animals])
 
   const selectedDayLogs = selectedDay
     ? (logsByDay.get(format(selectedDay, 'yyyy-MM-dd')) ?? [])
@@ -193,8 +194,6 @@ export function FeedingLog() {
               const dayLogs = logsByDay.get(key) ?? []
               const isToday = isSameDay(day, now)
               const isSelected = selectedDay ? isSameDay(day, selectedDay) : false
-              const hasFed = dayLogs.some((l) => !l.refused)
-
               return (
                 <button
                   key={key}
@@ -214,16 +213,13 @@ export function FeedingLog() {
                         <div
                           key={log.id}
                           className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: log.refused ? '#c45a5a' : (animalColorMap.get(log.animal_id) ?? '#8fbe5a') }}
+                          style={{ backgroundColor: log.refused ? '#c45a5a' : (animalColor(log.animal_id)) }}
                         />
                       ))}
                       {dayLogs.length > 6 && (
                         <span className="text-xs" style={{ color: '#9f9684', fontSize: 8 }}>+{dayLogs.length - 6}</span>
                       )}
                     </div>
-                  )}
-                  {dayLogs.length === 0 && hasFed && (
-                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8fbe5a' }} />
                   )}
                 </button>
               )
@@ -240,12 +236,17 @@ export function FeedingLog() {
               <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#c45a5a' }} />
               <span className="text-xs" style={{ color: '#9f9684' }}>Refused</span>
             </div>
-            {animals.slice(0, 5).map((a, i) => (
+            {animalsInMonth.slice(0, LEGEND_LIMIT).map((a) => (
               <div key={a.id} className="flex items-center gap-1.5">
-                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: ANIMAL_COLORS[i % ANIMAL_COLORS.length] }} />
+                <div className="w-2 h-2 rounded-full" style={{ backgroundColor: animalColor(a.id) }} />
                 <span className="text-xs" style={{ color: '#9f9684' }}>{a.name}</span>
               </div>
             ))}
+            {animalsInMonth.length > LEGEND_LIMIT && (
+              <span className="text-xs" style={{ color: '#9f9684' }}>
+                +{animalsInMonth.length - LEGEND_LIMIT} more
+              </span>
+            )}
           </div>
 
           {/* Selected day detail */}
@@ -260,7 +261,7 @@ export function FeedingLog() {
                     const animal = animals.find((a) => a.id === log.animal_id)
                     return (
                       <div key={log.id} className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : (animalColorMap.get(log.animal_id) ?? '#8fbe5a') }} />
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : (animalColor(log.animal_id)) }} />
                         <div className="flex-1">
                           <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{animal?.name ?? 'Unknown'}</span>
                           <span className="text-xs ml-2" style={{ color: '#9f9684' }}>

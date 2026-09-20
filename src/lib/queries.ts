@@ -128,15 +128,23 @@ export async function recalculateLastFedAt(householdId: string) {
 
 
 export async function getFeedingLogs(householdId: string, animalId?: string) {
-  let query = supabase
-    .from('feeding_logs')
-    .select('*, animals(name)')
-    .eq('household_id', householdId)
-    .order('fed_at', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  // Paged, because the Feeding Log page filters and groups client-side and so
+  // needs the complete set; an unpaged select stops at db.max_rows silently.
+  // The id tiebreaker is not decoration: a batch feed writes one fed_at across
+  // several animals, so ties are the norm here, and offset paging over an
+  // unstable sort can repeat or drop rows at a page boundary.
+  // No explicit row generic: letting it infer from the select keeps the hook's
+  // FeedingLog cast honest instead of widening every row to Record<string, unknown>.
+  return fetchAllRows((from, to) => {
+    let query = supabase
+      .from('feeding_logs')
+      .select('*, animals(name)')
+      .eq('household_id', householdId)
+      .order('fed_at', { ascending: false })
+      .order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 
 export async function createFeedingLog(log: {
