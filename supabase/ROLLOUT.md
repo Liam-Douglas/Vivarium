@@ -2,7 +2,8 @@
 
 > **Status — 20 September 2026.** `0001`, `0003` and `0004` are applied to the
 > production project. `0002` is not, and should not be until the client moves to
-> signed URLs (see *Before 0002*). Everything below still applies to any other
+> signed URLs (see *Before 0002*). `0005` is a repair for the medication tables
+> and is not applied yet. Everything below still applies to any other
 > environment, and to re-running these files after a schema change.
 >
 > `0001` and `0003` were verified against production as a signed-in user.
@@ -28,6 +29,15 @@ break working photos if it goes early.
 | 2 | `migrations/0003_functions.sql` | yes | Purely additive: the `log_feeding` RPC and the `feeder_stock` view. The client already falls back when they are absent, so nothing breaks either way. |
 | 3 | — | **not yet** | Ship the client change from "Before 0002" below. |
 | 4 | `migrations/0002_storage_policies.sql` | after step 3 | Makes the photo bucket private. |
+
+`migrations/0005_medication_schema.sql` is a repair, not a policy change, and
+should be applied as soon as convenient. The medication feature has never worked:
+the client reads and writes `name`, `frequency_days` and `given_at`, and the
+database has `medication_name`, `frequency` (text) and `administered_at`. Every
+insert and every select failed, and the failures were swallowed until the
+Dashboard started surfacing load errors. Both tables were empty — which is itself
+the evidence that nothing ever saved — so the migration renames and retypes rather
+than converting. **Not yet applied.**
 
 `migrations/0004_care_tasks.sql` sits outside this order: it creates two new
 tables for the Reminders page and depends only on `app_is_household_member()`
