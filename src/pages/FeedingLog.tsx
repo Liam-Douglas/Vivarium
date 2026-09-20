@@ -17,13 +17,15 @@ import { animalColor } from '@/lib/animalColors'
 import { groupByDay } from '@/lib/groupByDay'
 import { getFeedingStatus } from '@/lib/feedingStatus'
 import { filterFeedings, preyTypesIn, type FeedingOutcome } from '@/lib/feedingFilters'
+import { loadState } from '@/lib/loadState'
+import { LoadError } from '@/components/ui/LoadError'
 
 /** Legend entries shown before collapsing the rest into a count. */
 const LEGEND_LIMIT = 6
 
 export function FeedingLog() {
   const { data: animals } = useAnimals()
-  const { data: allLogs, loading, refresh } = useFeedingLogs()
+  const { data: allLogs, loading, error, refresh } = useFeedingLogs()
 
   const { showToast } = useToast()
 
@@ -92,6 +94,8 @@ export function FeedingLog() {
   }, [logsInMonth])
 
   const logsByDate = useMemo(() => groupByDay(logs), [logs])
+
+  const state = loadState({ loading, error, count: allLogs.length })
 
   // Batch feeding from here means "the ones that need it". The other two entry
   // points take a curated set — a selection on Animals, an enclosure on the
@@ -294,10 +298,16 @@ export function FeedingLog() {
             </div>
           )}
 
-          {loading ? (
+          {state === 'stale' && (
+            <LoadError inline subject="feedings" message={error} onRetry={refresh} />
+          )}
+
+          {state === 'loading' ? (
             <div className="flex justify-center py-12">
               <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
             </div>
+          ) : state === 'error' ? (
+            <LoadError subject="feedings" message={error} onRetry={refresh} />
           ) : logs.length === 0 ? (
             filtersActive ? (
               <EmptyState

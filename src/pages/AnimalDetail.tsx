@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays, addDays } from 'date-fns'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
@@ -13,6 +13,7 @@ import {
   getMedicationLogs, createMedicationLog,
 } from '@/lib/queries'
 import { processImage } from '@/lib/image'
+import { LoadError } from '@/components/ui/LoadError'
 import { dateInputToISO, daysSince } from '@/lib/dates'
 import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
 import { useEnclosures } from '@/hooks/useEnclosures'
@@ -78,6 +79,7 @@ export function AnimalDetail() {
   const { showToast } = useToast()
 
   const [animal, setAnimal] = useState<Animal | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('overview')
   const [editOpen, setEditOpen] = useState(false)
@@ -215,7 +217,10 @@ export function AnimalDetail() {
     setConfirmDialog({ title, message, onConfirm })
   }
 
-  useEffect(() => {
+  // The catch here used to discard the error and only stop the spinner, so the
+  // page fell through to "Animal not found" — telling the keeper the record was
+  // deleted when the truth was a dropped request.
+  const loadAnimal = useCallback(() => {
     if (!id || !householdId) return
     getAnimal(id)
       .then((a) => {
@@ -226,13 +231,23 @@ export function AnimalDetail() {
           return
         }
         setAnimal(a as Animal)
+        setLoadError(null)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch((e: unknown) => {
+        setLoadError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load this animal')
+        setLoading(false)
+      })
   }, [id, householdId, navigate])
+
+  useEffect(() => { loadAnimal() }, [loadAnimal])
 
   useEffect(() => {
     if (!householdId || !id || medicationSchedules.length === 0) return
+    // The empty catch here is deliberate and stays: last-dose times are extra
+    // context on a schedule that renders fine without them, so a failure is
+    // not worth a banner. It is not the same as the swallowed catch above,
+    // which decided whether the page claimed the animal existed.
     getMedicationLogs(householdId, id).then((logs) => {
       const lastDoses: Record<string, string> = {}
       for (const log of logs) {
@@ -573,6 +588,16 @@ export function AnimalDetail() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+      </div>
+    )
+  }
+
+  // "Not found" is a claim about the database, so it is only made once a load
+  // has actually succeeded and come back without the row.
+  if (loadError && !animal) {
+    return (
+      <div className="flex-1 px-4 py-6">
+        <LoadError subject="this animal" message={loadError} onRetry={loadAnimal} />
       </div>
     )
   }

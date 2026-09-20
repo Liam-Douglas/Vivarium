@@ -25,6 +25,8 @@ import { Modal } from '@/components/ui/Modal'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
 import { BatchFeedForm } from '@/components/feeding/BatchFeedForm'
+import { loadState } from '@/lib/loadState'
+import { LoadError } from '@/components/ui/LoadError'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
@@ -77,12 +79,12 @@ const FAB_ACTIONS = [
 export function Dashboard() {
   const { profile, user, canAddAnimal } = useAuth()
   const { householdId, pendingRequests, currentUserRole, refresh: refreshHousehold } = useHousehold()
-  const { data: animals, refresh: refreshAnimals } = useAnimals()
-  const { data: allLogs, refresh: refreshLogs } = useFeedingLogs()
+  const { data: animals, loading: animalsLoading, error: animalsError, refresh: refreshAnimals } = useAnimals()
+  const { data: allLogs, error: logsError, refresh: refreshLogs } = useFeedingLogs()
   const { data: enclosures } = useEnclosures()
   const { data: feeders } = useFeederInventory()
-  const { data: medSchedules } = useMedicationSchedules()
-  const { data: medLogs, refresh: refreshMedLogs } = useMedicationLogs()
+  const { data: medSchedules, error: medSchedulesError } = useMedicationSchedules()
+  const { data: medLogs, error: medLogsError, refresh: refreshMedLogs } = useMedicationLogs()
   const { showToast } = useToast()
 
   const strikeAnimals = useMemo(() => {
@@ -225,6 +227,18 @@ export function Dashboard() {
     [animals]
   )
 
+  // The Dashboard derives everything from animals: with none held it reports
+  // "Nothing due today", which on a failed load is an all-clear the app has no
+  // basis for. One error region rather than six, because six hooks failing at
+  // once is one failure — the network.
+  const animalsState = loadState({ loading: animalsLoading, error: animalsError, count: animals.length })
+  const secondaryError = logsError ?? medSchedulesError ?? medLogsError
+  function retryAll() {
+    refreshAnimals()
+    refreshLogs()
+    refreshMedLogs()
+  }
+
   const greeting = (() => {
     const h = new Date().getHours()
     if (h < 12) return 'Good morning'
@@ -361,8 +375,29 @@ export function Dashboard() {
 
   const activityIcon = { feeding: '🍽️', shedding: '🐍', weight: '⚖️' }
 
+  // Nothing on this page means anything without animals, so a failed first
+  // load replaces it rather than rendering a dashboard of zeroes.
+  if (animalsState === 'error') {
+    return (
+      <div className="flex-1 px-4 lg:px-8 py-6 pb-24 md:pb-8 max-w-[1240px] mx-auto w-full">
+        <LoadError subject="your collection" message={animalsError} onRetry={retryAll} />
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 px-4 lg:px-8 py-6 pb-24 md:pb-8 max-w-[1240px] mx-auto w-full">
+      {/* A refresh failed over rows already on screen, or something other than
+          the animals themselves did — say so without discarding the page. */}
+      {(animalsState === 'stale' || secondaryError) && (
+        <LoadError
+          inline
+          subject="the latest records"
+          message={animalsError ?? secondaryError}
+          onRetry={retryAll}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
