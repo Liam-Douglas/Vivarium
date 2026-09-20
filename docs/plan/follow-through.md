@@ -7,7 +7,7 @@ fix that stays.
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
 | ✓ | 1 — Test what was only ever verified by hand | S | shipped |
-| | 2 — Stop the generated types going stale | S | no |
+| ✓ | 2 — Stop the generated types going stale | S | shipped |
 | | 3 — AnimalDetail, slices 2 and 3 | L | no |
 
 ## Phase 1 — Test what was only ever verified by hand
@@ -60,6 +60,12 @@ git diff can tell the difference. That check needs no credentials at all.
 Add it as a CI job with an explicit escape hatch — a migration that genuinely
 changes no columns (a policy-only file like `0001`) says so in its body, and the
 check honours that rather than forcing a no-op regeneration.
+
+Shipped and verified against all four outcomes: a non-exempt migration alone
+fails; an exempt one alone passes; a non-exempt migration with regenerated types
+passes; no migration touched passes. The first was checked against this
+repository's own history — diffing the commit that added `0004` against its
+parent fails, because the generated types did not exist yet.
 
 ## Phase 3 — AnimalDetail, slices 2 and 3
 
