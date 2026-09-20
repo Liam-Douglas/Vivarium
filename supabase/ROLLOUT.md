@@ -1,7 +1,15 @@
 # Applying the security migrations
 
-Until these run, the anon key shipped in the client is a full read/write grant
-across every household. That is the single largest open risk in the app.
+> **Status — 20 September 2026.** `0001` and `0003` are applied to the
+> production project and verified against it. `0002` is not, and should not be
+> until the client moves to signed URLs (see *Before 0002*). Everything below
+> still applies to any other environment, and to re-running these files after a
+> schema change.
+>
+> Applying them to a live database that already had hand-written policies
+> surfaced three separate holes, none of which were visible from the repository.
+> They are catalogued under *Before you apply* — read that section before
+> running any of this anywhere else.
 
 Everything here is applied by hand in the Supabase SQL editor. Run the files in
 the order below — **it is not their numeric order**, and 0002 in particular will
@@ -194,3 +202,43 @@ alter table public.animals disable row level security;
 That restores access immediately and keeps the policy definitions in place, so
 re-enabling is one statement rather than a re-run. Prefer it to dropping
 policies while debugging.
+
+## What applying it to production actually found
+
+Recorded because the pattern matters more than the individual policies: in all
+three cases a policy listing showed the *correct* policy present, so nothing was
+visibly wrong.
+
+| Shape | Where | What it allowed |
+|---|---|---|
+| Constrains who, not what | `members_insert_self` | Any user could insert themselves as `role='owner', status='active'` into any household whose id they could name. Confirmed by doing it. |
+| Consults membership, not status | 8× `*_household_access` | A pending request — never approved — had read and write on seven tables. |
+| No constraint at all | `Authenticated users can read profiles` | `using (true)`: every profile readable by every signed-in user. |
+
+Two tables, `equipment` and `incubations`, were missing from this file entirely.
+No client code references either, and the original table list was written by
+reading the client — so the app could not have revealed them. The database is
+the only reliable source of truth about the database.
+
+Verified afterwards, reporting numbers rather than the absence of an error:
+
+```
+membership_without_status = 0
+unrestricted_using_true   = 0
+equipment_policies        = 4
+incubations_policies      = 4
+```
+
+## Housekeeping done at the same time
+
+Seven households existed, all named "Our Collection", six of them empty.
+`getHouseholdForUser` returns a single row and the client takes `data[0]` from
+an unordered result, so which collection that account opened could vary between
+sessions. The six empty ones were deleted with a guard that recomputed emptiness
+across all eighteen household-scoped tables at delete time, rather than trusting
+a pasted list of ids.
+
+Worth knowing if it recurs: the first version of that guard covered sixteen
+tables and would have reported a household holding `equipment` or `incubations`
+rows as empty — and those foreign keys are `CASCADE`, so the rows would have
+gone silently with it.
