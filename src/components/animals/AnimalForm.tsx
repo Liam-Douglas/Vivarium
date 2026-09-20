@@ -10,6 +10,7 @@ import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import { useRef, useState } from 'react'
+import { useSignedPhotoUrl } from '@/hooks/useSignedPhotoUrls'
 import type { Animal } from '@/hooks/useAnimals'
 
 const schema = z.object({
@@ -36,8 +37,12 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
   const { showToast } = useToast()
   const fileRef = useRef<HTMLInputElement>(null)
   const [photoFile, setPhotoFile] = useState<File | null>(null)
-  const [photoPreview, setPhotoPreview] = useState<string | null>(animal?.photo_url ?? null)
+  // Only ever a locally chosen file. The stored photo is a storage path now,
+  // which is not something an <img> can render, so it is signed separately and
+  // the local pick takes precedence when there is one.
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+  const existingPhotoUrl = useSignedPhotoUrl(animal?.photo_url)
 
   // Tags
   const [tags, setTags] = useState<string[]>(animal?.tags ?? [])
@@ -177,8 +182,8 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
         style={{ backgroundColor: '#1a1a18', border: '1px dashed rgba(255,255,255,0.12)' }}
         onClick={() => fileRef.current?.click()}
       >
-        {photoPreview ? (
-          <img src={photoPreview} alt="Preview" className="w-full h-full object-cover" />
+        {photoPreview ?? existingPhotoUrl ? (
+          <img src={photoPreview ?? existingPhotoUrl ?? undefined} alt="Preview" className="w-full h-full object-cover" />
         ) : (
           <>
             <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: '#9f9684' }}>

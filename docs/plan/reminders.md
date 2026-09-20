@@ -18,7 +18,7 @@ weighing is due.
 
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
-| ✓ | 1 — Schema and policies | S | **awaiting Liam — `0004` applied by hand** |
+| ✓ | 1 — Schema and policies | S | `0004` applied and verified |
 | ✓ | 2 — Due logic and data access | M | shipped |
 | ✓ | 3 — The Reminders page | M | shipped |
 | ✓ | 4 — Into the queue and the nav | S | shipped, with a change |

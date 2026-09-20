@@ -74,7 +74,17 @@ function AppShell() {
   return (
     <div className="flex min-h-screen" style={{ backgroundColor: '#1a1a18' }}>
       {showNav && <Sidebar />}
-      <main className="flex-1 flex flex-col min-w-0">
+      {/* index.html sets viewport-fit=cover, which extends the page under the
+          status bar and the notch. BottomNav has always compensated at the
+          bottom with env(safe-area-inset-bottom); nothing did at the top, so
+          installed as a PWA every page began underneath the clock — most
+          visibly on an animal's profile, where the name sits over a full-bleed
+          hero with no padding to absorb it. The inset is zero in a browser tab
+          and on desktop, so this only pays where it is needed. */}
+      <main
+        className="flex-1 flex flex-col min-w-0"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <Routes>
           <Route element={<RequireHousehold />}>
             <Route path="/" element={<><OverdueWatcher /><ErrorBoundary><Dashboard /></ErrorBoundary></>} />
