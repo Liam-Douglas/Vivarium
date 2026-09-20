@@ -5,12 +5,12 @@ import { useHousehold } from '@/context/HouseholdContext'
 export interface MedicationLog {
   id: string
   household_id: string
-  schedule_id: string
+  schedule_id: string | null
   animal_id: string
   user_id: string
   given_at: string
   notes: string | null
-  created_at: string
+  created_at: string | null
 }
 
 /** Omit `animalId` for every dose logged across the household. */

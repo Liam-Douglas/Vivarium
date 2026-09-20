@@ -15,7 +15,7 @@ export interface BreedingRecord {
   eggs_fertile: number | null
   hatch_date: string | null
   notes: string | null
-  created_at: string
+  created_at: string | null
 }
 
 export function useBreedingRecords(animalId?: string) {

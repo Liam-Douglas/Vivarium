@@ -7,13 +7,12 @@ export interface VetContact {
   household_id: string
   user_id: string
   name: string
-  clinic_name: string | null
+  practice_name: string | null
   phone: string | null
   email: string | null
   address: string | null
   notes: string | null
-  created_at: string
-  updated_at: string
+  created_at: string | null
 }
 
 export function useVetContacts() {

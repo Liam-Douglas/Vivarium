@@ -14,7 +14,7 @@ export interface MedicationSchedule {
   end_date: string | null
   notes: string | null
   is_active: boolean
-  created_at: string
+  created_at: string | null
   updated_at: string
 }
 

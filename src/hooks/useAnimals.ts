@@ -4,7 +4,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 
 export interface Animal {
   id: string
-  household_id: string
+  household_id: string | null
   user_id: string
   name: string
   species: string
@@ -19,10 +19,10 @@ export interface Animal {
   is_active: boolean
   created_at: string
   updated_at: string
-  tags: string[]
+  tags: string[] | null
   quarantine_started_at: string | null
   quarantine_ended_at: string | null
-  is_for_sale: boolean
+  is_for_sale: boolean | null
   asking_price_cents: number | null
   custom_fields: Record<string, string>
   enclosure_id: string | null

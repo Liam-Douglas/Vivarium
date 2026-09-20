@@ -19,7 +19,8 @@ export interface DoseSchedule {
 }
 
 export interface DoseLog {
-  schedule_id: string
+  /** Null for a dose given outside any course; such a log matches no schedule. */
+  schedule_id: string | null
   given_at: string
 }
 

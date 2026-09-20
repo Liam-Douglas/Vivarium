@@ -994,7 +994,7 @@ export function AnimalDetail() {
               <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>TAGS</p>
                 <div className="flex flex-wrap gap-2">
-                  {animal.tags.map((t) => (
+                  {(animal.tags ?? []).map((t) => (
                     <span key={t} className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}>
                       #{t}
                     </span>

@@ -4,7 +4,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 
 export interface SheddingLog {
   id: string
-  household_id: string
+  household_id: string | null
   animal_id: string
   user_id: string
   shed_at: string
