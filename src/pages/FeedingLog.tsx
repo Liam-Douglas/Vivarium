@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { animalColor } from '@/lib/animalColors'
+import { groupByDay } from '@/lib/groupByDay'
 
 /** Legend entries shown before collapsing the rest into a count. */
 const LEGEND_LIMIT = 6
@@ -57,6 +58,8 @@ export function FeedingLog() {
     })
     return map
   }, [logsInMonth])
+
+  const logsByDate = useMemo(() => groupByDay(logs), [logs])
 
   // The legend names the animals actually on the grid this month, not the first
   // five of the collection: a coloured dot with no legend entry explains nothing.
@@ -138,27 +141,75 @@ export function FeedingLog() {
               action={<Button onClick={() => setAddOpen(true)}>Log first feeding</Button>}
             />
           ) : (
-            <div className="flex flex-col gap-2">
-              {logs.map((log) => {
-                const a = log.animals as { name: string } | null
-                return (
-                  <div
-                    key={log.id}
-                    className="rounded-xl p-4 flex items-center gap-3"
-                    style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}
-                  >
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : '#5a9e6a' }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>
-                        {!selectedAnimalId && a?.name ? `${a.name} — ` : ''}
-                        {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
-                      </p>
-                      {log.notes && <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{log.notes}</p>}
-                    </div>
-                    <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+            <div className="flex flex-col gap-5">
+              {logsByDate.map((group) => (
+                <section key={group.key}>
+                  <div className="flex items-baseline justify-between mb-2 px-1">
+                    <h2 className="text-sm font-medium" style={{ color: '#f0ece0' }}>{group.label}</h2>
+                    {group.relative && (
+                      <span className="text-xs" style={{ color: '#9f9684' }}>{group.relative}</span>
+                    )}
                   </div>
-                )
-              })}
+
+                  <div className="flex flex-col gap-2">
+                    {group.entries.map((log) => {
+                      const a = log.animals as { name: string } | null
+                      const name = selectedAnimalId ? null : (a?.name ?? 'Unknown')
+                      const prey = `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''}`
+                      // What was offered still matters on a refusal, so the prey
+                      // stays on the row rather than being replaced by "Refused".
+                      const detail = log.refused ? prey : `${prey} ×${log.quantity}`
+                      const fedAt = new Date(log.fed_at)
+                      // Imported rows often carry a date with no time; "12:00 AM"
+                      // on every one of them reads as a bug rather than a fact.
+                      const hasTime = fedAt.getHours() !== 0 || fedAt.getMinutes() !== 0
+
+                      return (
+                        <div
+                          key={log.id}
+                          className="rounded-xl p-3.5 flex items-center gap-3"
+                          style={{
+                            backgroundColor: log.refused ? 'rgba(196,90,90,0.08)' : '#242420',
+                            border: log.refused
+                              ? '1px solid rgba(196,90,90,0.3)'
+                              : '1px solid rgba(255,255,255,0.06)',
+                            // The left edge carries the animal's calendar colour,
+                            // so the two tabs read as the same data.
+                            borderLeft: `3px solid ${log.refused ? '#c45a5a' : animalColor(log.animal_id)}`,
+                          }}
+                        >
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-baseline gap-2 flex-wrap">
+                              <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+                                {name ?? detail}
+                              </span>
+                              {log.refused && (
+                                <span
+                                  className="text-xs font-medium px-1.5 py-0.5 rounded"
+                                  style={{ color: '#e08a8a', backgroundColor: 'rgba(196,90,90,0.16)' }}
+                                >
+                                  Refused
+                                </span>
+                              )}
+                            </div>
+                            {name && (
+                              <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{detail}</p>
+                            )}
+                            {log.notes && (
+                              <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{log.notes}</p>
+                            )}
+                          </div>
+                          {hasTime && (
+                            <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>
+                              {format(fedAt, 'h:mm a')}
+                            </p>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </section>
+              ))}
             </div>
           )}
         </>
