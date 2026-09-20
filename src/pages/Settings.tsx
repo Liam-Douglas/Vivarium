@@ -66,14 +66,14 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
     setVetFormOpen(true)
   }
   function openEditVet(vet: VetContact) {
-    setEditingVet(vet); setVetName(vet.name); setVetClinic(vet.clinic_name ?? ''); setVetPhone(vet.phone ?? ''); setVetEmail(vet.email ?? ''); setVetAddress(vet.address ?? ''); setVetNotes(vet.notes ?? '')
+    setEditingVet(vet); setVetName(vet.name); setVetClinic(vet.practice_name ?? ''); setVetPhone(vet.phone ?? ''); setVetEmail(vet.email ?? ''); setVetAddress(vet.address ?? ''); setVetNotes(vet.notes ?? '')
     setVetFormOpen(true)
   }
   async function handleSaveVet() {
     if (!user || !householdId || !vetName.trim()) return
     setSavingVet(true)
     try {
-      const payload = { name: vetName.trim(), clinic_name: vetClinic || null, phone: vetPhone || null, email: vetEmail || null, address: vetAddress || null, notes: vetNotes || null }
+      const payload = { name: vetName.trim(), practice_name: vetClinic || null, phone: vetPhone || null, email: vetEmail || null, address: vetAddress || null, notes: vetNotes || null }
       if (editingVet) {
         await updateVetContact(editingVet.id, payload)
         showToast('Contact updated', 'success')
@@ -208,7 +208,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
       })), 'Feeder stock events')
 
       sheet((vets ?? []).map((v) => ({
-        Name: v.name, Clinic: v.clinic_name ?? '', Phone: v.phone ?? '',
+        Name: v.name, Clinic: v.practice_name ?? '', Phone: v.phone ?? '',
         Email: v.email ?? '', Address: v.address ?? '', Notes: v.notes ?? '',
       })), 'Vet contacts')
 
@@ -594,7 +594,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
               <div key={vet.id} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{vet.name}</p>
-                  {vet.clinic_name && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{vet.clinic_name}</p>}
+                  {vet.practice_name && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{vet.practice_name}</p>}
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {vet.phone && (
                       <a href={`tel:${vet.phone}`} className="text-xs" style={{ color: '#8fbe5a' }}>{vet.phone}</a>

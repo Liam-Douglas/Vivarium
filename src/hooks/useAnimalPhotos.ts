@@ -9,7 +9,7 @@ export interface AnimalPhoto {
   user_id: string
   url: string
   caption: string | null
-  created_at: string
+  created_at: string | null
 }
 
 export function useAnimalPhotos(animalId?: string) {

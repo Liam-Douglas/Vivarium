@@ -29,3 +29,7 @@ dist-ssr
 # Seeded design canvas — 2.6MB generated bundle, rebuilt from docs/design/markups/*.dc.html
 docs/design/markups/*.html
 !docs/design/markups/*.dc.html
+
+# Working file for npm run types:generate — the generated types are committed,
+# the dump they came from is not.
+schema.json

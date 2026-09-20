@@ -4,7 +4,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 
 export interface HealthEvent {
   id: string
-  household_id: string
+  household_id: string | null
   animal_id: string
   user_id: string
   event_type: string

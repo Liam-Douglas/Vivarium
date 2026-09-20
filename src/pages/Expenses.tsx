@@ -196,7 +196,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
     setEditExpense(expense)
     setEditCategory(expense.category)
     setEditAmount((expense.amount_cents / 100).toFixed(2))
-    setEditDescription(expense.description)
+    setEditDescription(expense.description ?? '')
     setEditAnimalId(expense.animal_id ?? '')
     setEditDate(expense.expense_date.split('T')[0])
   }

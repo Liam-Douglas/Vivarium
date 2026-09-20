@@ -8,8 +8,7 @@ export interface Enclosure {
   user_id: string
   name: string
   notes: string | null
-  created_at: string
-  updated_at: string
+  created_at: string | null
 }
 
 export function useEnclosures() {

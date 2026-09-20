@@ -4,7 +4,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 
 export interface FeederItem {
   id: string
-  household_id: string
+  household_id: string | null
   user_id: string
   name: string
   feeder_type: string
@@ -20,7 +20,7 @@ export interface FeederItemWithStock extends FeederItem {
 /** A row of feeder_stock_events — a purchase, or an adjustment from a feeding. */
 export interface FeederStockEvent {
   id: string
-  household_id: string
+  household_id: string | null
   feeder_item_id: string
   user_id: string
   event_type: string

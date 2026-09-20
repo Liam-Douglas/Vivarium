@@ -11,7 +11,7 @@ export interface ExitRecord {
   reason: string
   price_cents: number | null
   notes: string | null
-  created_at: string
+  created_at: string | null
 }
 
 export function useExitRecords(animalId?: string) {

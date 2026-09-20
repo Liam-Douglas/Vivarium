@@ -1214,7 +1214,7 @@ export async function createVetContact(contact: {
   household_id: string
   user_id: string
   name: string
-  clinic_name?: string | null
+  practice_name?: string | null
   phone?: string | null
   email?: string | null
   address?: string | null
