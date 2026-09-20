@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useAnimals } from '@/hooks/useAnimals'
 import { useFeederInventory } from '@/hooks/useFeederInventory'
 import { useAuth } from '@/context/AuthContext'
@@ -10,6 +10,7 @@ import { feedingLogSchema } from '@/lib/validation'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { PREY_TYPES, getPreySizes } from '@/lib/preyTypes'
+import { getFeedingStatus, describeNextFeeding, FEEDING_URGENCY } from '@/lib/feedingStatus'
 import { ALL_PREY_NAMES } from '@/lib/preyTypes'
 
 interface FeedingLogFormProps {
@@ -43,6 +44,18 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
   const [refused, setRefused] = useState(false)
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
+
+  // The picker used to list the collection in whatever order it arrived, so
+  // choosing who to feed meant remembering who was due. The queue on the
+  // Dashboard answers that question; this puts the same answer where the
+  // decision is actually made, without repeating the queue as another panel.
+  const animalsByUrgency = useMemo(
+    () => [...animals].sort((a, b) => {
+      const byUrgency = FEEDING_URGENCY[getFeedingStatus(a)] - FEEDING_URGENCY[getFeedingStatus(b)]
+      return byUrgency !== 0 ? byUrgency : a.name.localeCompare(b.name)
+    }),
+    [animals]
+  )
 
   const sizes = preyType ? getPreySizes(preyType) : []
   const filteredPrey = ALL_PREY_NAMES.filter((n) =>
@@ -119,8 +132,8 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
           onChange={(e) => setAnimalId(e.target.value)}
         >
           <option value="">Select animal…</option>
-          {animals.map((a) => (
-            <option key={a.id} value={a.id}>{a.name}</option>
+          {animalsByUrgency.map((a) => (
+            <option key={a.id} value={a.id}>{a.name} — {describeNextFeeding(a)}</option>
           ))}
         </Select>
       )}

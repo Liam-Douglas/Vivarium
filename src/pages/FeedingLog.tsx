@@ -6,9 +6,16 @@ import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
+import { FeedingEditForm } from '@/components/feeding/FeedingEditForm'
+import { BatchFeedForm } from '@/components/feeding/BatchFeedForm'
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
+import { useToast } from '@/components/ui/Toast'
+import { deleteFeedingLog, recalculateAnimalLastFedAt } from '@/lib/queries'
+import type { FeedingLog as FeedingLogRow } from '@/hooks/useFeedingLogs'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { animalColor } from '@/lib/animalColors'
 import { groupByDay } from '@/lib/groupByDay'
+import { getFeedingStatus } from '@/lib/feedingStatus'
 
 /** Legend entries shown before collapsing the rest into a count. */
 const LEGEND_LIMIT = 6
@@ -17,8 +24,13 @@ export function FeedingLog() {
   const { data: animals } = useAnimals()
   const { data: allLogs, loading, refresh } = useFeedingLogs()
 
+  const { showToast } = useToast()
+
   const [tab, setTab] = useState<'log' | 'calendar'>('log')
   const [addOpen, setAddOpen] = useState(false)
+  const [batchOpen, setBatchOpen] = useState(false)
+  const [editingLog, setEditingLog] = useState<FeedingLogRow | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState<FeedingLogRow | null>(null)
 
   // Log tab state
   const [selectedAnimalId, setSelectedAnimalId] = useState<string | undefined>(undefined)
@@ -61,6 +73,17 @@ export function FeedingLog() {
 
   const logsByDate = useMemo(() => groupByDay(logs), [logs])
 
+  // Batch feeding from here means "the ones that need it". The other two entry
+  // points take a curated set — a selection on Animals, an enclosure on the
+  // Dashboard — and on a page about feeding, due and overdue is that set.
+  const dueAnimals = useMemo(
+    () => animals.filter((a) => {
+      const status = getFeedingStatus(a)
+      return status === 'overdue' || status === 'due-soon'
+    }),
+    [animals]
+  )
+
   // The legend names the animals actually on the grid this month, not the first
   // five of the collection: a coloured dot with no legend entry explains nothing.
   // Refused feedings draw red rather than the animal's colour, so they are not
@@ -73,6 +96,21 @@ export function FeedingLog() {
   const selectedDayLogs = selectedDay
     ? (logsByDay.get(format(selectedDay, 'yyyy-MM-dd')) ?? [])
     : []
+
+  async function handleDelete(log: FeedingLogRow) {
+    setConfirmDelete(null)
+    try {
+      await deleteFeedingLog(log.id)
+      // Deleting the most recent feeding moves last_fed_at, and every feeding
+      // status in the app derives from it.
+      await recalculateAnimalLastFedAt(log.animal_id)
+      setEditingLog(null)
+      refresh()
+      showToast('Feeding deleted', 'success')
+    } catch (e) {
+      showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to delete', 'error')
+    }
+  }
 
   function changeMonth(delta: number) {
     let m = month + delta
@@ -88,7 +126,16 @@ export function FeedingLog() {
     <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-3xl mx-auto w-full">
       <Header
         title="Feeding Log"
-        action={tab === 'log' ? <Button size="sm" onClick={() => setAddOpen(true)}>Log feeding</Button> : null}
+        action={tab === 'log' ? (
+          <div className="flex gap-2">
+            {dueAnimals.length > 0 && (
+              <Button size="sm" variant="secondary" onClick={() => setBatchOpen(true)}>
+                Feed {dueAnimals.length} due
+              </Button>
+            )}
+            <Button size="sm" onClick={() => setAddOpen(true)}>Log feeding</Button>
+          </div>
+        ) : null}
       />
 
       {/* Tab switcher */}
@@ -165,9 +212,12 @@ export function FeedingLog() {
                       const hasTime = fedAt.getHours() !== 0 || fedAt.getMinutes() !== 0
 
                       return (
-                        <div
+                        <button
                           key={log.id}
-                          className="rounded-xl p-3.5 flex items-center gap-3"
+                          type="button"
+                          onClick={() => setEditingLog(log)}
+                          aria-label={`Edit feeding: ${name ?? detail}`}
+                          className="rounded-xl p-3.5 flex items-center gap-3 w-full text-left transition-colors hover:brightness-110"
                           style={{
                             backgroundColor: log.refused ? 'rgba(196,90,90,0.08)' : '#242420',
                             border: log.refused
@@ -204,7 +254,7 @@ export function FeedingLog() {
                               {format(fedAt, 'h:mm a')}
                             </p>
                           )}
-                        </div>
+                        </button>
                       )
                     })}
                   </div>
@@ -361,6 +411,48 @@ export function FeedingLog() {
           onCancel={() => setAddOpen(false)}
         />
       </Modal>
+
+      <Modal
+        open={batchOpen}
+        onClose={() => setBatchOpen(false)}
+        title={`Feed ${dueAnimals.length} due animal${dueAnimals.length !== 1 ? 's' : ''}`}
+      >
+        <BatchFeedForm
+          animals={dueAnimals}
+          onSuccess={() => { setBatchOpen(false); refresh() }}
+          onCancel={() => setBatchOpen(false)}
+        />
+      </Modal>
+
+      <Modal open={!!editingLog} onClose={() => setEditingLog(null)} title="Edit feeding">
+        {editingLog && (
+          <div className="flex flex-col gap-4">
+            <FeedingEditForm
+              log={editingLog}
+              onSaved={() => { setEditingLog(null); refresh() }}
+              onCancel={() => setEditingLog(null)}
+            />
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(editingLog)}
+              className="text-sm py-2 rounded-xl transition-colors hover:bg-white/5"
+              style={{ color: '#c45a5a' }}
+            >
+              Delete this feeding
+            </button>
+          </div>
+        )}
+      </Modal>
+
+      {confirmDelete && (
+        <ConfirmDialog
+          open
+          title="Delete feeding record"
+          message="This feeding record will be permanently deleted."
+          onConfirm={() => handleDelete(confirmDelete)}
+          onClose={() => setConfirmDelete(null)}
+        />
+      )}
     </div>
   )
 }
