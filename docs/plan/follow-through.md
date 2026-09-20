@@ -6,7 +6,7 @@ fix that stays.
 
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
-| | 1 — Test what was only ever verified by hand | S | no |
+| ✓ | 1 — Test what was only ever verified by hand | S | shipped |
 | | 2 — Stop the generated types going stale | S | no |
 | | 3 — AnimalDetail, slices 2 and 3 | L | no |
 
@@ -36,6 +36,14 @@ exercised. Take the sign-out call as a parameter, so the wiring — clear the ca
 without a client.
 
 Both are small. Both cover a bug that actually happened rather than one imagined.
+
+Making the sign-out wiring injectable turned up a third, introduced by the cache
+work itself: `signOutAndClearCaches` let a failed sign-out request propagate
+through its `finally`, so the `navigate` after it never ran. A keeper signing out
+offline stayed on the settings page with no message and an unhandled rejection.
+The sequence now reports the failure instead of throwing it, and both callers
+navigate either way — the point of signing out is to leave, and the local session
+and caches are cleared whether or not the request reached the server.
 
 ## Phase 2 — Stop the generated types going stale
 

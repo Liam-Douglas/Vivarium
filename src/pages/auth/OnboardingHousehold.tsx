@@ -75,7 +75,8 @@ export function OnboardingHousehold() {
   }
 
   async function handleSignOut() {
-    await signOutAndClearCaches()
+    const { error } = await signOutAndClearCaches()
+    if (error) showToast(`Signed out on this device, but the server was not reached — ${error}`, 'error')
     navigate('/auth/signin', { replace: true })
   }
 

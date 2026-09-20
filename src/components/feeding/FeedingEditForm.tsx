@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { format } from 'date-fns'
 import { updateFeedingLog, recalculateAnimalLastFedAt } from '@/lib/queries'
-import { dateInputToISO } from '@/lib/dates'
+import { dateInputToISO, isoToDateTimeInput } from '@/lib/dates'
 import { getPreySizes } from '@/lib/preyTypes'
 import { useToast } from '@/components/ui/Toast'
 import { Button } from '@/components/ui/Button'
@@ -28,8 +27,9 @@ export function FeedingEditForm({ log, onSaved, onCancel }: FeedingEditFormProps
   const [preySize, setPreySize] = useState(log.prey_size ?? '')
   const [quantity, setQuantity] = useState(String(log.quantity))
   // Local time for the picker: slicing the stored ISO string would show the
-  // keeper a UTC clock and silently shift the feeding on save.
-  const [fedAt, setFedAt] = useState(format(new Date(log.fed_at), "yyyy-MM-dd'T'HH:mm"))
+  // keeper a UTC clock and silently shift the feeding on save. The conversion
+  // and its inverse are tested together in lib/dates.test.ts.
+  const [fedAt, setFedAt] = useState(isoToDateTimeInput(log.fed_at))
   const [refused, setRefused] = useState(log.refused)
   const [notes, setNotes] = useState(log.notes ?? '')
   const [saving, setSaving] = useState(false)
