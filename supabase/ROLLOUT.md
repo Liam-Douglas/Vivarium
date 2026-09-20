@@ -50,12 +50,39 @@ same command are OR'd**: a caller has to satisfy only one of them. So a single
 loose policy defeats every careful one beside it, and a policy listing that
 contains the careful one looks reassuring while the hole stays open.
 
-The live database carried `members_insert_self`, whose entire check was
-`user_id = auth.uid()`. That constrains who the row is about and says nothing
-about what it says, so any user could insert themselves as
+Three shapes were found this way on the live database, none of them in any
+migration. Each is worth recognising, because a policy listing shows the
+correct policy present in every case:
+
+**Constrains who, not what.** `members_insert_self`, whose entire check was
+`user_id = auth.uid()`. Any user could insert themselves as
 `role = 'owner', status = 'active'` into any household whose id they could
-name — the approval flow bypassed completely. `0001` now sweeps competing
-insert policies on `household_members` before adding its own.
+name — the approval flow bypassed completely.
+
+**Reads `household_members` without reading `status`.** Eight policies named
+`*_household_access`, on `animal_photos`, `enclosures`, `equipment`,
+`incubations`, `medication_logs`, `medication_schedules`, `vet_contacts` and
+`households`. Each used `household_id in (select household_id from
+household_members where user_id = auth.uid())`, which treats *having* a
+membership row as *being* a member. A pending request — someone who typed an
+invite code and was never approved — had full read and write. This is the
+shape that hides best: it mentions `household_id`, so a search for policies
+that "aren't household-scoped" walks straight past it. Find it with:
+
+```sql
+select tablename, policyname, cmd, qual, with_check
+from pg_policies
+where schemaname = 'public'
+  and (coalesce(qual,'') || ' ' || coalesce(with_check,'')) ~ 'household_members'
+  and (coalesce(qual,'') || ' ' || coalesce(with_check,'')) !~ 'status';
+```
+
+**No constraint at all.** `Authenticated users can read profiles`, `using
+(true)`, making every profile readable by every signed-in user.
+
+`0001` now drops all of these before adding its own, and covers `equipment`
+and `incubations`, which no client code touches — which is precisely why a
+table list derived from the app missed them.
 
 ## Verifying 0001
 
