@@ -8,8 +8,8 @@ by how hard it is to fix. Each phase lands as its own pull request and stands al
 
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
-| | 1 — Failures say so | M | no |
-| | 2 — The last silent truncations | S | no |
+| ✓ | 1 — Failures say so | M | shipped (`9d9fd47`) |
+| ✓ | 2 — The last silent truncations | S | shipped |
 | | 3 — The cache forgets | S | no |
 | | 4 — Small correctness batch | XS | no |
 | | 5 — AnimalDetail, in slices | L | no |
@@ -65,6 +65,20 @@ them. Health events accumulate over a collection's life. Acquisition, exit, bree
 schedule, feeder, vet and enclosure rows are bounded by animal count in practice, but
 the inconsistency is the bug: a reader cannot tell which half of the export is
 complete, and neither could the code's author.
+
+**Four `getAll*` wrappers turned out to be redundant, not just untidy.** Once the
+base queries page, `getAllFeedingLogs`, `getAllSheddingLogs`, `getAllWeightLogs` and
+`getAllMedicationLogs` are exact aliases of them. They were deleted rather than fixed
+in parallel, which is the same decision as deleting `getAllExpenses` applied to the
+rest of the family.
+
+**Three more reads were unpaginated for the same reason nobody noticed the first
+ones.** `getAllAnimalsForMatching` feeds the importer's duplicate check, where
+truncation has the same consequence as the failed load Phase 1 fixed: rows it cannot
+see look like animals it has never met. `recalculateLastFedAt` reads the animal list
+to rebuild feeding dates, so an animal past the cap keeps a stale `last_fed_at`
+silently. `getFeederStockEvents` is scoped to one feeder item, but a feeder used
+weekly accumulates events for years.
 
 **The `getAll*` family orders on a date column alone.** Recorded as a follow-up in
 the Feeding Log plan. Offset paging over a sort with ties can repeat a row on one page

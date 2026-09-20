@@ -5,7 +5,7 @@ import { useAnimals } from '@/hooks/useAnimals'
 import { summariseFeeding } from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useHousehold } from '@/context/HouseholdContext'
-import { getAllExpenses } from '@/lib/queries'
+import { getAllExpensesComplete } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import type { Expense } from '@/hooks/useExpenses'
 import { EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
@@ -38,7 +38,7 @@ export function Stats() {
     // at [] and the page reported a year's spend as nothing, while the
     // rejection went unhandled. The error clears on success rather than before
     // the request, so nothing sets state synchronously inside the effect.
-    getAllExpenses(householdId)
+    getAllExpensesComplete(householdId)
       .then((data) => { setExpenses(data as Expense[]); setExpensesError(null) })
       .catch((e: unknown) => setExpensesError(
         e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load expenses'

@@ -16,25 +16,28 @@ function stripOwnershipKeys<T extends Record<string, unknown>>(updates: T): Part
 // ─── Animals ─────────────────────────────────────────────────────────────────
 
 export async function getAnimals(householdId: string) {
-  const { data, error } = await supabase
+  return fetchAllRows((from, to) => supabase
     .from('animals')
     .select('*')
     .eq('household_id', householdId)
     .eq('is_active', true)
     .order('name')
-  if (error) throw error
-  return data
+    .order('id')
+    .range(from, to))
 }
 
 export async function getAllAnimalsForMatching(householdId: string) {
-  const { data, error } = await supabase
+  // Truncation here has the same consequence as a failed load: rows the
+  // importer cannot see look like animals it has never met, so it creates
+  // duplicates of them.
+  return fetchAllRows((from, to) => supabase
     .from('animals')
     .select('id, name, species, is_active')
     .eq('household_id', householdId)
     .order('name')
     .order('created_at', { ascending: true })
-  if (error) throw error
-  return data ?? []
+    .order('id')
+    .range(from, to))
 }
 
 export async function getAnimal(id: string) {
@@ -101,11 +104,15 @@ export async function reactivateAnimal(id: string) {
 }
 
 export async function recalculateLastFedAt(householdId: string) {
-  const { data: animals } = await supabase
+  // Paged: an animal this read does not return is an animal whose last_fed_at
+  // silently keeps its old value.
+  const animals = await fetchAllRows((from, to) => supabase
     .from('animals')
     .select('id')
     .eq('household_id', householdId)
-  if (!animals?.length) return
+    .order('id')
+    .range(from, to))
+  if (!animals.length) return
 
   await Promise.all(animals.map(async (animal) => {
     const { data: latest } = await supabase
@@ -267,15 +274,16 @@ export async function recalculateAnimalLastFedAt(animalId: string) {
 // ─── Shedding logs ───────────────────────────────────────────────────────────
 
 export async function getSheddingLogs(householdId: string, animalId?: string) {
-  let query = supabase
-    .from('shedding_logs')
-    .select('*, animals(name)')
-    .eq('household_id', householdId)
-    .order('shed_at', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase
+      .from('shedding_logs')
+      .select('*, animals(name)')
+      .eq('household_id', householdId)
+      .order('shed_at', { ascending: false })
+      .order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 
 export async function createSheddingLog(log: {
@@ -304,15 +312,16 @@ export async function deleteSheddingLog(id: string) {
 // ─── Weight logs ─────────────────────────────────────────────────────────────
 
 export async function getWeightLogs(householdId: string, animalId?: string) {
-  let query = supabase
-    .from('weight_logs')
-    .select('*')
-    .eq('household_id', householdId)
-    .order('logged_at', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase
+      .from('weight_logs')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('logged_at', { ascending: false })
+      .order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 
 export async function createWeightLog(log: {
@@ -341,15 +350,16 @@ export async function deleteWeightLog(id: string) {
 // ─── Health events ───────────────────────────────────────────────────────────
 
 export async function getHealthEvents(householdId: string, animalId?: string) {
-  let query = supabase
-    .from('health_events')
-    .select('*')
-    .eq('household_id', householdId)
-    .order('event_date', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase
+      .from('health_events')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('event_date', { ascending: false })
+      .order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 
 export async function updateHealthEvent(id: string, updates: { event_type?: string; event_date?: string; title?: string; notes?: string | null; cost_cents?: number | null }) {
@@ -380,11 +390,12 @@ export async function createHealthEvent(event: {
 // ─── Acquisition records ─────────────────────────────────────────────────────
 
 export async function getAcquisitionRecords(householdId: string, animalId?: string) {
-  let query = supabase.from('acquisition_records').select('*').eq('household_id', householdId).order('acquired_at', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase.from('acquisition_records').select('*').eq('household_id', householdId)
+      .order('acquired_at', { ascending: false }).order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 export async function createAcquisitionRecord(r: { household_id: string; animal_id: string; user_id: string; acquired_at: string; source?: string; source_name?: string; price_cents?: number; notes?: string }) {
   const { error } = await supabase.from('acquisition_records').insert(r)
@@ -402,11 +413,12 @@ export async function deleteAcquisitionRecord(id: string) {
 // ─── Exit records ─────────────────────────────────────────────────────────────
 
 export async function getExitRecords(householdId: string, animalId?: string) {
-  let query = supabase.from('exit_records').select('*').eq('household_id', householdId).order('exited_at', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase.from('exit_records').select('*').eq('household_id', householdId)
+      .order('exited_at', { ascending: false }).order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 export async function createExitRecord(r: { household_id: string; animal_id: string; user_id: string; exited_at: string; reason: string; price_cents?: number; notes?: string }) {
   const { error } = await supabase.from('exit_records').insert(r)
@@ -424,11 +436,12 @@ export async function deleteExitRecord(id: string) {
 // ─── Breeding records ─────────────────────────────────────────────────────────
 
 export async function getBreedingRecords(householdId: string, animalId?: string) {
-  let query = supabase.from('breeding_records').select('*').eq('household_id', householdId).order('pairing_date', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase.from('breeding_records').select('*').eq('household_id', householdId)
+      .order('pairing_date', { ascending: false }).order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 export async function createBreedingRecord(r: { household_id: string; animal_id: string; user_id: string; pairing_date: string; paired_with_id?: string; paired_with_name?: string; outcome?: string; clutch_size?: number; eggs_fertile?: number; hatch_date?: string; notes?: string }) {
   const { error } = await supabase.from('breeding_records').insert(r)
@@ -446,13 +459,13 @@ export async function deleteBreedingRecord(id: string) {
 // ─── Feeder inventory ────────────────────────────────────────────────────────
 
 export async function getFeederItems(householdId: string) {
-  const { data, error } = await supabase
+  return fetchAllRows((from, to) => supabase
     .from('feeder_items')
     .select('*')
     .eq('household_id', householdId)
     .order('name')
-  if (error) throw error
-  return data
+    .order('id')
+    .range(from, to))
 }
 
 export async function createFeederItem(item: {
@@ -507,14 +520,14 @@ export async function createFeederStockEvent(event: {
 }
 
 export async function getFeederStockEvents(householdId: string, feederItemId: string) {
-  const { data, error } = await supabase
+  return fetchAllRows((from, to) => supabase
     .from('feeder_stock_events')
     .select('*')
     .eq('household_id', householdId)
     .eq('feeder_item_id', feederItemId)
     .order('created_at', { ascending: false })
-  if (error) throw error
-  return data
+    .order('id', { ascending: false })
+    .range(from, to))
 }
 
 export async function updateFeederItem(id: string, updates: { name?: string; unit_label?: string; low_stock_threshold?: number }) {
@@ -544,16 +557,6 @@ export async function getExpenses(householdId: string, year: number, month: numb
   return data
 }
 
-export async function getAllExpenses(householdId: string) {
-  const { data, error } = await supabase
-    .from('expenses')
-    .select('*')
-    .eq('household_id', householdId)
-    .is('deleted_at', null)
-    .order('expense_date', { ascending: false })
-  if (error) throw error
-  return data
-}
 
 export async function createExpense(expense: {
   household_id: string
@@ -598,40 +601,22 @@ export async function softDeleteExpense(id: string) {
 // is their collection, and a duplicate guard built from a truncated set lets
 // duplicates straight back in.
 
-export async function getAllFeedingLogs(householdId: string) {
-  return fetchAllRows<Record<string, unknown>>((from, to) =>
-    supabase.from('feeding_logs').select('*, animals(name)')
-      .eq('household_id', householdId).order('fed_at', { ascending: false }).range(from, to))
-}
 
-export async function getAllSheddingLogs(householdId: string) {
-  return fetchAllRows<Record<string, unknown>>((from, to) =>
-    supabase.from('shedding_logs').select('*, animals(name)')
-      .eq('household_id', householdId).order('shed_at', { ascending: false }).range(from, to))
-}
 
-export async function getAllWeightLogs(householdId: string) {
-  return fetchAllRows<Record<string, unknown>>((from, to) =>
-    supabase.from('weight_logs').select('*')
-      .eq('household_id', householdId).order('logged_at', { ascending: false }).range(from, to))
-}
 
 export async function getAllExpensesComplete(householdId: string) {
-  return fetchAllRows<Record<string, unknown>>((from, to) =>
+  // No explicit row generic: inferring from the select keeps callers' casts
+  // honest rather than widening every row to Record<string, unknown>.
+  return fetchAllRows((from, to) =>
     supabase.from('expenses').select('*').eq('household_id', householdId)
-      .is('deleted_at', null).order('expense_date', { ascending: false }).range(from, to))
+      .is('deleted_at', null).order('expense_date', { ascending: false }).order('id').range(from, to))
 }
 
-export async function getAllMedicationLogs(householdId: string) {
-  return fetchAllRows<Record<string, unknown>>((from, to) =>
-    supabase.from('medication_logs').select('*')
-      .eq('household_id', householdId).order('given_at', { ascending: false }).range(from, to))
-}
 
 export async function getAllFeederStockEvents(householdId: string) {
   return fetchAllRows<Record<string, unknown>>((from, to) =>
     supabase.from('feeder_stock_events').select('*')
-      .eq('household_id', householdId).order('created_at', { ascending: false }).range(from, to))
+      .eq('household_id', householdId).order('created_at', { ascending: false }).order('id').range(from, to))
 }
 
 /** Just the columns the duplicate guard keys on, paged to the end. */
@@ -1073,13 +1058,13 @@ export async function batchInsertSheddingLogs(logs: Record<string, unknown>[]) {
 // ─── Enclosures ──────────────────────────────────────────────────────────────
 
 export async function getEnclosures(householdId: string) {
-  const { data, error } = await supabase
+  return fetchAllRows((from, to) => supabase
     .from('enclosures')
     .select('*')
     .eq('household_id', householdId)
     .order('name')
-  if (error) throw error
-  return data
+    .order('id')
+    .range(from, to))
 }
 
 export async function createEnclosure(enclosure: {
@@ -1149,15 +1134,16 @@ export async function uploadAdditionalPhoto(householdId: string, animalId: strin
 // ─── Medication schedules ─────────────────────────────────────────────────────
 
 export async function getMedicationSchedules(householdId: string, animalId?: string) {
-  let query = supabase
-    .from('medication_schedules')
-    .select('*')
-    .eq('household_id', householdId)
-    .order('created_at', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase
+      .from('medication_schedules')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 
 export async function createMedicationSchedule(schedule: {
@@ -1187,15 +1173,16 @@ export async function deleteMedicationSchedule(id: string) {
 }
 
 export async function getMedicationLogs(householdId: string, animalId?: string) {
-  let query = supabase
-    .from('medication_logs')
-    .select('*')
-    .eq('household_id', householdId)
-    .order('given_at', { ascending: false })
-  if (animalId) query = query.eq('animal_id', animalId)
-  const { data, error } = await query
-  if (error) throw error
-  return data
+  return fetchAllRows((from, to) => {
+    let query = supabase
+      .from('medication_logs')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('given_at', { ascending: false })
+      .order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
 }
 
 export async function createMedicationLog(log: {
@@ -1214,13 +1201,13 @@ export async function createMedicationLog(log: {
 // ─── Vet contacts ─────────────────────────────────────────────────────────────
 
 export async function getVetContacts(householdId: string) {
-  const { data, error } = await supabase
+  return fetchAllRows((from, to) => supabase
     .from('vet_contacts')
     .select('*')
     .eq('household_id', householdId)
     .order('name')
-  if (error) throw error
-  return data
+    .order('id')
+    .range(from, to))
 }
 
 export async function createVetContact(contact: {
