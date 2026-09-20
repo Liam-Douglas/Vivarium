@@ -4,11 +4,14 @@
 -- REVIEW BEFORE APPLYING. Confirm column names against your schema.
 -- ============================================================================
 
+-- no-schema-change: an RPC and a view; no table columns change.
+
 -- ── Atomic feeding ───────────────────────────────────────────────────────────
 -- Replaces the client's three sequential writes (feeding_logs insert →
 -- animals.last_fed_at update → feeder_stock_events insert) with one
 -- transaction, so a flaky/offline connection can't leave a partial write.
 -- Runs as the caller (SECURITY INVOKER) so RLS still applies.
+
 create or replace function public.log_feeding(
   p_household_id   uuid,
   p_animal_id      uuid,

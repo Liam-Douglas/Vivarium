@@ -14,7 +14,10 @@
 -- it regardless of the SELECT policy below.
 -- ============================================================================
 
+-- no-schema-change: storage bucket policies only; no table columns change.
+
 -- Make the bucket private (id must match the bucket name used in the client).
+
 update storage.buckets set public = false where id = 'animal-photos';
 
 alter table storage.objects enable row level security;
