@@ -38,6 +38,7 @@ export function FeedingLog() {
   const [outcome, setOutcome] = useState<FeedingOutcome>('all')
   const [preyType, setPreyType] = useState('')
   const [periodDays, setPeriodDays] = useState(0) // 0 = all time
+  const [filtersOpen, setFiltersOpen] = useState(false)
 
   // Calendar tab state
   const now = new Date()
@@ -54,7 +55,10 @@ export function FeedingLog() {
   }), [allLogs, selectedAnimalId, outcome, preyType, periodDays])
 
   const preyOptions = useMemo(() => preyTypesIn(allLogs), [allLogs])
-  const filtersActive = Boolean(selectedAnimalId) || outcome !== 'all' || Boolean(preyType) || periodDays > 0
+  // Outcome stays on the surface; the rest fold away. Tracked separately so a
+  // filter narrowing the list from behind a closed panel can still be shown.
+  const secondaryActive = Boolean(selectedAnimalId) || Boolean(preyType) || periodDays > 0
+  const filtersActive = secondaryActive || outcome !== 'all'
 
   function clearFilters() {
     setSelectedAnimalId(undefined)
@@ -178,22 +182,10 @@ export function FeedingLog() {
           {/* Filters */}
           {animals.length > 0 && (
             <div className="flex flex-col gap-2 mb-4">
-              <select
-                value={selectedAnimalId ?? ''}
-                onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
-                aria-label="Filter by animal"
-                className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
-                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#9f9684' }}
-              >
-                <option value="">All animals</option>
-                {animals.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
-
+              <div className="flex gap-2">
               {/* Outcome — refusals are the reason to filter this list at all,
                   so they get a control you can hit rather than a menu item. */}
-              <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex gap-1 p-1 rounded-xl flex-1" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                 {([
                   ['all', 'All'],
                   ['fed', 'Fed'],
@@ -219,6 +211,41 @@ export function FeedingLog() {
                   )
                 })}
               </div>
+
+              <button
+                type="button"
+                onClick={() => setFiltersOpen((open) => !open)}
+                aria-expanded={filtersOpen}
+                className="px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 shrink-0"
+                style={{
+                  backgroundColor: '#242420',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  color: secondaryActive ? '#8fbe5a' : '#9f9684',
+                }}
+              >
+                Filters
+                {/* A filter narrowing the list from behind a closed panel is
+                    hidden state; the dot is what stops it being a trap. */}
+                {secondaryActive && (
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8fbe5a' }} />
+                )}
+              </button>
+              </div>
+
+              {filtersOpen && (
+              <>
+              <select
+                value={selectedAnimalId ?? ''}
+                onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
+                aria-label="Filter by animal"
+                className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#9f9684' }}
+              >
+                <option value="">All animals</option>
+                {animals.map((a) => (
+                  <option key={a.id} value={a.id}>{a.name}</option>
+                ))}
+              </select>
 
               <div className="grid grid-cols-2 gap-2">
                 <select
@@ -246,6 +273,8 @@ export function FeedingLog() {
                   {preyOptions.map((p) => <option key={p} value={p}>{p}</option>)}
                 </select>
               </div>
+              </>
+              )}
 
               {filtersActive && (
                 <div className="flex items-center justify-between px-1">
