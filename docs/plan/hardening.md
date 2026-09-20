@@ -10,7 +10,7 @@ own pull request and stands alone.
 | ✓ | Pending household members | S | shipped (`2974799`) |
 | ✓ | Data integrity — row caps and a destructive repair | M | shipped (`f4d07f1`, `c990ebb`) |
 | ✓ | Accessibility | M | shipped (`2d994cf`, colour follows) |
-| ~ | Security — RLS and storage | M | SQL prepared; awaiting the apply |
+| ✓ | Security — RLS and storage | M | 0001 + 0003 applied and verified; 0002 awaits signed URLs |
 | ✓ | Small correctness batch | S | shipped |
 
 ## Phase 1 — Data integrity
