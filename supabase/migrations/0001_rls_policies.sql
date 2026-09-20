@@ -31,6 +31,40 @@ $$;
 revoke all on function public.app_is_household_member(uuid) from public;
 grant execute on function public.app_is_household_member(uuid) to authenticated;
 
+-- ── Legacy policies this file replaces ───────────────────────────────────────
+-- Found on the live database, not in any migration. Two shapes, both of which
+-- survive alongside correct policies because permissive policies are OR'd:
+--
+--   *_household_access — `household_id in (select household_id from
+--   household_members where user_id = auth.uid())`. That treats HAVING a
+--   membership row as BEING a member. It never checks status, so a pending
+--   request — someone who typed an invite code and has not been approved —
+--   was granted full read and write. app_is_household_member() checks the
+--   status; an inline subquery written by hand did not.
+--
+--   "Authenticated users can read profiles" — `using (true)`, making every
+--   profile in the database readable by every signed-in user, which defeats
+--   the deliberately scoped profiles policy at the bottom of this file.
+do $$
+declare
+  legacy text[][] := array[
+    ['animal_photos',        'animal_photos_household_access'],
+    ['enclosures',           'enclosures_household_access'],
+    ['equipment',            'equipment_household_access'],
+    ['incubations',          'incubations_household_access'],
+    ['medication_logs',      'medication_logs_household_access'],
+    ['medication_schedules', 'medication_schedules_household_access'],
+    ['vet_contacts',         'vet_contacts_household_access'],
+    ['households',           'household members can read'],
+    ['profiles',             'Authenticated users can read profiles']
+  ];
+  i int;
+begin
+  for i in 1 .. array_length(legacy, 1) loop
+    execute format('drop policy if exists %I on public.%I;', legacy[i][2], legacy[i][1]);
+  end loop;
+end $$;
+
 -- ── Household-scoped tables ──────────────────────────────────────────────────
 -- All of these carry a household_id column. One uniform policy set each:
 --   SELECT / DELETE: row's household_id belongs to the caller.
@@ -44,7 +78,10 @@ declare
     'animals', 'feeding_logs', 'shedding_logs', 'weight_logs', 'health_events',
     'acquisition_records', 'exit_records', 'breeding_records', 'expenses',
     'enclosures', 'animal_photos', 'medication_schedules', 'medication_logs',
-    'vet_contacts', 'feeder_items', 'feeder_stock_events'
+    'vet_contacts', 'feeder_items', 'feeder_stock_events',
+    -- No client code touches these two, which is exactly why the first version
+    -- of this list missed them: it was written by reading the app.
+    'equipment', 'incubations'
   ];
 begin
   foreach t in array tables loop
