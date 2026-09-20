@@ -26,6 +26,8 @@ import { Input, Select, Textarea } from '@/components/ui/Input'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
 import { BatchFeedForm } from '@/components/feeding/BatchFeedForm'
 import { loadState } from '@/lib/loadState'
+import { useCareTasks } from '@/hooks/useCareTasks'
+import { getCareStatus, describeNextCare, CARE_URGENCY } from '@/lib/careStatus'
 import { LoadError } from '@/components/ui/LoadError'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
@@ -85,6 +87,7 @@ export function Dashboard() {
   const { data: feeders } = useFeederInventory()
   const { data: medSchedules, error: medSchedulesError } = useMedicationSchedules()
   const { data: medLogs, error: medLogsError, refresh: refreshMedLogs } = useMedicationLogs()
+  const { data: careTasks } = useCareTasks()
   const { showToast } = useToast()
 
   const strikeAnimals = useMemo(() => {
@@ -211,6 +214,19 @@ export function Dashboard() {
 
     return [...feedings, ...doses].sort((a, b) => a.due.getTime() - b.due.getTime())
   }, [animals, medSchedules, medLogs])
+
+  // Care tasks get their own card rather than joining the queue above. That
+  // queue is animal-shaped — a name column, an enclosure column and a Feed
+  // button — and a task on the whole collection has no animal to put in it.
+  const careDue = useMemo(
+    () => careTasks
+      .filter((t) => {
+        const status = getCareStatus(t)
+        return status === 'overdue' || status === 'due-soon'
+      })
+      .sort((a, b) => CARE_URGENCY[getCareStatus(a)] - CARE_URGENCY[getCareStatus(b)]),
+    [careTasks]
+  )
 
   /** Feeder items at or below their configured low-stock threshold. */
   const lowStock = useMemo(() => feeders.filter(isLowStock), [feeders])
@@ -675,6 +691,26 @@ export function Dashboard() {
       )}
         </div>
         <div className="min-w-0">
+      {/* Care due — cleaning, weighing and the rest, which nothing surfaced before */}
+      {careDue.length > 0 && (
+        <Link
+          to="/reminders"
+          className="block mb-6 rounded-xl p-4"
+          style={{ backgroundColor: 'rgba(143,190,90,0.07)', border: '1px solid rgba(143,190,90,0.22)' }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: '#8fbe5a' }}>
+              {careDue.length} care task{careDue.length !== 1 ? 's' : ''} due
+            </p>
+            <span className="text-xs shrink-0" style={{ color: '#8fbe5a' }}>Reminders &rarr;</span>
+          </div>
+          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+            {careDue.slice(0, 3).map((t) => `${t.name} — ${describeNextCare(t).toLowerCase()}`).join(' · ')}
+            {careDue.length > 3 && ` · and ${careDue.length - 3} more`}
+          </p>
+        </Link>
+      )}
+
       {/* Feeder stock — needed before you start feeding, not after */}
       {lowStock.length > 0 && (
         <Link

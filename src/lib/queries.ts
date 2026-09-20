@@ -1234,3 +1234,106 @@ export async function deleteVetContact(id: string) {
   const { error } = await supabase.from('vet_contacts').delete().eq('id', id)
   if (error) throw error
 }
+
+// ── Care tasks ──────────────────────────────────────────────────────────────
+// Recurring care the app could not record before 0004: cleaning, weighing and
+// anything else on an interval. Feeding and medication already had cadences of
+// their own; these are everything else.
+
+export async function getCareTasks(householdId: string) {
+  return fetchAllRows((from, to) => supabase
+    .from('care_tasks')
+    .select('*')
+    .eq('household_id', householdId)
+    .order('created_at', { ascending: true })
+    .order('id')
+    .range(from, to))
+}
+
+export async function createCareTask(task: {
+  household_id: string
+  user_id: string
+  name: string
+  kind?: string
+  animal_id?: string | null
+  enclosure_id?: string | null
+  frequency_days: number
+  notes?: string | null
+}) {
+  const { error } = await supabase.from('care_tasks').insert(task)
+  if (error) throw error
+}
+
+export async function updateCareTask(id: string, updates: {
+  name?: string
+  kind?: string
+  animal_id?: string | null
+  enclosure_id?: string | null
+  frequency_days?: number
+  is_active?: boolean
+  notes?: string | null
+  last_done_at?: string | null
+}) {
+  const { error } = await supabase
+    .from('care_tasks')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', id)
+  if (error) throw error
+}
+
+export async function deleteCareTask(id: string) {
+  const { error } = await supabase.from('care_tasks').delete().eq('id', id)
+  if (error) throw error
+}
+
+export async function getCareTaskLogs(householdId: string, taskId?: string) {
+  return fetchAllRows((from, to) => {
+    let query = supabase
+      .from('care_task_logs')
+      .select('*')
+      .eq('household_id', householdId)
+      .order('done_at', { ascending: false })
+      .order('id', { ascending: false })
+    if (taskId) query = query.eq('task_id', taskId)
+    return query.range(from, to)
+  })
+}
+
+/**
+ * Record a completion.
+ *
+ * Two writes, log first: last_done_at is a cache of the log, so a failure
+ * between them leaves the cache behind the truth, which
+ * recalculateCareTaskLastDone can repair. The reverse order would leave a task
+ * claiming a completion that was never recorded, which nothing can repair.
+ */
+export async function markCareTaskDone(args: {
+  household_id: string
+  task_id: string
+  user_id: string
+  done_at?: string
+  notes?: string | null
+}) {
+  const doneAt = args.done_at ?? new Date().toISOString()
+  const { error: logError } = await supabase.from('care_task_logs').insert({
+    household_id: args.household_id,
+    task_id: args.task_id,
+    user_id: args.user_id,
+    done_at: doneAt,
+    notes: args.notes ?? null,
+  })
+  if (logError) throw logError
+  await updateCareTask(args.task_id, { last_done_at: doneAt })
+}
+
+/** Rebuild last_done_at from the log — the repair the cache exists to need. */
+export async function recalculateCareTaskLastDone(taskId: string) {
+  const { data: latest } = await supabase
+    .from('care_task_logs')
+    .select('done_at')
+    .eq('task_id', taskId)
+    .order('done_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  await updateCareTask(taskId, { last_done_at: latest?.done_at ?? null })
+}

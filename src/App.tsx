@@ -25,6 +25,7 @@ import { FeedingLog } from '@/pages/FeedingLog'
 import { Expenses } from '@/pages/Expenses'
 import { Settings } from '@/pages/Settings'
 import { Stats } from '@/pages/Stats'
+import { Reminders } from '@/pages/Reminders'
 import { Terms } from '@/pages/Terms'
 import { Privacy } from '@/pages/Privacy'
 
@@ -85,6 +86,7 @@ function AppShell() {
             <Route path="/expenses" element={<ErrorBoundary><Expenses /></ErrorBoundary>} />
             <Route path="/import" element={<ErrorBoundary><Settings initialTab="import" /></ErrorBoundary>} />
             <Route path="/stats" element={<ErrorBoundary><Stats /></ErrorBoundary>} />
+            <Route path="/reminders" element={<ErrorBoundary><Reminders /></ErrorBoundary>} />
           </Route>
           <Route path="/settings" element={<ErrorBoundary><Settings /></ErrorBoundary>} />
           <Route path="/terms" element={<Terms />} />

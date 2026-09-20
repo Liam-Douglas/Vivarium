@@ -6,10 +6,21 @@ const navItems = [
   { to: '/', label: 'Dashboard', icon: DashboardIcon, exact: true },
   { to: '/animals', label: 'Animals', icon: AnimalsIcon },
   { to: '/feeding', label: 'Feeding', icon: FeedingIcon },
+  { to: '/reminders', label: 'Reminders', icon: RemindersIcon },
   { to: '/expenses', label: 'Expenses', icon: ExpensesIcon },
   { to: '/stats', label: 'Stats', icon: StatsIcon },
   { to: '/settings', label: 'Settings', icon: SettingsIcon },
 ]
+
+function RemindersIcon({ active }: { active: boolean }) {
+  return (
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+      strokeWidth={active ? 2.2 : 1.8}>
+      <path strokeLinecap="round" strokeLinejoin="round"
+        d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2a2 2 0 01-.6 1.4L4 17h5m6 0a3 3 0 11-6 0" />
+    </svg>
+  )
+}
 
 function DashboardIcon({ active }: { active: boolean }) {
   return (
