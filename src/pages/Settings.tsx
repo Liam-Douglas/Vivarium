@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Import } from '@/pages/Import'
-import { supabase } from '@/lib/supabase'
+import { signOutAndClearCaches } from '@/lib/session'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
@@ -10,8 +10,8 @@ import {
   removeMember, setMemberRole, getAnimals, detectOrphanedFeedingLogs,
   detectDuplicateRecords, removeDuplicateRecords,
   createVetContact, updateVetContact, deleteVetContact, recalculateLastFedAt,
-  getAllFeedingLogs, getAllSheddingLogs, getAllWeightLogs, getAllExpensesComplete,
-  getAllMedicationLogs, getAllFeederStockEvents, getHealthEvents,
+  getFeedingLogs, getSheddingLogs, getWeightLogs, getAllExpensesComplete,
+  getMedicationLogs, getAllFeederStockEvents, getHealthEvents,
   getAcquisitionRecords, getExitRecords, getBreedingRecords,
   getMedicationSchedules, getFeederItems, getVetContacts, getEnclosures,
 } from '@/lib/queries'
@@ -104,16 +104,16 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
         medSchedules, medLogs, feederItems, stockEvents, vets, enclosures,
       ] = await Promise.all([
         getAnimals(householdId),
-        getAllFeedingLogs(householdId),
-        getAllSheddingLogs(householdId),
-        getAllWeightLogs(householdId),
+        getFeedingLogs(householdId),
+        getSheddingLogs(householdId),
+        getWeightLogs(householdId),
         getAllExpensesComplete(householdId),
         getHealthEvents(householdId),
         getAcquisitionRecords(householdId),
         getExitRecords(householdId),
         getBreedingRecords(householdId),
         getMedicationSchedules(householdId),
-        getAllMedicationLogs(householdId),
+        getMedicationLogs(householdId),
         getFeederItems(householdId),
         getAllFeederStockEvents(householdId),
         getVetContacts(householdId),
@@ -361,7 +361,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   }
 
   async function handleSignOut() {
-    await supabase.auth.signOut()
+    await signOutAndClearCaches()
     navigate('/auth/signin')
   }
 

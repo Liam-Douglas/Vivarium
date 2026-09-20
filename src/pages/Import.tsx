@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import * as XLSX from 'xlsx'
 import { parseISO, parse, isValid } from 'date-fns'
@@ -10,6 +10,7 @@ import { supabase } from '@/lib/supabase'
 import { importAnimalSchema, importFeedingSchema, importShedSchema, partitionValid } from '@/lib/validation'
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
+import { LoadError } from '@/components/ui/LoadError'
 
 type Step = 1 | 2 | 3 | 4
 
@@ -63,6 +64,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
   const [step, setStep] = useState<Step>(1)
   const [allAnimals, setAllAnimals] = useState<{ id: string; name: string; species: string; is_active: boolean }[]>([])
+  const [matchListError, setMatchListError] = useState<string | null>(null)
   const [fileName, setFileName] = useState('')
   const [sheets, setSheets] = useState<{ name: string; rows: ParsedRow[] }[]>([])
   const [importData, setImportData] = useState<ImportData>({ animals: [], feedingLogs: [], sheddingLogs: [] })
@@ -93,10 +95,23 @@ export function Import({ embedded }: { embedded?: boolean }) {
   const [fixingDuplicates, setFixingDuplicates] = useState(false)
 
   // Load all animals (active + inactive) once for matching
+  // This list is what every imported row is matched against. Swallowing a
+  // failure left it empty, which does not read as "could not check" — it reads
+  // as "nothing matches", so every row imports as a new animal and the keeper
+  // gets a duplicate of their whole collection.
+  const loadMatchList = useCallback(() => {
+    if (!householdId) return
+    getAllAnimalsForMatching(householdId)
+      .then((rows) => { setAllAnimals(rows); setMatchListError(null) })
+      .catch((e: unknown) => setMatchListError(
+        e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Could not load your existing animals'
+      ))
+  }, [householdId])
+
   useEffect(() => {
     if (!householdId) return
-    getAllAnimalsForMatching(householdId).then(setAllAnimals).catch(() => {})
-  }, [householdId])
+    loadMatchList()
+  }, [householdId, loadMatchList])
 
   // Computed reactively so it updates once allAnimals loads
   const matchCandidates: MatchCandidate[] = importData.animals
@@ -757,9 +772,17 @@ export function Import({ embedded }: { embedded?: boolean }) {
               </table>
             </div>
           )}
+          {matchListError && (
+            <LoadError
+              inline
+              subject="your existing animals"
+              message={`${matchListError} — importing now would add every row as a new animal.`}
+              onRetry={loadMatchList}
+            />
+          )}
           <div className="flex gap-2">
             <Button variant="secondary" onClick={() => setStep(2)}>Back</Button>
-            <Button onClick={handleImport} loading={importing}>Import now</Button>
+            <Button onClick={handleImport} loading={importing} disabled={!!matchListError}>Import now</Button>
           </div>
         </div>
       )}

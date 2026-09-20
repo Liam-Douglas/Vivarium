@@ -30,9 +30,19 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/.*supabase\.co\/.*/i,
+            // The negative lookahead keeps /auth/ out of the cache. A token or
+            // user response has no business sitting in CacheStorage, where it
+            // outlives the session and is readable by any script on the origin.
+            urlPattern: /^https:\/\/[a-z0-9-]+\.supabase\.co\/(?!auth\/).*/i,
             handler: 'NetworkFirst',
-            options: { cacheName: 'supabase-cache', networkTimeoutSeconds: 10 },
+            options: {
+              cacheName: 'supabase-cache',
+              networkTimeoutSeconds: 10,
+              // Previously unbounded in both age and size: a stale fallback
+              // from any point in the app's history, kept forever.
+              expiration: { maxEntries: 200, maxAgeSeconds: 60 * 60 * 24 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
           },
         ],
       },

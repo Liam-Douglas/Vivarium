@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays, addDays } from 'date-fns'
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
@@ -7,12 +7,14 @@ import {
   createWeightLog, updateWeightLog, deleteWeightLog,
   createSheddingLog, updateSheddingLog, deleteSheddingLog,
   createHealthEvent, updateHealthEvent, deleteHealthEvent,
-  updateFeedingLog, deleteFeedingLog, recalculateAnimalLastFedAt,
+  deleteFeedingLog, recalculateAnimalLastFedAt,
   uploadAdditionalPhoto, createAnimalPhotoRecord, deleteAnimalPhotoRecord,
   createMedicationSchedule, updateMedicationSchedule, deleteMedicationSchedule,
   getMedicationLogs, createMedicationLog,
 } from '@/lib/queries'
 import { processImage } from '@/lib/image'
+import { LoadError } from '@/components/ui/LoadError'
+import { FeedingEditForm } from '@/components/feeding/FeedingEditForm'
 import { dateInputToISO, daysSince } from '@/lib/dates'
 import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
 import { useEnclosures } from '@/hooks/useEnclosures'
@@ -78,6 +80,7 @@ export function AnimalDetail() {
   const { showToast } = useToast()
 
   const [animal, setAnimal] = useState<Animal | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [tab, setTab] = useState<Tab>('overview')
   const [editOpen, setEditOpen] = useState(false)
@@ -137,13 +140,6 @@ export function AnimalDetail() {
 
   // ── Feeding edit state ────────────────────────────────────────────────────
   const [editingFeed, setEditingFeed] = useState<FeedingLog | null>(null)
-  const [feedEditPreyType, setFeedEditPreyType] = useState('')
-  const [feedEditPreySize, setFeedEditPreySize] = useState('')
-  const [feedEditQty, setFeedEditQty] = useState('1')
-  const [feedEditRefused, setFeedEditRefused] = useState(false)
-  const [feedEditNotes, setFeedEditNotes] = useState('')
-  const [feedEditDate, setFeedEditDate] = useState('')
-  const [savingFeedEdit, setSavingFeedEdit] = useState(false)
 
   // ── Acquisition state ─────────────────────────────────────────────────────
   const [acquisitionOpen, setAcquisitionOpen] = useState(false)
@@ -215,7 +211,10 @@ export function AnimalDetail() {
     setConfirmDialog({ title, message, onConfirm })
   }
 
-  useEffect(() => {
+  // The catch here used to discard the error and only stop the spinner, so the
+  // page fell through to "Animal not found" — telling the keeper the record was
+  // deleted when the truth was a dropped request.
+  const loadAnimal = useCallback(() => {
     if (!id || !householdId) return
     getAnimal(id)
       .then((a) => {
@@ -226,13 +225,23 @@ export function AnimalDetail() {
           return
         }
         setAnimal(a as Animal)
+        setLoadError(null)
         setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch((e: unknown) => {
+        setLoadError(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load this animal')
+        setLoading(false)
+      })
   }, [id, householdId, navigate])
+
+  useEffect(() => { loadAnimal() }, [loadAnimal])
 
   useEffect(() => {
     if (!householdId || !id || medicationSchedules.length === 0) return
+    // The empty catch here is deliberate and stays: last-dose times are extra
+    // context on a schedule that renders fine without them, so a failure is
+    // not worth a banner. It is not the same as the swallowed catch above,
+    // which decided whether the page claimed the animal existed.
     getMedicationLogs(householdId, id).then((logs) => {
       const lastDoses: Record<string, string> = {}
       for (const log of logs) {
@@ -447,27 +456,6 @@ export function AnimalDetail() {
   }
 
   // ── Feeding edit handlers ─────────────────────────────────────────────────
-  function openEditFeed(log: FeedingLog) {
-    setEditingFeed(log)
-    setFeedEditPreyType(log.prey_type)
-    setFeedEditPreySize(log.prey_size ?? '')
-    setFeedEditQty(String(log.quantity))
-    setFeedEditRefused(log.refused)
-    setFeedEditNotes(log.notes ?? '')
-    setFeedEditDate(log.fed_at.split('T')[0])
-  }
-  async function handleSaveFeedEdit() {
-    if (!editingFeed) return
-    setSavingFeedEdit(true)
-    try {
-      await updateFeedingLog(editingFeed.id, { prey_type: feedEditPreyType, prey_size: feedEditPreySize || null, quantity: Number(feedEditQty), refused: feedEditRefused, notes: feedEditNotes || null, fed_at: dateInputToISO(feedEditDate) })
-      await recalculateAnimalLastFedAt(editingFeed.animal_id)
-      refreshFeeding()
-      setEditingFeed(null)
-      showToast('Feeding updated', 'success')
-    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
-    finally { setSavingFeedEdit(false) }
-  }
   function handleDeleteFeed(log: FeedingLog) {
     requestConfirm('Delete feeding record', 'This feeding record will be permanently deleted.', async () => {
       setConfirmDialog(null)
@@ -573,6 +561,16 @@ export function AnimalDetail() {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+      </div>
+    )
+  }
+
+  // "Not found" is a claim about the database, so it is only made once a load
+  // has actually succeeded and come back without the row.
+  if (loadError && !animal) {
+    return (
+      <div className="flex-1 px-4 py-6">
+        <LoadError subject="this animal" message={loadError} onRetry={loadAnimal} />
       </div>
     )
   }
@@ -1320,7 +1318,7 @@ export function AnimalDetail() {
                           : <p className="hidden lg:block lg:flex-1 lg:min-w-0 text-sm" style={{ color: '#9f9684' }}>—</p>}
                       </div>
                       <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
-                      <RecordActions onEdit={() => openEditFeed(log)} onDelete={() => handleDeleteFeed(log)} />
+                      <RecordActions onEdit={() => setEditingFeed(log)} onDelete={() => handleDeleteFeed(log)} />
                     </div>
                   ))}
                 </div>
@@ -1842,25 +1840,13 @@ export function AnimalDetail() {
 
       {/* Edit feeding modal */}
       <Modal open={!!editingFeed} onClose={() => setEditingFeed(null)} title="Edit feeding">
-        <div className="flex flex-col gap-4">
-          <Input label="Date" type="date" value={feedEditDate} onChange={(e) => setFeedEditDate(e.target.value)} />
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={feedEditRefused} onChange={(e) => setFeedEditRefused(e.target.checked)} className="w-4 h-4 accent-[#8fbe5a]" />
-            <span className="text-sm" style={{ color: '#f0ece0' }}>Refused</span>
-          </label>
-          {!feedEditRefused && (
-            <>
-              <Input label="Prey type" value={feedEditPreyType} onChange={(e) => setFeedEditPreyType(e.target.value)} placeholder="e.g. Rat" />
-              <Input label="Size" value={feedEditPreySize} onChange={(e) => setFeedEditPreySize(e.target.value)} placeholder="e.g. Medium" />
-              <Input label="Quantity" type="number" min={1} value={feedEditQty} onChange={(e) => setFeedEditQty(e.target.value)} />
-            </>
-          )}
-          <Textarea label="Notes" value={feedEditNotes} onChange={(e) => setFeedEditNotes(e.target.value)} rows={2} />
-          <div className="flex gap-2">
-            <Button variant="secondary" fullWidth onClick={() => setEditingFeed(null)}>Cancel</Button>
-            <Button fullWidth onClick={handleSaveFeedEdit} loading={savingFeedEdit}>Save</Button>
-          </div>
-        </div>
+        {editingFeed && (
+          <FeedingEditForm
+            log={editingFeed}
+            onSaved={() => { setEditingFeed(null); refreshFeeding() }}
+            onCancel={() => setEditingFeed(null)}
+          />
+        )}
       </Modal>
 
       {/* Weight modal (add + edit) */}

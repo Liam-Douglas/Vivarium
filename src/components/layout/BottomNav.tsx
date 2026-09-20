@@ -17,6 +17,7 @@ const tabs = [
 ]
 
 const moreLinks = [
+  { to: '/reminders', label: 'Reminders', detail: 'Feeding, cleaning and weighing schedules' },
   { to: '/expenses', label: 'Expenses', detail: 'Monthly spend by category' },
   { to: '/feeders', label: 'Feeder stock', detail: 'Inventory and shopping list' },
   { to: '/import', label: 'Import collection', detail: 'CSV or spreadsheet' },

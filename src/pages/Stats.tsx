@@ -1,14 +1,16 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useCallback } from 'react'
 import { format, startOfYear } from 'date-fns'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
 import { useAnimals } from '@/hooks/useAnimals'
 import { summariseFeeding } from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useHousehold } from '@/context/HouseholdContext'
-import { getAllExpenses } from '@/lib/queries'
+import { getAllExpensesComplete } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
 import type { Expense } from '@/hooks/useExpenses'
 import { EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
+import { loadState } from '@/lib/loadState'
+import { LoadError } from '@/components/ui/LoadError'
 
 const CATEGORY_COLORS: Record<string, string> = {
   feeder_stock: '#8fbe5a',
@@ -24,15 +26,34 @@ const ANIMAL_CATEGORY_COLORS = [
 ]
 
 export function Stats() {
-  const { data: animals } = useAnimals()
-  const { data: logs } = useFeedingLogs()
+  const { data: animals, loading: animalsLoading, error: animalsError, refresh: refreshAnimals } = useAnimals()
+  const { data: logs, error: logsError, refresh: refreshLogs } = useFeedingLogs()
   const { householdId } = useHousehold()
   const [expenses, setExpenses] = useState<Expense[]>([])
+  const [expensesError, setExpensesError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadExpenses = useCallback(() => {
     if (!householdId) return
-    getAllExpenses(householdId).then((data) => setExpenses(data as Expense[]))
+    // Previously a floating promise with no catch: a failed load left expenses
+    // at [] and the page reported a year's spend as nothing, while the
+    // rejection went unhandled. The error clears on success rather than before
+    // the request, so nothing sets state synchronously inside the effect.
+    getAllExpensesComplete(householdId)
+      .then((data) => { setExpenses(data as Expense[]); setExpensesError(null) })
+      .catch((e: unknown) => setExpensesError(
+        e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Failed to load expenses'
+      ))
   }, [householdId])
+
+  useEffect(() => { loadExpenses() }, [loadExpenses])
+
+  const animalsState = loadState({ loading: animalsLoading, error: animalsError, count: animals.length })
+  const anyError = animalsError ?? logsError ?? expensesError
+  function retryAll() {
+    refreshAnimals()
+    refreshLogs()
+    loadExpenses()
+  }
 
   const now = new Date()
   const yearStart = startOfYear(now)
@@ -113,6 +134,17 @@ export function Stats() {
   return (
     <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-3xl mx-auto w-full">
       <Header title="Collection Stats" />
+
+      {/* Every figure here is derived from animals, feedings and expenses. A
+          statistic computed over a set that failed to load is not a small
+          error, it is a confident wrong number. */}
+      {animalsState === 'error' ? (
+        <LoadError subject="your collection" message={animalsError} onRetry={retryAll} />
+      ) : (
+      <>
+      {anyError && (
+        <LoadError inline subject="these figures" message={anyError} onRetry={retryAll} />
+      )}
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -216,6 +248,8 @@ export function Stats() {
             ))}
           </div>
         </Section>
+      )}
+      </>
       )}
     </div>
   )

@@ -25,6 +25,10 @@ import { Modal } from '@/components/ui/Modal'
 import { Input, Select, Textarea } from '@/components/ui/Input'
 import { FeedingLogForm } from '@/components/feeding/FeedingLogForm'
 import { BatchFeedForm } from '@/components/feeding/BatchFeedForm'
+import { loadState } from '@/lib/loadState'
+import { useCareTasks } from '@/hooks/useCareTasks'
+import { getCareStatus, describeNextCare, CARE_URGENCY } from '@/lib/careStatus'
+import { LoadError } from '@/components/ui/LoadError'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { useToast } from '@/components/ui/Toast'
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
@@ -77,12 +81,13 @@ const FAB_ACTIONS = [
 export function Dashboard() {
   const { profile, user, canAddAnimal } = useAuth()
   const { householdId, pendingRequests, currentUserRole, refresh: refreshHousehold } = useHousehold()
-  const { data: animals, refresh: refreshAnimals } = useAnimals()
-  const { data: allLogs, refresh: refreshLogs } = useFeedingLogs()
+  const { data: animals, loading: animalsLoading, error: animalsError, refresh: refreshAnimals } = useAnimals()
+  const { data: allLogs, error: logsError, refresh: refreshLogs } = useFeedingLogs()
   const { data: enclosures } = useEnclosures()
   const { data: feeders } = useFeederInventory()
-  const { data: medSchedules } = useMedicationSchedules()
-  const { data: medLogs, refresh: refreshMedLogs } = useMedicationLogs()
+  const { data: medSchedules, error: medSchedulesError } = useMedicationSchedules()
+  const { data: medLogs, error: medLogsError, refresh: refreshMedLogs } = useMedicationLogs()
+  const { data: careTasks } = useCareTasks()
   const { showToast } = useToast()
 
   const strikeAnimals = useMemo(() => {
@@ -210,6 +215,19 @@ export function Dashboard() {
     return [...feedings, ...doses].sort((a, b) => a.due.getTime() - b.due.getTime())
   }, [animals, medSchedules, medLogs])
 
+  // Care tasks get their own card rather than joining the queue above. That
+  // queue is animal-shaped — a name column, an enclosure column and a Feed
+  // button — and a task on the whole collection has no animal to put in it.
+  const careDue = useMemo(
+    () => careTasks
+      .filter((t) => {
+        const status = getCareStatus(t)
+        return status === 'overdue' || status === 'due-soon'
+      })
+      .sort((a, b) => CARE_URGENCY[getCareStatus(a)] - CARE_URGENCY[getCareStatus(b)]),
+    [careTasks]
+  )
+
   /** Feeder items at or below their configured low-stock threshold. */
   const lowStock = useMemo(() => feeders.filter(isLowStock), [feeders])
 
@@ -224,6 +242,18 @@ export function Dashboard() {
     () => animals.filter((a) => getFeedingStatus(a) === 'never-fed'),
     [animals]
   )
+
+  // The Dashboard derives everything from animals: with none held it reports
+  // "Nothing due today", which on a failed load is an all-clear the app has no
+  // basis for. One error region rather than six, because six hooks failing at
+  // once is one failure — the network.
+  const animalsState = loadState({ loading: animalsLoading, error: animalsError, count: animals.length })
+  const secondaryError = logsError ?? medSchedulesError ?? medLogsError
+  function retryAll() {
+    refreshAnimals()
+    refreshLogs()
+    refreshMedLogs()
+  }
 
   const greeting = (() => {
     const h = new Date().getHours()
@@ -361,8 +391,29 @@ export function Dashboard() {
 
   const activityIcon = { feeding: '🍽️', shedding: '🐍', weight: '⚖️' }
 
+  // Nothing on this page means anything without animals, so a failed first
+  // load replaces it rather than rendering a dashboard of zeroes.
+  if (animalsState === 'error') {
+    return (
+      <div className="flex-1 px-4 lg:px-8 py-6 pb-24 md:pb-8 max-w-[1240px] mx-auto w-full">
+        <LoadError subject="your collection" message={animalsError} onRetry={retryAll} />
+      </div>
+    )
+  }
+
   return (
     <div className="flex-1 px-4 lg:px-8 py-6 pb-24 md:pb-8 max-w-[1240px] mx-auto w-full">
+      {/* A refresh failed over rows already on screen, or something other than
+          the animals themselves did — say so without discarding the page. */}
+      {(animalsState === 'stale' || secondaryError) && (
+        <LoadError
+          inline
+          subject="the latest records"
+          message={animalsError ?? secondaryError}
+          onRetry={retryAll}
+        />
+      )}
+
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
@@ -640,6 +691,26 @@ export function Dashboard() {
       )}
         </div>
         <div className="min-w-0">
+      {/* Care due — cleaning, weighing and the rest, which nothing surfaced before */}
+      {careDue.length > 0 && (
+        <Link
+          to="/reminders"
+          className="block mb-6 rounded-xl p-4"
+          style={{ backgroundColor: 'rgba(143,190,90,0.07)', border: '1px solid rgba(143,190,90,0.22)' }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm font-medium" style={{ color: '#8fbe5a' }}>
+              {careDue.length} care task{careDue.length !== 1 ? 's' : ''} due
+            </p>
+            <span className="text-xs shrink-0" style={{ color: '#8fbe5a' }}>Reminders &rarr;</span>
+          </div>
+          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+            {careDue.slice(0, 3).map((t) => `${t.name} — ${describeNextCare(t).toLowerCase()}`).join(' · ')}
+            {careDue.length > 3 && ` · and ${careDue.length - 3} more`}
+          </p>
+        </Link>
+      )}
+
       {/* Feeder stock — needed before you start feeding, not after */}
       {lowStock.length > 0 && (
         <Link
