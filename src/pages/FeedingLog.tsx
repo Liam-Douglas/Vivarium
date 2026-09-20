@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay } from 'date-fns'
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, getDay, subDays, startOfDay } from 'date-fns'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useAnimals } from '@/hooks/useAnimals'
 import { Header } from '@/components/layout/Header'
@@ -16,6 +16,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { animalColor } from '@/lib/animalColors'
 import { groupByDay } from '@/lib/groupByDay'
 import { getFeedingStatus } from '@/lib/feedingStatus'
+import { filterFeedings, preyTypesIn, type FeedingOutcome } from '@/lib/feedingFilters'
 
 /** Legend entries shown before collapsing the rest into a count. */
 const LEGEND_LIMIT = 6
@@ -34,6 +35,9 @@ export function FeedingLog() {
 
   // Log tab state
   const [selectedAnimalId, setSelectedAnimalId] = useState<string | undefined>(undefined)
+  const [outcome, setOutcome] = useState<FeedingOutcome>('all')
+  const [preyType, setPreyType] = useState('')
+  const [periodDays, setPeriodDays] = useState(0) // 0 = all time
 
   // Calendar tab state
   const now = new Date()
@@ -42,10 +46,22 @@ export function FeedingLog() {
   const [selectedDay, setSelectedDay] = useState<Date | null>(null)
 
   // Filtered logs for Log tab
-  const logs = useMemo(
-    () => selectedAnimalId ? allLogs.filter((l) => l.animal_id === selectedAnimalId) : allLogs,
-    [allLogs, selectedAnimalId]
-  )
+  const logs = useMemo(() => filterFeedings(allLogs, {
+    animalId: selectedAnimalId,
+    outcome,
+    preyType: preyType || undefined,
+    since: periodDays > 0 ? subDays(startOfDay(new Date()), periodDays - 1) : undefined,
+  }), [allLogs, selectedAnimalId, outcome, preyType, periodDays])
+
+  const preyOptions = useMemo(() => preyTypesIn(allLogs), [allLogs])
+  const filtersActive = Boolean(selectedAnimalId) || outcome !== 'all' || Boolean(preyType) || periodDays > 0
+
+  function clearFilters() {
+    setSelectedAnimalId(undefined)
+    setOutcome('all')
+    setPreyType('')
+    setPeriodDays(0)
+  }
 
   const monthStart = startOfMonth(new Date(year, month))
   const monthEnd = endOfMonth(monthStart)
@@ -159,12 +175,13 @@ export function FeedingLog() {
       {/* ── LOG TAB ── */}
       {tab === 'log' && (
         <>
-          {/* Animal filter */}
+          {/* Filters */}
           {animals.length > 0 && (
-            <div className="mb-4">
+            <div className="flex flex-col gap-2 mb-4">
               <select
                 value={selectedAnimalId ?? ''}
                 onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
+                aria-label="Filter by animal"
                 className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
                 style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#9f9684' }}
               >
@@ -173,6 +190,78 @@ export function FeedingLog() {
                   <option key={a.id} value={a.id}>{a.name}</option>
                 ))}
               </select>
+
+              {/* Outcome — refusals are the reason to filter this list at all,
+                  so they get a control you can hit rather than a menu item. */}
+              <div className="flex gap-1 p-1 rounded-xl" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                {([
+                  ['all', 'All'],
+                  ['fed', 'Fed'],
+                  ['refused', 'Refused'],
+                ] as const).map(([value, label]) => {
+                  const active = outcome === value
+                  const accent = value === 'refused' ? '#c45a5a' : '#8fbe5a'
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => setOutcome(value)}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      style={{
+                        backgroundColor: active ? `${accent}26` : 'transparent',
+                        color: active ? accent : '#9f9684',
+                        border: active ? `1px solid ${accent}40` : '1px solid transparent',
+                      }}
+                    >
+                      {label}
+                    </button>
+                  )
+                })}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <select
+                  value={periodDays}
+                  onChange={(e) => setPeriodDays(Number(e.target.value))}
+                  aria-label="Filter by period"
+                  className="rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                  style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: periodDays ? '#f0ece0' : '#9f9684' }}
+                >
+                  <option value={0}>All time</option>
+                  <option value={30}>Last 30 days</option>
+                  <option value={90}>Last 90 days</option>
+                  <option value={365}>Last year</option>
+                </select>
+
+                <select
+                  value={preyType}
+                  onChange={(e) => setPreyType(e.target.value)}
+                  aria-label="Filter by prey type"
+                  disabled={preyOptions.length < 2}
+                  className="rounded-xl px-3 py-2.5 text-sm focus:outline-none disabled:opacity-40"
+                  style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: preyType ? '#f0ece0' : '#9f9684' }}
+                >
+                  <option value="">All prey</option>
+                  {preyOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                </select>
+              </div>
+
+              {filtersActive && (
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs" style={{ color: '#9f9684' }}>
+                    {logs.length} of {allLogs.length} feedings
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="text-xs underline"
+                    style={{ color: '#8fbe5a' }}
+                  >
+                    Clear filters
+                  </button>
+                </div>
+              )}
             </div>
           )}
 
@@ -181,12 +270,21 @@ export function FeedingLog() {
               <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
             </div>
           ) : logs.length === 0 ? (
-            <EmptyState
-              icon="🍽️"
-              title={selectedAnimalId ? 'No feedings logged for this animal' : 'No feedings logged yet'}
-              description="Tap to log one"
-              action={<Button onClick={() => setAddOpen(true)}>Log first feeding</Button>}
-            />
+            filtersActive ? (
+              <EmptyState
+                icon="🔍"
+                title="No feedings match these filters"
+                description="Try widening the period, or clear the filters to see everything."
+                action={<Button variant="secondary" onClick={clearFilters}>Clear filters</Button>}
+              />
+            ) : (
+              <EmptyState
+                icon="🍽️"
+                title="No feedings logged yet"
+                description="Tap to log one"
+                action={<Button onClick={() => setAddOpen(true)}>Log first feeding</Button>}
+              />
+            )
           ) : (
             <div className="flex flex-col gap-5">
               {logsByDate.map((group) => (
@@ -277,6 +375,31 @@ export function FeedingLog() {
             <button onClick={() => changeMonth(1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: '#a8a090' }}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </button>
+          </div>
+
+          {/* Monthly summary */}
+          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+            <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>MONTH SUMMARY</p>
+            <div className="grid grid-cols-3 gap-3 text-center">
+              <div>
+                <p className="text-lg font-bold" style={{ color: '#8fbe5a', fontFamily: 'Playfair Display, serif' }}>
+                  {logsInMonth.filter((l) => !l.refused).length}
+                </p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Feedings</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold" style={{ color: '#c45a5a', fontFamily: 'Playfair Display, serif' }}>
+                  {logsInMonth.filter((l) => l.refused).length}
+                </p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Refused</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>
+                  {new Set(logsInMonth.filter((l) => !l.refused).map((l) => format(new Date(l.fed_at), 'yyyy-MM-dd'))).size}
+                </p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>Active days</p>
+              </div>
+            </div>
           </div>
 
           {/* Day headers */}
@@ -378,30 +501,6 @@ export function FeedingLog() {
             </div>
           )}
 
-          {/* Monthly summary */}
-          <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>MONTH SUMMARY</p>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <p className="text-lg font-bold" style={{ color: '#8fbe5a', fontFamily: 'Playfair Display, serif' }}>
-                  {logsInMonth.filter((l) => !l.refused).length}
-                </p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Feedings</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold" style={{ color: '#c45a5a', fontFamily: 'Playfair Display, serif' }}>
-                  {logsInMonth.filter((l) => l.refused).length}
-                </p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Refused</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>
-                  {new Set(logsInMonth.filter((l) => !l.refused).map((l) => format(new Date(l.fed_at), 'yyyy-MM-dd'))).size}
-                </p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Active days</p>
-              </div>
-            </div>
-          </div>
         </>
       )}
 

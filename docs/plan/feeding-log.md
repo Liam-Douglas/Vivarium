@@ -7,10 +7,10 @@ pull request and stands alone.
 
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
-| | 1 — Three defects | S | no |
-| | 2 — The list reads like a log | M | no |
-| | 3 — Record from here | M | no |
-| | 4 — Finding things | S | no |
+| ✓ | 1 — Three defects | S | shipped (`b5ba316`) |
+| ✓ | 2 — The list reads like a log | M | shipped (`bcc5fbb`) |
+| ✓ | 3 — Record from here | M | shipped (`51177d7`) |
+| ✓ | 4 — Finding things | S | shipped |
 
 ## Phase 1 — Three defects
 
@@ -140,3 +140,17 @@ selected-day detail.
   `lib/feedingStatus.ts`. Phases here consume that logic; none of them alter it.
 - The Calendar tab's interaction model. Phase 1 fixes its two defects and Phase 4
   moves one panel; redesigning it is separate work.
+
+## Follow-ups this work left behind
+
+- **`AnimalDetail` has its own inline feeding editor.** Phase 3 added
+  `components/feeding/FeedingEditForm.tsx` and used it on the Feeding Log page
+  only. AnimalDetail's version was left alone: it is embedded in a 900-line page
+  that cannot be exercised here without Supabase credentials, and swapping it
+  blind was the riskier half of the change. It should adopt the shared component
+  — it currently edits `fed_at` through a date-only input seeded by slicing the
+  stored ISO string, which shows a UTC clock and drops the time on save.
+- **The `getAll*` query family shares the tie-break bug Phase 1 fixed.** Export
+  pages `feeding_logs`, `shedding_logs` and the rest ordered only by their date
+  column. Ties are less common there than on a batch feed, but the failure mode
+  is the same: a row repeated on one page and missing from the next.
