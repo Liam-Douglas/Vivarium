@@ -361,7 +361,11 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   }
 
   async function handleSignOut() {
-    await signOutAndClearCaches()
+    // Navigate either way: the point of signing out is to leave, and the local
+    // session and caches are cleared whether or not the request reached the
+    // server.
+    const { error } = await signOutAndClearCaches()
+    if (error) showToast(`Signed out on this device, but the server was not reached — ${error}`, 'error')
     navigate('/auth/signin')
   }
 

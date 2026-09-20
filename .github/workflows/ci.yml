@@ -52,3 +52,21 @@ jobs:
       # No Supabase env vars needed: the client reads them at runtime, not
       # build time, so the bundle builds without secrets in CI.
       - run: npm run build
+
+  schema-types:
+    name: Schema types
+    runs-on: ubuntu-latest
+    # Only meaningful against a base: it asks what this branch changed.
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # The check diffs against the base commit, which a shallow clone
+          # does not have.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # No npm ci: the script uses only node builtins and git, so there is
+      # nothing to install.
+      - run: node scripts/check-types-fresh.mjs ${{ github.event.pull_request.base.sha }}

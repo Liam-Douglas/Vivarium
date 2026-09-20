@@ -11,7 +11,11 @@
 -- that table's own RLS (which would otherwise recurse).
 -- ============================================================================
 
+-- no-schema-change: policies and a helper function only; no columns are
+-- added, removed or retyped, so the generated types are unaffected.
+
 -- ── Membership helper ───────────────────────────────────────────────────────
+
 create or replace function public.app_is_household_member(hid uuid)
 returns boolean
 language sql
