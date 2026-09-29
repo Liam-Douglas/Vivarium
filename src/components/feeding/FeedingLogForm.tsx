@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAnimals } from '@/hooks/useAnimals'
 import { useFeederInventory } from '@/hooks/useFeederInventory'
+import { useWeightLogs } from '@/hooks/useWeightLogs'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
@@ -13,6 +14,8 @@ import { Input, Textarea, Select } from '@/components/ui/Input'
 import { PREY_TYPES, getPreySizes } from '@/lib/preyTypes'
 import { getFeedingStatus, describeNextFeeding, FEEDING_URGENCY } from '@/lib/feedingStatus'
 import { ALL_PREY_NAMES } from '@/lib/preyTypes'
+import { currentWeight } from '@/lib/weightStats'
+import { recommendedPreyWeight } from '@/lib/preyGuidance'
 
 interface FeedingLogFormProps {
   preselectedAnimalId?: string
@@ -29,6 +32,10 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
   const { showToast } = useToast()
   const { data: animals } = useAnimals()
   const { data: feeders, refresh: refreshFeeders } = useFeederInventory()
+  // Household-wide rather than per-animal: the selection changes as the keeper
+  // scrolls the picker, and refetching on each change would put a request
+  // behind every keystroke of a decision.
+  const { data: weightLogs } = useWeightLogs()
 
   const [animalId, setAnimalId] = useState(preselectedAnimalId ?? '')
   const [preyType, setPreyType] = useState(prefill?.preyType ?? '')
@@ -65,8 +72,23 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
   )
 
   const selectedAnimal = animals.find((a) => a.id === animalId)
-  const preyWeightMin = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.10) : null
-  const preyWeightMax = selectedAnimal?.weight_grams ? Math.round(selectedAnimal.weight_grams * 0.15) : null
+
+  /**
+   * The suggested meal size, from the animal's own weigh-ins.
+   *
+   * This read `animals.weight_grams` — a column nothing in the app writes, so
+   * the line it draws had never once appeared. It is guarded, which is why
+   * nobody noticed: what a keeper saw was silence rather than a wrong number.
+   * The column stays as a fallback for an imported animal with no logs yet.
+   */
+  const selectedWeight = useMemo(() => {
+    if (!selectedAnimal) return null
+    return currentWeight(
+      weightLogs.filter((log) => log.animal_id === selectedAnimal.id),
+      selectedAnimal.weight_grams
+    )
+  }, [selectedAnimal, weightLogs])
+  const preyWeight = recommendedPreyWeight(selectedWeight)
 
   async function handleSubmit() {
     if (!user || !householdId || saving) return
@@ -207,9 +229,14 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
       </div>
 
       {/* Prey weight recommendation */}
-      {preyType && preyWeightMin && preyWeightMax && (
+      {preyType && preyWeight && (
         <p className="text-xs -mt-2" style={{ color: '#8fbe5a' }}>
-          Recommended prey: {preyWeightMin}–{preyWeightMax}g (10–15% of {selectedAnimal?.weight_grams}g body weight)
+          {/* The two ends round together below about 12g, and "1–1g" reads as
+              a mistake rather than as advice. */}
+          Recommended prey: {preyWeight.minGrams === preyWeight.maxGrams
+            ? `${preyWeight.minGrams}g`
+            : `${preyWeight.minGrams}–${preyWeight.maxGrams}g`}
+          {' '}(10–15% of {selectedWeight}g body weight)
         </p>
       )}
 
