@@ -16,7 +16,9 @@ import {
 import { getNextDose, describeDose } from '@/lib/medicationSchedule'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useEnclosures } from '@/hooks/useEnclosures'
-import { useFeederInventory, isLowStock } from '@/hooks/useFeederInventory'
+import { useFeederInventory } from '@/hooks/useFeederInventory'
+import { findMatchingFeeder } from '@/lib/feederMatch'
+import { projectFeederStock, needsRestocking } from '@/lib/feederProjection'
 import { useMedicationSchedules } from '@/hooks/useMedicationSchedules'
 import { useMedicationLogs } from '@/hooks/useMedicationLogs'
 import { AnimalForm } from '@/components/animals/AnimalForm'
@@ -189,18 +191,26 @@ export function Dashboard() {
     const now = new Date()
     const animalById = new Map(animals.map((a) => [a.id, a]))
 
-    const feedings: QueueItem[] = animals
-      .map((animal) => ({
-        kind: 'feeding' as const,
-        key: `feed-${animal.id}`,
-        animal,
-        status: getFeedingStatus(animal, now),
-        due: getNextFeedingDue(animal),
-      }))
+    const candidates = animals.map((animal) => ({
+      kind: 'feeding' as const,
+      key: `feed-${animal.id}`,
+      animal,
+      status: getFeedingStatus(animal, now),
+      due: getNextFeedingDue(animal),
+    }))
+
+    // "Coming up": on a well-run collection this queue is blank most days,
+    // which is the one state the dashboard had nothing to say about. It widens
+    // to a week only when nothing is actually due — a seven-day queue every day
+    // would bury today's work under next week's on the days that matter.
+    const hasUrgent = candidates.some((i) => i.status === 'overdue' || i.status === 'due-soon')
+    const horizonDays = hasUrgent ? 3 : 7
+
+    const feedings: QueueItem[] = candidates
       .filter((item): item is Extract<QueueItem, { kind: 'feeding' }> =>
         item.due !== null && (
           item.status === 'overdue' || item.status === 'due-soon' ||
-          (item.status === 'on-schedule' && differenceInDays(item.due, now) <= 3)))
+          (item.status === 'on-schedule' && differenceInDays(item.due, now) <= horizonDays)))
 
     const doses: QueueItem[] = medSchedules.flatMap((schedule) => {
       const animal = animalById.get(schedule.animal_id)
@@ -228,8 +238,36 @@ export function Dashboard() {
     [careTasks]
   )
 
-  /** Feeder items at or below their configured low-stock threshold. */
-  const lowStock = useMemo(() => feeders.filter(isLowStock), [feeders])
+  /**
+   * Feeder items worth restocking, from the rate the collection actually eats
+   * rather than from whether the number looks small. Twelve rats is plenty for
+   * one snake and a fortnight's notice for eight.
+   *
+   * Demand comes from each animal's last meal — what it ate tells us which
+   * item it draws on — and its feeding interval. An animal whose last meal was
+   * refused is skipped: a refusal says what was offered, not what was consumed.
+   */
+  const lowStock = useMemo(() => {
+    const demand = animals.flatMap((animal) => {
+      const meal = lastMealByAnimal.get(animal.id)
+      if (!meal || meal.refused || !animal.feeding_frequency_days) return []
+      const matched = findMatchingFeeder(feeders, meal.prey_type, meal.prey_size)
+      if (!matched) return []
+      return [{
+        itemId: matched.id,
+        everyDays: animal.feeding_frequency_days,
+        quantity: meal.quantity,
+      }]
+    })
+
+    const byId = new Map(feeders.map((f) => [f.id, f]))
+    return projectFeederStock(feeders, demand)
+      .filter(needsRestocking)
+      .flatMap((projection) => {
+        const item = byId.get(projection.itemId)
+        return item ? [{ item, projection }] : []
+      })
+  }, [animals, feeders, lastMealByAnimal])
 
 
   // Animals with no schedule, or a schedule but no feeding logged, can never
@@ -723,7 +761,11 @@ export function Dashboard() {
             <span className="text-xs shrink-0" style={{ color: '#d4924a' }}>Stock &rarr;</span>
           </div>
           <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
-            {lowStock.slice(0, 3).map((f) => `${f.name} — ${f.currentStock} left`).join(' · ')}
+            {lowStock.slice(0, 3).map(({ item, projection }) => (
+              projection.daysRemaining === null
+                ? `${item.name} — ${item.currentStock} left`
+                : `${item.name} — ${projection.daysRemaining}d left`
+            )).join(' · ')}
             {lowStock.length > 3 && ` · and ${lowStock.length - 3} more`}
           </p>
         </Link>
