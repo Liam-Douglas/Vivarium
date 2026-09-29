@@ -9,7 +9,7 @@ original build order, then the refactor that has been deferred twice on purpose.
 |---|---|---|---|
 | ✓ | 1 — Signed photo URLs, then `0002` | M | applied — see `0002`'s header |
 | ✓ | 2 — The quiet states | M | no |
-| | 3 — AnimalDetail, slices 2 and 3 | L | no |
+| ✓ | 3 — AnimalDetail, slices 2 and 3 | L | no |
 
 ## Phase 1 — Signed photo URLs, then `0002`
 
@@ -136,14 +136,36 @@ was too risky to touch.
 2. Extract the weight section, chart included.
 3. Extract shedding, then health.
 
-Deferred twice now, both times for the same honest reason: it is JSX that cannot
-be run in the build environment, `tsc` does not catch a section rendering in the
-wrong place, and the defects it would prevent are hypothetical. It is third here
-for the same reason.
+Deferred twice, both times for the same honest reason: it is JSX that cannot be
+run in the build environment, `tsc` does not catch a section rendering in the
+wrong place, and the defects it would prevent are hypothetical.
 
-If Phase 2 lands the shed-interval work, it touches this page's shedding
-section — which would be the concrete reason to extract that section rather than
-a speculative one. Worth revisiting after Phase 2 rather than before.
+**Both halves of that turned out to be wrong, and the render harness is what
+showed it.**
+
+The JSX can be run now — `npm run render` drives the real built page against
+fixtures, and a scenario for each section was written *before* it was moved, so
+the extraction had something to be wrong against.
+
+And the defects were not hypothetical. Rendering the page found two:
+
+- **"Current weight" read a column nothing writes.** `animals.weight_grams` is
+  not accepted by `createAnimal`, has no field in `AnimalForm`, and is not
+  touched when a weight is logged — logging inserts a `weight_logs` row and
+  nothing else. So the card showed an em dash for every animal in the app,
+  with the trend badge computed from the logs sitting beside it: `—+150`, a
+  change against nothing. It now reads the logs, keeping the column as a
+  fallback for an import that carries one.
+- **The shed prediction existed twice, by different rules.** Phase 2 extracted
+  `lib/shedStatus`, but the inline copy on this page was never removed. The
+  inline one had no cap on a gap too long to be a cycle and silently depended
+  on the query's newest-first order, so this card and the dashboard's "Worth a
+  look" could name different dates for the same animal.
+
+Shipped: `lib/weightStats`, `lib/healthStats`, shed intervals folded into
+`lib/shedStatus`, and `WeightSection`, `SheddingSection`, `HealthEventsSection`
+and a shared `RecordActions` out of the page. 1915 lines to 1720, and the
+arithmetic that left is tested rather than inlined.
 
 ## Decisions taken
 

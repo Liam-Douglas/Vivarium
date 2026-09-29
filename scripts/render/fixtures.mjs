@@ -81,6 +81,16 @@ export function careTask(name, over = {}) {
   }
 }
 
+export function healthEvent(animalId, title, over = {}) {
+  return {
+    id: id('health'), ...owned(), animal_id: animalId, title,
+    event_type: 'observation', event_date: daysAgo(30),
+    notes: null, cost_cents: null,
+    created_at: daysAgo(30),
+    ...over,
+  }
+}
+
 export function enclosure(name, over = {}) {
   return {
     id: id('enclosure'), ...owned(), name,

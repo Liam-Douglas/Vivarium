@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { predictNextShed, isShedOverdue, describeNextShed } from './shedStatus'
+import {
+  predictNextShed, isShedOverdue, describeNextShed, shedIntervals, summariseSheds,
+} from './shedStatus'
 
 const day = (y: number, m: number, d: number) => ({ shed_at: new Date(y, m - 1, d, 12).toISOString() })
 
@@ -99,5 +101,72 @@ describe('describeNextShed', () => {
 
   it('has nothing to say without a prediction', () => {
     expect(describeNextShed(null)).toBeNull()
+  })
+})
+
+const shed = (y: number, m: number, d: number, complete = true) => ({
+  shed_at: new Date(y, m - 1, d, 12).toISOString(),
+  complete,
+})
+
+describe('shedIntervals', () => {
+  it('gives the gap before each shed, oldest first', () => {
+    const intervals = shedIntervals([shed(2026, 3, 2), shed(2026, 1, 31), shed(2026, 1, 1)])
+    expect(intervals.map((i) => i.days)).toEqual([30, 30])
+  })
+
+  it('carries the completeness of the shed that closed each gap', () => {
+    const intervals = shedIntervals([
+      shed(2026, 1, 1, true), shed(2026, 1, 31, false), shed(2026, 3, 2, true),
+    ])
+    expect(intervals.map((i) => i.complete)).toEqual([false, true])
+  })
+
+  it('drops a gap too long to be a cycle, exactly as the prediction does', () => {
+    // Otherwise the chart would draw a bar the prediction refuses to average,
+    // and the two would be telling the keeper different things.
+    const intervals = shedIntervals([shed(2024, 1, 1), shed(2026, 1, 1), shed(2026, 1, 31)])
+    expect(intervals.map((i) => i.days)).toEqual([30])
+  })
+
+  it('does not care what order the logs arrive in', () => {
+    const logs = [shed(2026, 1, 1), shed(2026, 1, 31), shed(2026, 3, 2)]
+    expect(shedIntervals(logs)).toEqual(shedIntervals([...logs].reverse()))
+  })
+
+  it('has nothing to say about a single shed', () => {
+    expect(shedIntervals([shed(2026, 1, 1)])).toEqual([])
+    expect(shedIntervals([])).toEqual([])
+  })
+})
+
+describe('summariseSheds', () => {
+  it('counts the sheds and averages the recent intervals', () => {
+    const summary = summariseSheds([
+      shed(2026, 1, 1), shed(2026, 1, 31), shed(2026, 3, 2, false),
+    ])
+    expect(summary).toEqual({ total: 3, complete: 2, averageIntervalDays: 30 })
+  })
+
+  it('counts a lone shed without inventing an interval', () => {
+    expect(summariseSheds([shed(2026, 1, 1)])).toEqual({
+      total: 1, complete: 1, averageIntervalDays: null,
+    })
+  })
+
+  it('averages the same window the prediction uses', () => {
+    // Six 10-day intervals then one of 40: the prediction considers five, so
+    // the displayed average must not be computed over all six.
+    const logs = [0, 10, 20, 30, 40, 50, 90].map((offset) => ({
+      shed_at: new Date(2026, 0, 1 + offset, 12).toISOString(),
+      complete: true,
+    }))
+    const summary = summariseSheds(logs)
+    const prediction = predictNextShed(logs)
+    expect(summary.averageIntervalDays).toBe(prediction?.intervalDays)
+  })
+
+  it('is empty-safe', () => {
+    expect(summariseSheds([])).toEqual({ total: 0, complete: 0, averageIntervalDays: null })
   })
 })
