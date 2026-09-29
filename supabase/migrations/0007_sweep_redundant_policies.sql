@@ -1,6 +1,10 @@
 -- ============================================================================
 -- 0007 — Remove the 49 redundant policies 0001's sweep left behind
 --
+-- APPLIED 29 September 2026. Every table now reports exactly four policies,
+-- except households (1), household_members (5) and profiles (2), which 0001
+-- gives deliberately different ones.
+--
 -- no-schema-change: policies only; no table columns change.
 --
 -- 0001 enabled RLS and gave every table four policies — <table>_select,

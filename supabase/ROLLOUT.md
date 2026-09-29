@@ -3,7 +3,7 @@
 > **Status — 20 September 2026.** `0001`, `0003` and `0004` are applied to the
 > production project. `0002` is applied — through the Dashboard, not this file; see its
 > header. `0001`, `0003` and `0004` went through the SQL editor. `0005` repairs the medication tables and `0006` tightens
-> `household_id`; both are applied — verified by reading the resulting columns back, which for a schema
+> `household_id` and `0007` sweeps 49 redundant policies; all three are applied — verified by reading the resulting columns back, which for a schema
 > change is the whole claim. Everything below still applies to any other
 > environment, and to re-running these files after a schema change.
 >
