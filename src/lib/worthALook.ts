@@ -89,18 +89,22 @@ export function collectWorthALook(
     const prediction = predictNextShed(sheds)
     if (prediction) {
       const days = differenceInCalendarDays(prediction.due, now)
+      // Non-null whenever the prediction is, but the signature cannot say so.
+      // Read once rather than optional-chained at each use: `?.` there would
+      // quietly render the string "undefined" into the row if that ever changed.
+      const when = (describeNextShed(prediction, now) ?? '').toLowerCase()
       if (isShedOverdue(prediction, now)) {
         candidates.push({
           key: `shed-${animal.id}`, animalId: animal.id, animalName: animal.name,
           kind: 'shed-overdue',
-          detail: `Shed ${describeNextShed(prediction, now)?.toLowerCase()} — every ${prediction.intervalDays} days`,
+          detail: `Shed ${when} — every ${prediction.intervalDays} days`,
           weight: -days,
         })
       } else if (days >= 0 && days <= SHED_SOON_DAYS) {
         candidates.push({
           key: `shed-${animal.id}`, animalId: animal.id, animalName: animal.name,
           kind: 'shed-soon',
-          detail: `Shed expected — ${describeNextShed(prediction, now)?.toLowerCase()}`,
+          detail: `Shed expected — ${when}`,
           // Sooner is more pressing, so the sign flips here too.
           weight: -days,
         })

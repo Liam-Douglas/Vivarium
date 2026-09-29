@@ -167,6 +167,28 @@ describe('collectWorthALook', () => {
     expect(items).toHaveLength(MAX_ITEMS)
   })
 
+  it('never renders a hole in a detail string', () => {
+    // Every branch builds its detail by interpolation, so a null slipping into
+    // one shows up as the literal text "undefined" on the dashboard rather than
+    // as an error anywhere. Cheap to assert across all four kinds at once.
+    const items = collectWorthALook({
+      animals: [
+        animal('o', 'Overdue'),
+        animal('s', 'Soon'),
+        animal('q', 'Quarantined', { quarantine_started_at: daysAgo(3) }),
+        animal('w', 'Weighed'),
+      ],
+      shedLogsByAnimal: new Map([['o', sheds(30, 45)], ['s', sheds(30, 28)]]),
+      weightLogsByAnimal: new Map([['w', [{ logged_at: daysAgo(200) }]]]),
+    }, NOW)
+    expect(items).toHaveLength(4)
+    for (const item of items) {
+      expect(item.detail).not.toContain('undefined')
+      expect(item.detail).not.toContain('null')
+      expect(item.detail).not.toContain('NaN')
+    }
+  })
+
   it('ignores logs belonging to an animal that is not in the list', () => {
     const items = collectWorthALook({
       animals: [animal('a', 'Suki')],

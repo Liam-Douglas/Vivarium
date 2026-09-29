@@ -49,9 +49,24 @@ jobs:
           cache: npm
       - run: npm ci
       # `npm run build` is `tsc -b && vite build`, so this covers typecheck.
-      # No Supabase env vars needed: the client reads them at runtime, not
-      # build time, so the bundle builds without secrets in CI.
+      #
+      # The Supabase vars are needed, and this step used to say the opposite.
+      # Vite inlines import.meta.env.VITE_* at build time, and lib/supabase.ts
+      # throws at module scope when they are absent — so the bundler proved the
+      # throw unconditional, dropped the whole app as unreachable, and emitted
+      # 600 kB of vendor code with an exit status of 0. The build half of this
+      # job was checking nothing for as long as that comment was here.
+      #
+      # These are placeholders, not the real project's. Nothing calls them: the
+      # build only needs the module to finish initialising. The real values are
+      # set in Vercel, which is why production was never affected.
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key-not-a-secret
+      # And the assertion, so the next time this silently empties out, a check
+      # goes red instead of a deploy going out.
+      - run: node scripts/check-bundle.mjs
 
   schema-types:
     name: Schema types
