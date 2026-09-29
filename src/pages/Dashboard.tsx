@@ -17,8 +17,7 @@ import { getNextDose, describeDose } from '@/lib/medicationSchedule'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import { useFeederInventory } from '@/hooks/useFeederInventory'
-import { findMatchingFeeder } from '@/lib/feederMatch'
-import { projectFeederStock, needsRestocking } from '@/lib/feederProjection'
+import { restockList, deriveFeederDemand, lastMealPerAnimal } from '@/lib/feederDemand'
 import { useMedicationSchedules } from '@/hooks/useMedicationSchedules'
 import { useMedicationLogs } from '@/hooks/useMedicationLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
@@ -178,14 +177,7 @@ export function Dashboard() {
   }, [enclosures])
 
   /** Most recent feeding per animal, for the "last meal" line and to prefill. */
-  const lastMealByAnimal = useMemo(() => {
-    const byAnimal = new Map<string, (typeof allLogs)[number]>()
-    for (const log of allLogs) {
-      const held = byAnimal.get(log.animal_id)
-      if (!held || new Date(log.fed_at) > new Date(held.fed_at)) byAnimal.set(log.animal_id, log)
-    }
-    return byAnimal
-  }, [allLogs])
+  const lastMealByAnimal = useMemo(() => lastMealPerAnimal(allLogs), [allLogs])
 
   // One queue ordered by when things fall due, replacing the old "Needs
   // feeding" and "Due soon" cards — identical row anatomy split by an
@@ -248,32 +240,13 @@ export function Dashboard() {
    * rather than from whether the number looks small. Twelve rats is plenty for
    * one snake and a fortnight's notice for eight.
    *
-   * Demand comes from each animal's last meal — what it ate tells us which
-   * item it draws on — and its feeding interval. An animal whose last meal was
-   * refused is skipped: a refusal says what was offered, not what was consumed.
+   * The Expenses shopping list asks the same question of the same code, so the
+   * two cannot drift into flagging different items.
    */
-  const lowStock = useMemo(() => {
-    const demand = animals.flatMap((animal) => {
-      const meal = lastMealByAnimal.get(animal.id)
-      if (!meal || meal.refused || !animal.feeding_frequency_days) return []
-      const matched = findMatchingFeeder(feeders, meal.prey_type, meal.prey_size)
-      if (!matched) return []
-      return [{
-        itemId: matched.id,
-        everyDays: animal.feeding_frequency_days,
-        quantity: meal.quantity,
-      }]
-    })
-
-    const byId = new Map(feeders.map((f) => [f.id, f]))
-    return projectFeederStock(feeders, demand)
-      .filter(needsRestocking)
-      .flatMap((projection) => {
-        const item = byId.get(projection.itemId)
-        return item ? [{ item, projection }] : []
-      })
-  }, [animals, feeders, lastMealByAnimal])
-
+  const lowStock = useMemo(
+    () => restockList(feeders, deriveFeederDemand(animals, lastMealByAnimal, feeders)),
+    [animals, feeders, lastMealByAnimal]
+  )
 
   /**
    * Conditions no schedule produces: a late shed, a running quarantine, a

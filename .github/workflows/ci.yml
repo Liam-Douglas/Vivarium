@@ -68,6 +68,27 @@ jobs:
       # goes red instead of a deploy going out.
       - run: node scripts/check-bundle.mjs
 
+  render:
+    name: Render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Its own job rather than part of Tests: this one builds the app and
+      # drives a browser, so it is slower and has failure modes — a missing
+      # browser, a port in use — that have nothing to do with the code. Mixed
+      # into the unit suite those would read as test failures.
+      #
+      # No browser download: the harness looks for a Chrome that already
+      # exists, and GitHub's runner images ship Google Chrome. If a future
+      # image drops it, this fails with the paths it tried, and the fix is to
+      # install one here rather than to add a postinstall to every job.
+      - run: npm run render
+
   schema-types:
     name: Schema types
     runs-on: ubuntu-latest
