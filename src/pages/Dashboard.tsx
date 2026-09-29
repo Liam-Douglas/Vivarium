@@ -21,6 +21,9 @@ import { findMatchingFeeder } from '@/lib/feederMatch'
 import { projectFeederStock, needsRestocking } from '@/lib/feederProjection'
 import { useMedicationSchedules } from '@/hooks/useMedicationSchedules'
 import { useMedicationLogs } from '@/hooks/useMedicationLogs'
+import { useSheddingLogs } from '@/hooks/useSheddingLogs'
+import { useWeightLogs } from '@/hooks/useWeightLogs'
+import { collectWorthALook, WORTH_A_LOOK_COLOR } from '@/lib/worthALook'
 import { AnimalForm } from '@/components/animals/AnimalForm'
 import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
@@ -90,6 +93,8 @@ export function Dashboard() {
   const { data: medSchedules, error: medSchedulesError } = useMedicationSchedules()
   const { data: medLogs, error: medLogsError, refresh: refreshMedLogs } = useMedicationLogs()
   const { data: careTasks } = useCareTasks()
+  const { data: shedLogs, error: shedLogsError } = useSheddingLogs()
+  const { data: weightLogs, error: weightLogsError } = useWeightLogs()
   const { showToast } = useToast()
 
   const strikeAnimals = useMemo(() => {
@@ -270,6 +275,28 @@ export function Dashboard() {
   }, [animals, feeders, lastMealByAnimal])
 
 
+  /**
+   * Conditions no schedule produces: a late shed, a running quarantine, a
+   * weight nobody has taken in a season. Grouped here and ranked in
+   * lib/worthALook, which is where the rules and their tests live.
+   */
+  const worthALook = useMemo(() => {
+    const group = <T extends { animal_id: string }>(logs: readonly T[]) => {
+      const byAnimal = new Map<string, T[]>()
+      for (const log of logs) {
+        const held = byAnimal.get(log.animal_id)
+        if (held) held.push(log)
+        else byAnimal.set(log.animal_id, [log])
+      }
+      return byAnimal
+    }
+    return collectWorthALook({
+      animals,
+      shedLogsByAnimal: group(shedLogs),
+      weightLogsByAnimal: group(weightLogs),
+    })
+  }, [animals, shedLogs, weightLogs])
+
   // Animals with no schedule, or a schedule but no feeding logged, can never
   // reach a queue — surface them rather than letting them read as on schedule.
   const unscheduledAnimals = useMemo(
@@ -286,7 +313,12 @@ export function Dashboard() {
   // basis for. One error region rather than six, because six hooks failing at
   // once is one failure — the network.
   const animalsState = loadState({ loading: animalsLoading, error: animalsError, count: animals.length })
+  // Shedding and weight feed the "Worth a look" section below. A failure there
+  // shows up as an empty section, which reads as nothing to look at — the same
+  // false all-clear the queue's error region exists to prevent — so it is
+  // reported rather than swallowed.
   const secondaryError = logsError ?? medSchedulesError ?? medLogsError
+    ?? shedLogsError ?? weightLogsError
   function retryAll() {
     refreshAnimals()
     refreshLogs()
@@ -724,6 +756,41 @@ export function Dashboard() {
                 View all {animals.length} animal{animals.length !== 1 ? 's' : ''} &rarr;
               </Link>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Worth a look — only when the queue is empty, because these are things
+          to notice rather than things to do, and they should never compete with
+          a feeding that is overdue. The "not tracked" block above stays visible
+          either way: that one is a gap in the records, not a state of an
+          animal. */}
+      {queue.length === 0 && worthALook.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+              Worth a look
+            </h2>
+          </div>
+          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+            {worthALook.map((item, i) => (
+              <Link
+                key={item.key}
+                to={`/animals/${item.animalId}`}
+                className="flex items-center gap-3 px-4 py-3 transition-opacity active:opacity-70"
+                style={i > 0 ? { borderTop: '1px solid rgba(255,255,255,0.04)' } : undefined}
+              >
+                <span
+                  className="shrink-0 rounded-full"
+                  style={{ width: 8, height: 8, backgroundColor: WORTH_A_LOOK_COLOR[item.kind] }}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{item.animalName}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{item.detail}</p>
+                </div>
+                <span className="text-xs shrink-0" style={{ color: '#a8a090' }}>&rarr;</span>
+              </Link>
+            ))}
           </div>
         </div>
       )}
