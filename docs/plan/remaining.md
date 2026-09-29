@@ -8,7 +8,7 @@ original build order, then the refactor that has been deferred twice on purpose.
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
 | ✓ | 1 — Signed photo URLs, then `0002` | M | applied — see `0002`'s header |
-| | 2 — The quiet states | M | no |
+| ✓ | 2 — The quiet states | M | no |
 | | 3 — AnimalDetail, slices 2 and 3 | L | no |
 
 ## Phase 1 — Signed photo URLs, then `0002`
@@ -77,6 +77,26 @@ that plan — are both long shipped, so nothing blocks it.
 The reasoning still holds: the dashboard is built out of exceptions, and on a
 well-run collection that is blank most days. Three items, and the current code
 is further along than the original plan assumed.
+
+**Shipped.** All three, in `lib/shedStatus.ts`, `lib/animalState.ts`,
+`lib/feederProjection.ts` and `lib/worthALook.ts`, with 47 tests between them.
+Two things came out differently from the plan below, both deliberate:
+
+- **A never-weighed animal is not a stale weight.** It is a different condition
+  — nobody started rather than somebody stopped — and folding them together
+  would have listed every animal in the collection on the day the section
+  shipped, which is the fastest way to teach a keeper to skip it.
+- **One row per animal, its most pressing condition only.** An animal that is
+  quarantined, overdue to shed and unweighed is one animal to go and look at,
+  and three rows for it would have pushed out two others that also needed it.
+
+And one correction to the plan's reading of the code: the existing
+`unscheduledAnimals` / `neverFedAnimals` block is *not* half of "Worth a look"
+and did not fold into it. That block reports a gap in the records rather than a
+state of an animal, and it is what keeps "Nothing due today" from being a lie on
+an untracked collection, so it stays visible whether or not there is a queue.
+"Worth a look" is a separate section that appears only when the queue is
+empty.
 
 **"Coming up".** The queue already reaches three days ahead
 (`Dashboard.tsx:203`), so this is not a new section but a widening. Recommend
