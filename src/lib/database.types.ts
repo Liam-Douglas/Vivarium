@@ -100,7 +100,7 @@ export interface Database {
           is_active: boolean
           created_at: string
           updated_at: string
-          household_id: string | null
+          household_id: string
           last_fed_at: string | null
           tags: string[] | null
           quarantine_started_at: string | null
@@ -125,7 +125,7 @@ export interface Database {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-          household_id?: string | null
+          household_id: string
           last_fed_at?: string | null
           tags?: string[] | null
           quarantine_started_at?: string | null
@@ -150,7 +150,7 @@ export interface Database {
           is_active?: boolean
           created_at?: string
           updated_at?: string
-          household_id?: string | null
+          household_id?: string
           last_fed_at?: string | null
           tags?: string[] | null
           quarantine_started_at?: string | null
@@ -414,7 +414,7 @@ export interface Database {
           source_ref_id: string | null
           created_at: string
           deleted_at: string | null
-          household_id: string | null
+          household_id: string
         }
         Insert: {
           id?: string
@@ -428,7 +428,7 @@ export interface Database {
           source_ref_id?: string | null
           created_at?: string
           deleted_at?: string | null
-          household_id?: string | null
+          household_id: string
         }
         Update: {
           id?: string
@@ -442,7 +442,7 @@ export interface Database {
           source_ref_id?: string | null
           created_at?: string
           deleted_at?: string | null
-          household_id?: string | null
+          household_id?: string
         }
       }
       feeder_items: {
@@ -454,7 +454,7 @@ export interface Database {
           unit_label: string
           low_stock_threshold: number
           created_at: string
-          household_id: string | null
+          household_id: string
         }
         Insert: {
           id?: string
@@ -464,7 +464,7 @@ export interface Database {
           unit_label?: string
           low_stock_threshold?: number
           created_at?: string
-          household_id?: string | null
+          household_id: string
         }
         Update: {
           id?: string
@@ -474,7 +474,7 @@ export interface Database {
           unit_label?: string
           low_stock_threshold?: number
           created_at?: string
-          household_id?: string | null
+          household_id?: string
         }
       }
       feeder_stock_events: {
@@ -488,7 +488,7 @@ export interface Database {
           source_ref_id: string | null
           notes: string | null
           created_at: string
-          household_id: string | null
+          household_id: string
         }
         Insert: {
           id?: string
@@ -500,7 +500,7 @@ export interface Database {
           source_ref_id?: string | null
           notes?: string | null
           created_at?: string
-          household_id?: string | null
+          household_id: string
         }
         Update: {
           id?: string
@@ -512,7 +512,7 @@ export interface Database {
           source_ref_id?: string | null
           notes?: string | null
           created_at?: string
-          household_id?: string | null
+          household_id?: string
         }
       }
       feeding_logs: {
@@ -527,7 +527,7 @@ export interface Database {
           refused: boolean
           notes: string | null
           created_at: string
-          household_id: string | null
+          household_id: string
         }
         Insert: {
           id?: string
@@ -540,7 +540,7 @@ export interface Database {
           refused?: boolean
           notes?: string | null
           created_at?: string
-          household_id?: string | null
+          household_id: string
         }
         Update: {
           id?: string
@@ -553,7 +553,7 @@ export interface Database {
           refused?: boolean
           notes?: string | null
           created_at?: string
-          household_id?: string | null
+          household_id?: string
         }
       }
       health_events: {
@@ -567,7 +567,7 @@ export interface Database {
           notes: string | null
           cost_cents: number | null
           created_at: string
-          household_id: string | null
+          household_id: string
         }
         Insert: {
           id?: string
@@ -579,7 +579,7 @@ export interface Database {
           notes?: string | null
           cost_cents?: number | null
           created_at?: string
-          household_id?: string | null
+          household_id: string
         }
         Update: {
           id?: string
@@ -591,7 +591,7 @@ export interface Database {
           notes?: string | null
           cost_cents?: number | null
           created_at?: string
-          household_id?: string | null
+          household_id?: string
         }
       }
       household_members: {
@@ -813,7 +813,7 @@ export interface Database {
           complete: boolean
           notes: string | null
           created_at: string
-          household_id: string | null
+          household_id: string
         }
         Insert: {
           id?: string
@@ -823,7 +823,7 @@ export interface Database {
           complete?: boolean
           notes?: string | null
           created_at?: string
-          household_id?: string | null
+          household_id: string
         }
         Update: {
           id?: string
@@ -833,7 +833,7 @@ export interface Database {
           complete?: boolean
           notes?: string | null
           created_at?: string
-          household_id?: string | null
+          household_id?: string
         }
       }
       vet_contacts: {
@@ -888,7 +888,7 @@ export interface Database {
           weight_grams: number
           logged_at: string
           notes: string | null
-          household_id: string | null
+          household_id: string
         }
         Insert: {
           id?: string
@@ -897,7 +897,7 @@ export interface Database {
           weight_grams: number
           logged_at?: string
           notes?: string | null
-          household_id?: string | null
+          household_id: string
         }
         Update: {
           id?: string
@@ -906,7 +906,7 @@ export interface Database {
           weight_grams?: number
           logged_at?: string
           notes?: string | null
-          household_id?: string | null
+          household_id?: string
         }
       }
     }
