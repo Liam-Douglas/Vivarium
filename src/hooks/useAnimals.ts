@@ -4,7 +4,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 
 export interface Animal {
   id: string
-  household_id: string | null
+  household_id: string
   user_id: string
   name: string
   species: string

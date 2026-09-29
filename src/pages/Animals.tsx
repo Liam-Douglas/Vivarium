@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useAnimals } from '@/hooks/useAnimals'
 import { getFeedingStatus, describeNextFeeding, FEEDING_STATUS_META, FEEDING_URGENCY } from '@/lib/feedingStatus'
+import { inQuarantine } from '@/lib/animalState'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import type { Enclosure } from '@/hooks/useEnclosures'
 import { useAuth } from '@/context/AuthContext'
@@ -27,10 +28,6 @@ type StatusFilter = 'overdue' | 'due-soon' | 'quarantine' | null
 type Density = 'grid' | 'list'
 
 const DENSITY_KEY = 'vivarium-animals-density'
-
-function inQuarantine(animal: Animal): boolean {
-  return Boolean(animal.quarantine_started_at) && !animal.quarantine_ended_at
-}
 
 const CATEGORIES: { label: string; icon: string; pattern: RegExp }[] = [
   { label: 'Snakes',          icon: '🐍', pattern: /python|boa|corn\s*snake|king\s*snake|milk\s*snake|rat\s*snake|hognose|blood\s*python|vine\s*snake|sand\s*boa|garter|bull\s*snake|pine\s*snake|viper|mamba|cobra|anaconda|ribbon\s*snake|\bsnake\b/ },

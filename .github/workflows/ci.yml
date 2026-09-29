@@ -49,9 +49,45 @@ jobs:
           cache: npm
       - run: npm ci
       # `npm run build` is `tsc -b && vite build`, so this covers typecheck.
-      # No Supabase env vars needed: the client reads them at runtime, not
-      # build time, so the bundle builds without secrets in CI.
+      #
+      # The Supabase vars are needed, and this step used to say the opposite.
+      # Vite inlines import.meta.env.VITE_* at build time, and lib/supabase.ts
+      # throws at module scope when they are absent — so the bundler proved the
+      # throw unconditional, dropped the whole app as unreachable, and emitted
+      # 600 kB of vendor code with an exit status of 0. The build half of this
+      # job was checking nothing for as long as that comment was here.
+      #
+      # These are placeholders, not the real project's. Nothing calls them: the
+      # build only needs the module to finish initialising. The real values are
+      # set in Vercel, which is why production was never affected.
       - run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://placeholder.supabase.co
+          VITE_SUPABASE_ANON_KEY: placeholder-anon-key-not-a-secret
+      # And the assertion, so the next time this silently empties out, a check
+      # goes red instead of a deploy going out.
+      - run: node scripts/check-bundle.mjs
+
+  render:
+    name: Render
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Its own job rather than part of Tests: this one builds the app and
+      # drives a browser, so it is slower and has failure modes — a missing
+      # browser, a port in use — that have nothing to do with the code. Mixed
+      # into the unit suite those would read as test failures.
+      #
+      # No browser download: the harness looks for a Chrome that already
+      # exists, and GitHub's runner images ship Google Chrome. If a future
+      # image drops it, this fails with the paths it tried, and the fix is to
+      # install one here rather than to add a postinstall to every job.
+      - run: npm run render
 
   schema-types:
     name: Schema types

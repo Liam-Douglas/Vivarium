@@ -4,7 +4,7 @@ import { useHousehold } from '@/context/HouseholdContext'
 
 export interface WeightLog {
   id: string
-  household_id: string | null
+  household_id: string
   animal_id: string
   user_id: string
   weight_grams: number

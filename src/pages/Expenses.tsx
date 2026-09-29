@@ -9,7 +9,9 @@ import {
   createFeederItem, createFeederStockEvent, getFeederStockEvents, updateFeederItem, deleteFeederItem,
 } from '@/lib/queries'
 import type { Expense } from '@/hooks/useExpenses'
-import { useFeederInventory, isLowStock, type FeederStockEvent } from '@/hooks/useFeederInventory'
+import { useFeederInventory, type FeederStockEvent } from '@/hooks/useFeederInventory'
+import { useFeedingLogs } from '@/hooks/useFeedingLogs'
+import { restockList, deriveFeederDemand, lastMealPerAnimal } from '@/lib/feederDemand'
 import { readJson, writeJson } from '@/lib/localStore'
 import { supabase } from '@/lib/supabase'
 import { Header } from '@/components/layout/Header'
@@ -89,6 +91,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
   const { householdId } = useHousehold()
   const { showToast } = useToast()
   const { data: animals } = useAnimals()
+  const { data: feedingLogs } = useFeedingLogs()
 
   // ── Expenses ──────────────────────────────────────────────────────────────
   const now = new Date()
@@ -171,7 +174,15 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
     total: items.reduce((s, e) => s + e.amount_cents, 0),
   })).filter((g) => g.total > 0)
   const monthName = new Date(year, month - 1).toLocaleString('default', { month: 'long' })
-  const lowStockFeeders = feeders.filter(isLowStock)
+  // The same question the dashboard's stock card asks, through the same code:
+  // an item is low when the collection will eat through it before the next
+  // shop, falling back to the threshold for items nothing is scheduled
+  // against. Two different answers here would mean the dashboard warning about
+  // items this list does not offer to buy.
+  const lowStockFeeders = restockList(
+    feeders,
+    deriveFeederDemand(animals, lastMealPerAnimal(feedingLogs), feeders)
+  ).map((entry) => entry.item)
 
   // ── Expense handlers ──────────────────────────────────────────────────────
   function changeMonth(delta: number) {

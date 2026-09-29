@@ -47,7 +47,7 @@ function parse(name: string): { base: string; modifier: string } {
 }
 
 export function findMatchingFeeder<T extends MatchableFeeder>(
-  feeders: T[],
+  feeders: readonly T[],
   preyType: string,
   preySize?: string | null
 ): T | null {
