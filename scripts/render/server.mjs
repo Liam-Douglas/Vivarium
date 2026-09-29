@@ -8,8 +8,9 @@
 import { spawn } from 'node:child_process'
 import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabaseStub.mjs'
 
+export const HOST = '127.0.0.1'
 export const PORT = 4183
-export const ORIGIN = `http://127.0.0.1:${PORT}`
+export const ORIGIN = `http://${HOST}:${PORT}`
 
 function run(command, args, env = {}) {
   return new Promise((resolve, reject) => {
@@ -36,7 +37,12 @@ export async function build() {
 
 /** Serve dist/ and resolve once it answers. Returns a stop function. */
 export async function serve() {
-  const child = spawn('npx', ['vite', 'preview', '--port', String(PORT), '--strictPort'], {
+  // --host 127.0.0.1 is not cosmetic. Without it vite binds to `localhost`,
+  // which on a GitHub runner resolves to ::1 first, and the readiness probe
+  // below — and every request the browser then makes — goes to 127.0.0.1 and
+  // finds nothing listening. The server starts, prints its banner, and answers
+  // no one.
+  const child = spawn('npx', ['vite', 'preview', '--host', HOST, '--port', String(PORT), '--strictPort'], {
     stdio: ['ignore', 'pipe', 'pipe'],
     env: process.env,
   })
@@ -46,7 +52,7 @@ export async function serve() {
 
   const stop = () => { try { child.kill('SIGTERM') } catch { /* already gone */ } }
 
-  for (let i = 0; i < 100; i++) {
+  for (let i = 0; i < 300; i++) {
     if (child.exitCode !== null) throw new Error(`vite preview exited:\n${log}`)
     try {
       const res = await fetch(ORIGIN + '/', { signal: AbortSignal.timeout(500) })
