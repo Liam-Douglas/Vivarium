@@ -44,7 +44,7 @@ size. `--shots` exists for looking at, not for comparing.
 
 ## What it has found
 
-Its fourth scenario found a live bug, which is the honest argument for it.
+Three live bugs so far, which is the honest argument for it.
 
 The dashboard filtered its restock list with `.filter(needsRestocking)`.
 `Array.prototype.filter` passes the index as the second argument, and
@@ -55,6 +55,16 @@ had just been written to replace.
 
 Every unit test passed, because the defect was at the call site rather than in
 the module. Nothing short of rendering the card would have shown it.
+
+Rendering the animal detail page for the Phase 3 extraction found two more,
+both in code `tsc` was perfectly happy with:
+
+- **"Current weight" read `animals.weight_grams`**, a column nothing in the app
+  writes. Every animal showed an em dash, with a trend badge computed from the
+  logs beside it — `—+150`, a change against nothing.
+- **The shed prediction existed twice**, by rules that had drifted apart, so
+  the animal page and the dashboard could name different dates for the same
+  snake.
 
 ## Writing a scenario
 
@@ -90,6 +100,13 @@ export default {
 - **`absent`** is for things that must not be drawn. `'undefined'` is a good
   habit — row text is built by interpolation, so a null reaches the screen as
   that word rather than as an error anywhere.
+- **`act`** drives the screen first — opens a tab, chooses a filter. It is
+  re-run about once a second while the expectations are failing, so **it must
+  be idempotent**. Playwright will happily click a button React has rendered
+  but not yet wired up, and that click goes nowhere; retrying is what makes it
+  land. Any single action gives up after two seconds so the retry gets its
+  turn — Playwright's own default is thirty, which is longer than the whole
+  settle window and made this flaky in a way that looked like a slow render.
 
 The runner polls the assertions until they all pass or twenty seconds elapse.
 There is no `waitFor` to set: the app renders from nine or so independent
@@ -111,6 +128,17 @@ real bundle, the real contexts, the real queries in `lib/queries.ts` all run.
   replies — `get_household_for_user` is the one that matters, since
   `getMembershipForUser` calls it first and everything else is gated on the
   household it returns.
+- `order=` is honoured, because PostgREST puts it in the URL. Without that a
+  scenario has to guess the order the query returns, which is a trap:
+  `weightLogs[0]` is "the latest weight" only because the query sorts
+  descending, and a fixture listed oldest-first makes the page show a fall in
+  weight that never happened.
+- `.single()` is honoured too — it asks for one object rather than an array
+  through an Accept header, and answering with an array hands the caller a
+  shape it does not expect. A `.single()` against no rows gets PostgREST's
+  `PGRST116`, which is what "not found" looks like to the app.
+- Filtering is *not* implemented. The stub answers from the fixture list, so a
+  scenario that renders one record should supply the one it means.
 - Realtime is not stubbed. The websocket fails to connect and the app carries
   on, which is the same thing it does on a flaky connection.
 

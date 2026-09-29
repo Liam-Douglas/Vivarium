@@ -32,6 +32,63 @@ const MAX_SANE_INTERVAL_DAYS = 400
 /** Only the recent past predicts: a hatchling's intervals say nothing about an adult's. */
 const INTERVALS_CONSIDERED = 5
 
+export interface ShedInterval {
+  /** The shed that closed this interval. */
+  at: Date
+  /** Days since the shed before it. */
+  days: number
+  /** Whether the shed that closed it came away whole. */
+  complete: boolean
+}
+
+export interface DetailedShedLog extends ShedLog {
+  complete: boolean
+}
+
+/**
+ * The gap before each shed, oldest first.
+ *
+ * What the interval chart draws, and what the summary averages. It shares
+ * predictNextShed's view of a sane interval, so the chart, the average and the
+ * prediction cannot quietly disagree about which gaps are cycles and which are
+ * missing records.
+ */
+export function shedIntervals(logs: readonly DetailedShedLog[]): ShedInterval[] {
+  const sorted = logs
+    .filter((log) => !Number.isNaN(new Date(log.shed_at).getTime()))
+    .sort((a, b) => new Date(a.shed_at).getTime() - new Date(b.shed_at).getTime())
+
+  const intervals: ShedInterval[] = []
+  for (let i = 1; i < sorted.length; i++) {
+    const at = new Date(sorted[i].shed_at)
+    const days = Math.round((at.getTime() - new Date(sorted[i - 1].shed_at).getTime()) / 86_400_000)
+    if (days > 0 && days <= MAX_SANE_INTERVAL_DAYS) {
+      intervals.push({ at, days, complete: sorted[i].complete })
+    }
+  }
+  return intervals
+}
+
+export interface ShedSummary {
+  total: number
+  complete: number
+  /** Mean of the recent intervals, or null when there are none to average. */
+  averageIntervalDays: number | null
+}
+
+/** The three figures above the interval chart. */
+export function summariseSheds(logs: readonly DetailedShedLog[]): ShedSummary {
+  const intervals = shedIntervals(logs)
+  const recent = intervals.slice(-INTERVALS_CONSIDERED)
+  return {
+    total: logs.length,
+    complete: logs.filter((log) => log.complete).length,
+    averageIntervalDays: recent.length > 0
+      ? Math.round(recent.reduce((sum, i) => sum + i.days, 0) / recent.length)
+      : null,
+  }
+}
+
 /**
  * The next expected shed, or null when the history cannot support a guess.
  *

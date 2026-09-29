@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays, addDays } from 'date-fns'
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import {
   getAnimal, deactivateAnimal,
   createWeightLog, updateWeightLog, deleteWeightLog,
@@ -18,6 +18,13 @@ import { useSignedPhotoUrls } from '@/hooks/useSignedPhotoUrls'
 import { FeedingEditForm } from '@/components/feeding/FeedingEditForm'
 import { dateInputToISO, daysSince } from '@/lib/dates'
 import { getFeedingStatus, FEEDING_STATUS_META } from '@/lib/feedingStatus'
+import { currentWeight, weightTrend as weightChange, weightSeries } from '@/lib/weightStats'
+import { predictNextShed, isShedOverdue } from '@/lib/shedStatus'
+import { totalCostCents } from '@/lib/healthStats'
+import { RecordActions } from '@/components/ui/RecordActions'
+import { WeightSection } from '@/components/animals/WeightSection'
+import { SheddingSection } from '@/components/animals/SheddingSection'
+import { HealthEventsSection } from '@/components/animals/HealthEventsSection'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
 import { useSheddingLogs } from '@/hooks/useSheddingLogs'
@@ -31,7 +38,6 @@ import { Button } from '@/components/ui/Button'
 import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
-import { readPositiveNumber, writeJson, remove as removeStored } from '@/lib/localStore'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { AnimalForm } from '@/components/animals/AnimalForm'
@@ -57,21 +63,6 @@ import {
 } from '@/lib/queries'
 
 type Tab = 'overview' | 'timeline' | 'feeding' | 'vitals' | 'health' | 'records'
-
-function RecordActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
-  return (
-    <div className="flex gap-1 shrink-0">
-      <button onClick={onEdit} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a' }}>
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-      </button>
-      <button onClick={onDelete} className="w-7 h-7 rounded-lg flex items-center justify-center transition-colors" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>
-        <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-      </button>
-    </div>
-  )
-}
-
-const targetWeightKey = (animalId: string) => `vivarium-target-weight-${animalId}`
 
 export function AnimalDetail() {
   const { id } = useParams<{ id: string }>()
@@ -114,18 +105,6 @@ export function AnimalDetail() {
   const [weightDate, setWeightDate] = useState(new Date().toISOString().split('T')[0])
   const [weightNotes, setWeightNotes] = useState('')
   const [savingWeight, setSavingWeight] = useState(false)
-  const [targetWeightInput, setTargetWeightInput] = useState('')
-  const [targetWeight, setTargetWeight] = useState<number | null>(
-    () => (id ? readPositiveNumber(targetWeightKey(id)) : null)
-  )
-  function saveTargetWeight() {
-    const val = Number(targetWeightInput)
-    if (!id || !Number.isFinite(val) || val <= 0) return
-    writeJson(targetWeightKey(id), val)
-    setTargetWeight(val)
-    setTargetWeightInput('')
-  }
-
   // ── Shedding state ────────────────────────────────────────────────────────
   const [shedOpen, setShedOpen] = useState(false)
   const [editingShed, setEditingShed] = useState<SheddingLog | null>(null)
@@ -597,11 +576,6 @@ export function AnimalDetail() {
     weight: w.weight_grams,
   }))
 
-  const weightChartData = [...weightLogs].reverse().map((w) => ({
-    date: format(new Date(w.logged_at), 'MMM d'),
-    weight: w.weight_grams,
-  }))
-
   const feedingMonthlyData = (() => {
     const map = new Map<string, { month: string; fed: number; refused: number }>()
     ;[...feedingLogs].reverse().forEach((log) => {
@@ -614,38 +588,16 @@ export function AnimalDetail() {
     return Array.from(map.values()).slice(-12)
   })()
 
-  const sheddingIntervalData = (() => {
-    const sorted = [...sheddingLogs].reverse()
-    return sorted.slice(1).map((log, i) => ({
-      date: format(new Date(log.shed_at), 'MMM d yy'),
-      days: differenceInDays(new Date(log.shed_at), new Date(sorted[i].shed_at)),
-      complete: log.complete,
-    }))
-  })()
+  // Also shown on the Health tab, by the same helper, so the ROI panel and the
+  // tab cannot report different totals for the same events.
+  const totalHealthCost = totalCostCents(healthEvents)
 
-  const healthCostByType = (() => {
-    const map = new Map<string, number>()
-    healthEvents.forEach((ev) => {
-      if (ev.cost_cents != null && ev.cost_cents > 0) {
-        const label = ev.event_type.replace(/_/g, ' ')
-        map.set(label, (map.get(label) ?? 0) + ev.cost_cents)
-      }
-    })
-    return Array.from(map.entries()).map(([type, cents]) => ({ type, cost: cents / 100 }))
-  })()
-
-  const totalHealthCost = healthEvents.reduce((sum, ev) => sum + (ev.cost_cents ?? 0), 0)
-
-  const predictedNextShed = (() => {
-    if (sheddingIntervalData.length < 2) return null
-    const recent = sheddingIntervalData.slice(-5)
-    const avgDays = Math.round(recent.reduce((s, d) => s + d.days, 0) / recent.length)
-    const lastShed = sheddingLogs[0]
-    if (!lastShed) return null
-    const predicted = new Date(lastShed.shed_at)
-    predicted.setDate(predicted.getDate() + avgDays)
-    return predicted
-  })()
+  // Was computed inline here, by rules that had drifted from the ones in
+  // lib/shedStatus: no cap on a gap too long to be a cycle, and a dependence on
+  // the query's newest-first order that nothing stated. Two answers to one
+  // question, and the card could show a date the "Worth a look" section on the
+  // dashboard disagreed with.
+  const shedPrediction = predictNextShed(sheddingLogs)
 
   // ── Timeline events ───────────────────────────────────────────────────────
   type TEvent = { id: string; date: Date; type: string; icon: string; label: string; detail: string; color: string }
@@ -667,7 +619,13 @@ export function AnimalDetail() {
   const financials = { acqCost, salePrice, vetCost: totalHealthCost, totalCost: acqCost + totalHealthCost, net: salePrice - acqCost - totalHealthCost }
 
   const daysSinceFed = animal.last_fed_at ? daysSince(animal.last_fed_at) : null
-  const weightTrend = weightLogs.length >= 2 ? weightLogs[0].weight_grams - weightLogs[1].weight_grams : null
+  const weightTrend = weightChange(weightLogs)
+  // The card used to read animals.weight_grams, which nothing in the app
+  // writes — not createAnimal, not AnimalForm, not the weight form, which only
+  // inserts a weight_logs row. So it showed an em dash for every animal, with
+  // the trend badge computed from the logs beside it: "—+150". The logs are
+  // the record; the column survives only for an import that carries one.
+  const shownWeight = currentWeight(weightLogs, animal.weight_grams)
   const enclosure = enclosures.find((e) => e.id === animal.enclosure_id) ?? null
   const feedingStatusColor = FEEDING_STATUS_META[getFeedingStatus(animal)].color
 
@@ -690,7 +648,7 @@ export function AnimalDetail() {
   // Sparkline over the last dozen weights, oldest to newest, normalised into
   // the 100x20 viewBox. The full growth chart stays on the Vitals tab.
   const weightSparkline = (() => {
-    const points = weightLogs.slice(0, 12).map((l) => l.weight_grams).reverse()
+    const points = weightSeries(weightLogs, 12).map((p) => p.weight)
     if (points.length < 2) return null
     const min = Math.min(...points)
     const max = Math.max(...points)
@@ -771,7 +729,7 @@ export function AnimalDetail() {
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-xs" style={{ color: '#9f9684' }}>Current weight</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
-                {animal.weight_grams ? `${animal.weight_grams}g` : '—'}
+                {shownWeight !== null ? `${shownWeight}g` : '—'}
                 {weightTrend !== null && (
                   <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#c45a5a' }}>
                     {weightTrend >= 0 ? `+${weightTrend}` : weightTrend}
@@ -797,9 +755,9 @@ export function AnimalDetail() {
               <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
                 {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—'}
               </p>
-              {predictedNextShed && (
-                <p className="text-xs mt-0.5" style={{ color: predictedNextShed < new Date() ? '#d4924a' : '#9f9684' }}>
-                  Next ~{format(predictedNextShed, 'MMM d')}
+              {shedPrediction && (
+                <p className="text-xs mt-0.5" style={{ color: isShedOverdue(shedPrediction) ? '#d4924a' : '#9f9684' }}>
+                  Next ~{format(shedPrediction.due, 'MMM d')}
                 </p>
               )}
             </div>
@@ -1352,130 +1310,21 @@ export function AnimalDetail() {
               </Button>
             </div>
 
-            {vitalsSubTab === 'weight' && (
-              weightLogs.length === 0 ? (
-                <EmptyState icon="⚖️" title="No weights logged" description="Tap 'Log weight' to start tracking growth." />
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {weightChartData.length > 1 && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>GROWTH CHART</p>
-                      <ResponsiveContainer width="100%" height={160}>
-                        <AreaChart data={weightChartData}>
-                          <defs>
-                            <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-                              <stop offset="5%" stopColor="#8fbe5a" stopOpacity={0.25} />
-                              <stop offset="95%" stopColor="#8fbe5a" stopOpacity={0} />
-                            </linearGradient>
-                          </defs>
-                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
-                          <YAxis hide domain={['auto', 'auto']} />
-                          <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v}g`, 'Weight']} />
-                          <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
-                          {targetWeight && (
-                            <ReferenceLine y={targetWeight} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${targetWeight}g`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
-                          )}
-                        </AreaChart>
-                      </ResponsiveContainer>
-                      <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                        <input
-                          type="number" min={1} value={targetWeightInput}
-                          onChange={(e) => setTargetWeightInput(e.target.value)}
-                          placeholder={targetWeight ? `Target: ${targetWeight}g` : 'Set target weight (g)'}
-                          className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                          style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
-                        />
-                        <button onClick={saveTargetWeight} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>Set</button>
-                        {targetWeight && (
-                          <button onClick={() => { if (id) removeStored(targetWeightKey(id)); setTargetWeight(null) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#9f9684' }}>Clear</button>
-                        )}
-                      </div>
-                      {(() => {
-                        const first = [...weightLogs].at(-1)!
-                        const last = weightLogs[0]
-                        const gain = last.weight_grams - first.weight_grams
-                        return (
-                          <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                            <div className="text-center"><p className="text-xs" style={{ color: '#9f9684' }}>Start</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{first.weight_grams}g</p></div>
-                            <div className="text-center"><p className="text-xs" style={{ color: '#9f9684' }}>Total gain</p><p className="text-sm font-semibold" style={{ color: gain >= 0 ? '#8fbe5a' : '#c45a5a' }}>{gain >= 0 ? '+' : ''}{gain}g</p></div>
-                            <div className="text-center"><p className="text-xs" style={{ color: '#9f9684' }}>Latest</p><p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{last.weight_grams}g</p></div>
-                          </div>
-                        )
-                      })()}
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    {weightLogs.map((log) => (
-                      <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div className="flex-1">
-                          <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{log.weight_grams}g</p>
-                          {log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}
-                        </div>
-                        <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>{format(new Date(log.logged_at), 'MMM d, yyyy')}</p>
-                        <RecordActions onEdit={() => openEditWeight(log)} onDelete={() => handleDeleteWeight(log)} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
+            {vitalsSubTab === 'weight' && id && (
+              <WeightSection
+                animalId={id}
+                logs={weightLogs}
+                onEdit={openEditWeight}
+                onDelete={handleDeleteWeight}
+              />
             )}
 
             {vitalsSubTab === 'shedding' && (
-              sheddingLogs.length === 0 ? (
-                <EmptyState icon="🐍" title="No sheds logged" description="Tap 'Log shed' to record a shedding event." />
-              ) : (
-                <div className="flex flex-col gap-4">
-                  {(() => {
-                    const total = sheddingLogs.length
-                    const complete = sheddingLogs.filter((l) => l.complete).length
-                    const avgInterval = sheddingIntervalData.length > 0
-                      ? Math.round(sheddingIntervalData.reduce((s, d) => s + d.days, 0) / sheddingIntervalData.length)
-                      : null
-                    return (
-                      <div className="grid grid-cols-3 gap-3">
-                        {[
-                          { label: 'Total sheds', value: total },
-                          { label: 'Complete', value: complete, color: '#8fbe5a' },
-                          { label: 'Avg interval', value: avgInterval != null ? `${avgInterval}d` : '—' },
-                        ].map((s) => (
-                          <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                            <p className="text-xs" style={{ color: '#9f9684' }}>{s.label}</p>
-                            <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? '#f0ece0' }}>{s.value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    )
-                  })()}
-                  {sheddingIntervalData.length > 1 && (
-                    <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>SHED INTERVALS (days)</p>
-                      <p className="text-xs mb-3" style={{ color: '#9f9684' }}>Days between consecutive sheds — green = complete, amber = incomplete</p>
-                      <ResponsiveContainer width="100%" height={130}>
-                        <BarChart data={sheddingIntervalData} barCategoryGap="25%">
-                          <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
-                          <YAxis hide />
-                          <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`${v} days`, 'Interval']} />
-                          <Bar dataKey="days" radius={[4, 4, 0, 0]}>
-                            {sheddingIntervalData.map((entry, i) => (
-                              <Cell key={i} fill={entry.complete ? '#5a9e6a' : '#d4924a'} />
-                            ))}
-                          </Bar>
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
-                  <div className="flex flex-col gap-2">
-                    {sheddingLogs.map((log) => (
-                      <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <Badge status={log.complete ? 'green' : 'amber'}>{log.complete ? 'Complete' : 'Incomplete'}</Badge>
-                        <div className="flex-1">{log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}</div>
-                        <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>{format(new Date(log.shed_at), 'MMM d, yyyy')}</p>
-                        <RecordActions onEdit={() => openEditShed(log)} onDelete={() => handleDeleteShed(log)} />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
+              <SheddingSection
+                logs={sheddingLogs}
+                onEdit={openEditShed}
+                onDelete={handleDeleteShed}
+              />
             )}
           </div>
         )}
@@ -1533,55 +1382,11 @@ export function AnimalDetail() {
               <div className="flex justify-end mb-3">
                 <Button size="sm" onClick={openAddHealth}>Add event</Button>
               </div>
-            {healthEvents.length === 0 ? (
-              <EmptyState icon="🏥" title="No health events" description="Tap 'Add event' to log an observation or vet visit." />
-            ) : (
-              <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs" style={{ color: '#9f9684' }}>Total events</p>
-                    <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>{healthEvents.length}</p>
-                  </div>
-                  <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs" style={{ color: '#9f9684' }}>Total cost</p>
-                    <p className="text-base font-semibold mt-0.5" style={{ color: totalHealthCost > 0 ? '#d4924a' : '#f0ece0' }}>
-                      {totalHealthCost > 0 ? `$${(totalHealthCost / 100).toFixed(2)}` : '—'}
-                    </p>
-                  </div>
-                </div>
-                {healthCostByType.length > 0 && (
-                  <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>COST BY TYPE (AUD)</p>
-                    <ResponsiveContainer width="100%" height={130}>
-                      <BarChart data={healthCostByType} layout="vertical" margin={{ left: 8, right: 16 }}>
-                        <XAxis type="number" hide />
-                        <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: '#a8a090' }} axisLine={false} tickLine={false} width={80} />
-                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Cost']} />
-                        <Bar dataKey="cost" fill="#d4924a" radius={[0, 4, 4, 0]} />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
-                )}
-                <div className="flex flex-col gap-2">
-                  {healthEvents.map((ev) => (
-                    <div key={ev.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div className="flex items-start gap-2">
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.title}</p>
-                          <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{ev.event_type.replace('_', ' ')}</p>
-                          {ev.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{ev.notes}</p>}
-                        </div>
-                        <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(ev.event_date), 'MMM d, yyyy')}</p>
-                          {ev.cost_cents != null && <p className="text-xs mt-0.5" style={{ color: '#d4924a' }}>${(ev.cost_cents / 100).toFixed(2)}</p>}
-                        </div>
-                        <RecordActions onEdit={() => openEditHealth(ev)} onDelete={() => handleDeleteHealth(ev)} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
+            <HealthEventsSection
+              events={healthEvents}
+              onEdit={openEditHealth}
+              onDelete={handleDeleteHealth}
+            />
             </div>{/* end health events section */}
           </div>
         )}
