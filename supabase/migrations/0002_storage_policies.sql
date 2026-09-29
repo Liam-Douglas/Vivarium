@@ -1,51 +1,111 @@
 -- ============================================================================
 -- Vivarium — Storage policies for the `animal-photos` bucket
--- ============================================================================
--- REVIEW BEFORE APPLYING.
 --
--- Object paths are `<household_id>/<animal_id>/<file>`, so the first path
--- segment identifies the owning household. These policies restrict every
--- operation (read included) to active members of that household.
+-- APPLIED 21 September 2026 — but NOT by running this file. Read the procedure
+-- below before touching storage policies on any environment.
+-- ============================================================================
 --
--- IMPORTANT follow-up (see supabase/README.md): the bucket is currently PUBLIC,
--- and the client reads photos via getPublicUrl(). For these read policies to
--- actually protect anything, the bucket must be set to PRIVATE and the client
--- switched to createSignedUrl(). Until then, anyone with an object URL can read
--- it regardless of the SELECT policy below.
+-- no-schema-change: storage policies and a bucket setting; no table columns change.
+--
+-- ── This file cannot be run in the SQL editor ────────────────────────────────
+--
+-- storage.objects is owned by supabase_storage_admin, not postgres. The SQL
+-- editor connects as postgres, so both of these fail:
+--
+--   alter table storage.objects enable row level security;
+--     ERROR: 42501: must be owner of table objects
+--   set role supabase_storage_admin;
+--     ERROR: 42501: permission denied to set role "supabase_storage_admin"
+--
+-- and CREATE POLICY needs ownership too. The `alter table` was never needed in
+-- any case: RLS is already enabled on storage.objects in every hosted project.
+--
+-- Storage policies are created and edited in the Dashboard, under
+-- Storage → Policies, which runs them with the right privileges. The bucket's
+-- public flag is the toggle under Storage → <bucket> → Settings.
+--
+-- ── What the bucket actually had ────────────────────────────────────────────
+--
+-- Three policies already existed, and their names said nothing about what they
+-- checked:
+--
+--   Authenticated users can read animal photos    SELECT  bucket_id = 'animal-photos'
+--   Authenticated users can update animal photos  UPDATE  bucket_id = 'animal-photos'
+--   Authenticated users can upload animal photos  INSERT  bucket_id = 'animal-photos'
+--
+-- Every one scoped to the bucket and nothing else, so any signed-in user could
+-- read, overwrite and upload into every household's folder. This file used to
+-- say the problem was that the bucket was public. That was incomplete: making
+-- it private would have closed the anonymous-link hole and left the
+-- cross-household one wide open, while looking like it had worked.
+--
+-- The fourth instance of the shape 0001 documents — a policy listing showing
+-- correct-sounding policies that never check who is asking. Permissive policies
+-- are OR'd, so ADDING scoped policies beside these would have changed nothing.
+-- The three were edited in place.
+--
+-- ── The procedure that was actually applied ─────────────────────────────────
+--
+-- 1. Confirm every object's first path segment is a uuid, because the policy
+--    casts it and a bad cast fails the read rather than denying it:
+--
+--      select (storage.foldername(name))[1] as first_segment, count(*),
+--             bool_and((storage.foldername(name))[1] ~
+--               '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$') as is_uuid
+--      from storage.objects where bucket_id = 'animal-photos' group by 1;
+--
+-- 2. Dashboard → Storage → Policies → animal-photos. Edit each of the three
+--    policies — not add — replacing the expression with the one below. SELECT
+--    and UPDATE take it as USING; INSERT as WITH CHECK. Where UPDATE offers
+--    both boxes it takes it in both, or an object can be moved into another
+--    household's folder.
+--
+--      (bucket_id = 'animal-photos'::text)
+--        and public.app_is_household_member(((storage.foldername(name))[1])::uuid)
+--
+-- 3. Reload the app and confirm photos render and an upload works, while the
+--    bucket is still public. A wrong policy shows up here as a broken upload
+--    rather than a blank app.
+--
+-- 4. Storage → animal-photos → Settings → Public bucket → off. The same toggle
+--    reverses it.
+--
+-- No DELETE policy: deleteAnimalPhotoRecord removes the animal_photos row only,
+-- and nothing in the app ever deletes the storage object. (Which does mean
+-- deleted photos leave their objects behind — a separate, smaller problem.)
+--
+-- Object paths are `<household_id>/<animal_id>/<file>`, so the first segment
+-- identifies the owning household. app_is_household_member checks
+-- status = 'active', unlike the inline subqueries 0001 replaced.
+--
+-- ── Prerequisite, and why the order matters ─────────────────────────────────
+--
+-- The client had to stop reading photos through getPublicUrl() first. It now
+-- stores the storage path and signs it at render (lib/photoPaths.ts,
+-- lib/signedUrlCache.ts, hooks/useSignedPhotoUrls.ts), and recovers the path
+-- from the absolute URLs already in the database, so no data migration was
+-- needed. Signing works on a public bucket, which is what let the client ship
+-- and be verified before the bucket changed.
+--
+-- Applying this first would have turned every photo in the app into a broken
+-- image until the deploy landed.
 -- ============================================================================
 
--- no-schema-change: storage bucket policies only; no table columns change.
+-- Reference only — see above for why this cannot be executed here.
+--
+-- create policy animal_photos_select on storage.objects for select to authenticated
+--   using (
+--     bucket_id = 'animal-photos'
+--     and public.app_is_household_member(((storage.foldername(name))[1])::uuid)
+--   );
+--
+-- ...and the same expression for insert (with check), and update (using, and
+-- with check where offered).
 
--- Make the bucket private (id must match the bucket name used in the client).
+-- Verification, which does run as postgres: pg_policies is a readable view.
+select policyname, cmd, roles, qual, with_check
+from pg_policies
+where schemaname = 'storage' and tablename = 'objects'
+order by policyname;
 
-update storage.buckets set public = false where id = 'animal-photos';
-
-alter table storage.objects enable row level security;
-
-drop policy if exists animal_photos_select on storage.objects;
-create policy animal_photos_select on storage.objects for select to authenticated
-  using (
-    bucket_id = 'animal-photos'
-    and public.app_is_household_member(((storage.foldername(name))[1])::uuid)
-  );
-
-drop policy if exists animal_photos_insert on storage.objects;
-create policy animal_photos_insert on storage.objects for insert to authenticated
-  with check (
-    bucket_id = 'animal-photos'
-    and public.app_is_household_member(((storage.foldername(name))[1])::uuid)
-  );
-
-drop policy if exists animal_photos_update on storage.objects;
-create policy animal_photos_update on storage.objects for update to authenticated
-  using (
-    bucket_id = 'animal-photos'
-    and public.app_is_household_member(((storage.foldername(name))[1])::uuid)
-  );
-
-drop policy if exists animal_photos_delete on storage.objects;
-create policy animal_photos_delete on storage.objects for delete to authenticated
-  using (
-    bucket_id = 'animal-photos'
-    and public.app_is_household_member(((storage.foldername(name))[1])::uuid)
-  );
+select id, public from storage.buckets where id = 'animal-photos';

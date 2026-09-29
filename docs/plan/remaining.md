@@ -7,7 +7,7 @@ original build order, then the refactor that has been deferred twice on purpose.
 
 | | Phase | Size | Needs Liam |
 |---|---|---|---|
-| ◐ | 1 — Signed photo URLs, then `0002` | M | **client shipped; `0002` awaits deploy** |
+| ✓ | 1 — Signed photo URLs, then `0002` | M | applied — see `0002`'s header |
 | | 2 — The quiet states | M | no |
 | | 3 — AnimalDetail, slices 2 and 3 | L | no |
 
@@ -24,6 +24,20 @@ and `animal_photos.url` stop resolving.
 EXIF GPS is stripped before upload (`lib/image.ts`), so the worst case — a photo
 leaking where it was taken — is already closed. What remains is that the photos
 themselves are readable by anyone with a link.
+
+**What applying it found.** The bucket already carried three policies, each
+scoping to `bucket_id` and nothing else, so every signed-in user could read,
+overwrite and upload into every household's folder. This plan described the
+problem as "the bucket is public"; that was incomplete. Making it private would
+have closed the anonymous-link hole, left the cross-household one open, and
+looked like it had worked. The three were edited in place, because permissive
+policies are OR'd and adding beside them would have changed nothing.
+
+Also: the file could not be run at all. `storage.objects` is owned by
+`supabase_storage_admin`, so the SQL editor can neither alter it nor create
+policies on it, and the `alter table ... enable row level security` line it
+carried was never needed — RLS is already on. Storage policies go through the
+Dashboard. `0002` now documents that.
 
 **The client change.** Stop storing an absolute URL. `uploadAnimalPhoto` and
 `uploadAdditionalPhoto` already compute the storage path before asking for a

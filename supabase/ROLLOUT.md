@@ -1,8 +1,8 @@
 # Applying the security migrations
 
 > **Status — 20 September 2026.** `0001`, `0003` and `0004` are applied to the
-> production project. `0002` is not, and should not be until the client moves to
-> signed URLs (see *Before 0002*). `0005` repairs the medication tables and is
+> production project. `0002` is applied — through the Dashboard, not this file; see its
+> header. `0001`, `0003` and `0004` went through the SQL editor. `0005` repairs the medication tables and is
 > applied — verified by reading the resulting columns back, which for a schema
 > change is the whole claim. Everything below still applies to any other
 > environment, and to re-running these files after a schema change.
@@ -28,8 +28,8 @@ break working photos if it goes early.
 |---|---|---|---|
 | 1 | `migrations/0001_rls_policies.sql` | yes | Turns RLS on and scopes every table to active household members. |
 | 2 | `migrations/0003_functions.sql` | yes | Purely additive: the `log_feeding` RPC and the `feeder_stock` view. The client already falls back when they are absent, so nothing breaks either way. |
-| 3 | — | **not yet** | Ship the client change from "Before 0002" below. |
-| 4 | `migrations/0002_storage_policies.sql` | after step 3 | Makes the photo bucket private. |
+| 3 | — | done | The client reads photos through signed URLs (`lib/photoPaths.ts`). |
+| 4 | `migrations/0002_storage_policies.sql` | done | Dashboard only — storage.objects is owned by supabase_storage_admin, so the SQL editor cannot create or alter its policies. The file documents the procedure. |
 
 `migrations/0005_medication_schema.sql` is a repair, not a policy change, and
 should be applied as soon as convenient. The medication feature has never worked:
