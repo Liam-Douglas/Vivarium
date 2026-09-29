@@ -23,6 +23,9 @@ const SHOT_DIR = join(HERE, 'shots')
 /** How long a screen gets to reach the state a scenario describes. */
 const SETTLE_MS = 20000
 
+/** How long any single Playwright action may block before the loop retries it. */
+const ACTION_TIMEOUT_MS = 2000
+
 const args = process.argv.slice(2)
 const flags = new Set(args.filter((a) => a.startsWith('--')))
 const filters = args.filter((a) => !a.startsWith('--'))
@@ -112,6 +115,13 @@ async function main() {
         viewport: { width: 420, height: 1000 },
         deviceScaleFactor: 2,
       })
+      // Playwright waits 30 seconds on an action by default, which is longer
+      // than this runner's whole settle window: a click on a button React had
+      // not yet wired up would block inside click() until after the deadline,
+      // so the retry below never got a turn and the scenario failed having
+      // made one attempt that was still in flight. Actions now give up quickly
+      // and are retried by the loop, which is where the waiting belongs.
+      context.setDefaultTimeout(ACTION_TIMEOUT_MS)
       const { requested } = await installSupabaseStub(context, scenario.fixtures ?? {})
       const page = await context.newPage()
 
@@ -130,13 +140,35 @@ async function main() {
       const deadline = Date.now() + SETTLE_MS
       let text = ''
       let failures = []
-      for (;;) {
+      let actError = null
+      for (let round = 0; ; round++) {
+        // A scenario that needs the screen driven — a tab opened, a filter
+        // chosen — says so with `act`. It is re-run about once a second for as
+        // long as the expectations are failing, because Playwright will happily
+        // click a button that React has rendered but not yet attached a handler
+        // to, and that click goes nowhere. So `act` must be idempotent:
+        // opening a tab or choosing a filter is, which is all it is for.
+        //
+        // Retried for the whole window rather than a few rounds at the start.
+        // With a first-rounds-only cap this was flaky under load: eight
+        // scenarios sharing one browser could push hydration past the last
+        // attempt, and the remaining fifteen seconds then polled a page nobody
+        // had clicked.
+        if (scenario.act && round % 4 === 0) {
+          await scenario.act(page).catch((e) => { actError = e.message })
+        }
         text = await page.locator('body').innerText().catch(() => '')
         failures = checkText(text, scenario.expect)
         if (failures.length === 0 || Date.now() > deadline) break
         await page.waitForTimeout(250)
       }
 
+      if (failures.length > 0 && scenario.act) {
+        // An `act` scenario that fails usually failed to drive the screen, not
+        // to render it, and the two look identical in the text dump.
+        failures.push(`act: ${actError ? `last error: ${actError}` : 'ran without error'}`)
+        failures.push(`url at failure: ${page.url()}`)
+      }
       for (const message of pageErrors) failures.push(`page error: ${message}`)
 
       if (flags.has('--shots')) {

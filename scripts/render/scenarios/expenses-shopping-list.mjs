@@ -31,7 +31,10 @@ export default {
     // is what proves the crickets were left out. A blanket `absent` on their
     // name would not: the page also renders the full stock table below, which
     // lists every item whether it is low or not.
-    contains: ['2 feeders running low', 'Rats (Medium), Mice (Pinkie)'],
+    // Alphabetical, because getFeederItems orders by name and the stub honours
+    // the `order=` PostgREST sends. Listing them in fixture order would be
+    // asserting something the database would never return.
+    contains: ['2 feeders running low', 'Mice (Pinkie), Rats (Medium)'],
     absent: ['3 feeders running low', 'undefined'],
   },
 }

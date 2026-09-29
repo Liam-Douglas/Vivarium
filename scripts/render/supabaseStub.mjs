@@ -78,6 +78,43 @@ function rpcResponses() {
  * scenario lists only what it is about — the dashboard reads nine tables and a
  * scenario about shed prediction should mention two of them.
  */
+/**
+ * Apply PostgREST's `order=` to the fixture rows.
+ *
+ * Without this a scenario has to supply rows in the order the query happens to
+ * return them, which is a trap: weightLogs[0] is "the latest weight" only
+ * because the query sorts descending, and a fixture listed oldest-first makes
+ * the page show a fall in weight that never happened. That is a failure the
+ * app could never produce, and the scenario would be debugging the harness.
+ *
+ * Only what the app actually uses: column, direction, and several keys as
+ * tiebreakers. Nullslast and referenced-table ordering are not implemented —
+ * nothing here asks for them, and guessing at them would be worse than the
+ * error they would cause.
+ */
+function applyOrder(rows, search) {
+  const spec = new URLSearchParams(search).get('order')
+  if (!spec || !Array.isArray(rows)) return rows
+
+  const keys = spec.split(',').map((part) => {
+    const [column, ...flags] = part.split('.')
+    return { column, desc: flags.includes('desc') }
+  })
+
+  return [...rows].sort((a, b) => {
+    for (const { column, desc } of keys) {
+      const left = a?.[column], right = b?.[column]
+      if (left === right) continue
+      // Nulls sort last ascending, which is Postgres's default.
+      if (left == null) return 1
+      if (right == null) return -1
+      const cmp = left < right ? -1 : 1
+      return desc ? -cmp : cmp
+    }
+    return 0
+  })
+}
+
 export async function installSupabaseStub(context, fixtures = {}) {
   const tables = { ...baseFixtures(), ...fixtures }
   const rpcs = rpcResponses()
@@ -91,7 +128,7 @@ export async function installSupabaseStub(context, fixtures = {}) {
   }, [STORAGE_KEY, JSON.stringify(session())])
 
   await context.route('**placeholder.supabase.co/**', async (route) => {
-    const { pathname } = new URL(route.request().url())
+    const { pathname, search } = new URL(route.request().url())
     requested.push(pathname)
 
     const json = (body) => route.fulfill({
@@ -115,7 +152,30 @@ export async function installSupabaseStub(context, fixtures = {}) {
       return json(rpcs[pathname.slice('/rest/v1/rpc/'.length)] ?? [])
     }
     if (pathname.startsWith('/rest/v1/')) {
-      return json(tables[pathname.slice('/rest/v1/'.length)] ?? [])
+      const rows = applyOrder(tables[pathname.slice('/rest/v1/'.length)] ?? [], search)
+      // .single() asks PostgREST for one object rather than an array, through
+      // an Accept header. Answering with an array anyway hands the caller a
+      // shape it does not expect — getAnimal would return a list where the page
+      // reads `.name` — so the header is honoured here too. Filtering is not:
+      // the stub answers from the fixture list, so a scenario that renders one
+      // record should supply the one it means.
+      const wantsObject = (route.request().headers()['accept'] ?? '')
+        .includes('application/vnd.pgrst.object+json')
+      if (!wantsObject) return json(rows)
+      if (rows.length === 0) {
+        // What PostgREST says when .single() matches nothing, and what the page
+        // is written to handle — a missing record, not a broken request.
+        return route.fulfill({
+          status: 406,
+          contentType: 'application/json',
+          headers: { 'access-control-allow-origin': '*' },
+          body: JSON.stringify({
+            code: 'PGRST116', details: 'Results contain 0 rows', hint: null,
+            message: 'JSON object requested, multiple (or no) rows returned',
+          }),
+        })
+      }
+      return json(rows[0])
     }
 
     // Storage, realtime over HTTP, anything else: an empty 200 rather than a
