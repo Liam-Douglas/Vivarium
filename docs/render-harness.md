@@ -44,7 +44,7 @@ size. `--shots` exists for looking at, not for comparing.
 
 ## What it has found
 
-Three live bugs so far, which is the honest argument for it.
+Four live bugs so far, which is the honest argument for it.
 
 The dashboard filtered its restock list with `.filter(needsRestocking)`.
 `Array.prototype.filter` passes the index as the second argument, and
@@ -65,6 +65,13 @@ both in code `tsc` was perfectly happy with:
 - **The shed prediction existed twice**, by rules that had drifted apart, so
   the animal page and the dashboard could name different dates for the same
   snake.
+
+And the fourth is the one this harness is most obviously for: the feeding
+form's meal-size suggestion read the same dead column, so **that line had never
+once been drawn**. It is guarded, so a keeper saw silence rather than a wrong
+number — a feature that shipped, typechecked, passed review and did nothing.
+Only rendering the form with a real animal selected could tell the difference
+between "correctly hidden" and "never shown".
 
 ## Writing a scenario
 
