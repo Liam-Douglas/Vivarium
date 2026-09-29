@@ -180,6 +180,42 @@ arithmetic that left is tested rather than inlined.
   item no animal is scheduled against, and silently showing nothing would be a
   regression on today's behaviour.
 
+## The negative RLS test — done
+
+Carried since the security work and finally written:
+`supabase/tests/negative_rls.sql`.
+
+Everything before it proved the policies do not lock the owning member out.
+This proves they lock everybody else out, *and that they do it by scoping
+rather than by refusing everything* — the control half, without which the
+suite would pass just as happily against a database that denied all access.
+
+Two things are worth recording, because both were found by testing the test
+rather than by reading it.
+
+**It reported a pass against a real escalation hole.** With
+`household_members` carrying an insert policy that checks nothing, the
+stranger's insert went through the policy and was stopped only by the
+`auth.users` foreign key. The test called that a rejection. It now gives the
+stranger a real `auth.users` row inside its own rolled-back transaction, so
+the policy is the only thing that can refuse.
+
+**An inconclusive result is not a pass.** A missing `SELECT` grant makes a
+stranger see nothing, which is indistinguishable from a working policy and is
+not one. Those report `CHECK`, and `CHECK` fails the suite.
+
+`scripts/check-rls-test.sh` runs the test against a local miniature of the
+schema and then against four deliberately broken copies — a loose OR'd read
+policy, RLS switched off, an open escalation, a missing grant — and fails if
+any goes unnoticed.
+
+**Still not proven:** that a member of household B cannot read household A.
+The stranger here belongs to nothing. Both cases go through the same
+`app_is_household_member(household_id)` and the same policy expression, so the
+argument is strong, but it is an argument rather than an observation, and
+proving it outright needs a second household with a real member — a fixture
+this database does not have.
+
 ## Out of scope
 
 - A service-worker update prompt, out of scope since the resilience plan.

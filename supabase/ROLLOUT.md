@@ -178,6 +178,17 @@ rollback;
 
 Expect `should_be_one = 1`.
 
+> **All of the checks below are now in one runnable file:
+> `supabase/tests/negative_rls.sql`.** It finds the household and the member
+> itself rather than asking you to paste uuids, covers every table with a
+> `household_id` rather than the one you happen to type, and raises an
+> exception if anything fails so a leak cannot be skimmed past. The snippets
+> here remain as the explanation of what it does and why.
+>
+> `scripts/check-rls-test.sh` checks the test itself, by running it against a
+> local miniature of the schema and then against four deliberately broken
+> copies.
+
 **Cross-household reads must come back empty, and their own must not** — the
 second query is the control that proves the policy is scoping rather than
 simply blocking everything:
