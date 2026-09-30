@@ -274,11 +274,15 @@ a fallback for an imported animal with no weigh-ins.
 on its derived numbers, so it rendered nothing rather than nonsense. A feature
 that shipped, typechecked, passed review and never once drew.
 
-**Confirmed in production, 30 September 2026:** with a weight logged, the
-"Current weight" card shows the figure. That is the first time it has.
+**Both confirmed in production, 30 September 2026.** With a weight logged, the
+"Current weight" card shows the figure and the feeding form draws its
+suggestion. The card had shown an em dash for every animal in the app's life;
+the suggestion had never been drawn at all.
 
 Both were found by rendering the page rather than by reading it, which is the
-argument for `npm run render` in one line.
+argument for `npm run render` in one line. Neither could have been found by
+looking at the app: an em dash reads as "not weighed yet", and a suggestion
+that is correctly hidden and one that can never appear are the same screen.
 
 ## What is still only read, never written
 
