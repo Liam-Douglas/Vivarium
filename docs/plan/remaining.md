@@ -242,9 +242,11 @@ stranger see nothing, which is indistinguishable from a working policy and is
 not one. Those report `CHECK`, and `CHECK` fails the suite.
 
 `scripts/check-rls-test.sh` runs the test against a local miniature of the
-schema and then against four deliberately broken copies — a loose OR'd read
-policy, RLS switched off, an open escalation, a missing grant — and fails if
-any goes unnoticed.
+schema and then against five deliberately broken copies — a loose OR'd read
+policy, RLS switched off, an open escalation, a missing grant, and a view
+without `security_invoker` — and fails if any goes unnoticed. It runs in CI as the `rls-test` job, against a throwaway
+PostgreSQL service container — so the thing that checks the test now runs on
+every pull request rather than when somebody remembers.
 
 **Still not proven:** that a member of household B cannot read household A.
 The stranger here belongs to nothing. Both cases go through the same
