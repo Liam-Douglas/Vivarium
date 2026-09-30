@@ -315,12 +315,24 @@ section.
 references it. Both refusals were exercised against a local copy, along with a
 re-run against an already-dropped table, before the file was committed.
 
-## What is still only read, never written
+## The export column — fixed, and the reason for deferring it was wrong
 
-`Settings.tsx:140` exports `Weight (g)` from `animals.weight_grams`, so that
-column is blank in the spreadsheet for every animal not imported with one. Left
-alone because changing it changes a file format, which is a decision rather
-than a fix.
+The Animals sheet exported `Weight (g)` from `animals.weight_grams`, so that
+cell was blank for every animal not imported with one — while the Weight log
+sheet in the same workbook carried the real figures.
+
+This was deferred twice as "changing it changes a file format, which is a
+decision rather than a fix". **That was wrong, and the mistake is worth
+recording.** The column header does not move, the sheet structure does not
+move, and the importer never reads this column back — it only moves
+`weight_logs` rows. Nothing about the file's shape changes; a blank cell
+becomes the figure that was always meant to be there. It was a fix, and
+calling it a decision deferred it for no reason.
+
+`lib/latestWeights.ts` builds the map, because the risk here is not the
+arithmetic — `currentWeight` was already tested — but the wiring: one lookup
+that forgets to filter by animal hands every row the heaviest snake in the
+collection. That case is a test.
 
 ## Out of scope
 
