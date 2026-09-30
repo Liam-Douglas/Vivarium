@@ -38,12 +38,17 @@
 --
 -- ── A note on formatting, so nobody tidies it back ──────────────────────────
 --
--- The set_config calls below are each on one long line. They were written
--- across two, and the Supabase SQL editor cut the statement at the line break
--- and reported a syntax error at the continuation. The same file ran cleanly
--- under psql, so this is the editor's statement splitting rather than the SQL.
+-- Every statement below is on one line, however long, and that is deliberate.
 --
--- Wrapping them again would reintroduce that, so they stay long.
+-- The Supabase SQL editor cut this file at line breaks inside statements and
+-- reported syntax errors at the continuation lines — first at a set_config
+-- call written across two lines, then, once that was joined up, at the
+-- `order by` of a multi-line FOR loop. The same file ran cleanly under psql
+-- both times, so it is the editor splitting the text rather than the SQL.
+--
+-- Rewrapping anything here for readability would bring that straight back.
+-- Comments are free to wrap: they are not statements, and the file got past
+-- plenty of them before failing.
 
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
@@ -53,12 +58,7 @@
 
 begin;
 
-create temp table rls_result (
-  seq serial,
-  check_name text,
-  detail text,
-  verdict text
-) on commit drop;
+create temp table rls_result (seq serial, check_name text, detail text, verdict text) on commit drop;
 
 do $$
 declare
@@ -81,15 +81,10 @@ declare
   -- Whether the escalation check below can be conclusive. See check 4.
   stranger_exists boolean := false;
 begin
-  select hm.user_id, hm.household_id into member_id, household
-  from public.household_members hm
-  where hm.status = 'active'
-  order by hm.joined_at nulls last
-  limit 1;
+  select hm.user_id, hm.household_id into member_id, household from public.household_members hm where hm.status = 'active' order by hm.joined_at nulls last limit 1;
 
   if member_id is null then
-    insert into rls_result (check_name, detail, verdict)
-    values ('setup', 'no active household member found — nothing to test against', 'FAIL');
+    insert into rls_result (check_name, detail, verdict) values ('setup', 'no active household member found — nothing to test against', 'FAIL');
     return;
   end if;
 
@@ -97,16 +92,7 @@ begin
   -- Derived from the schema rather than listed, so a table added later is
   -- covered by this test the day it appears instead of the day somebody
   -- remembers to add it here.
-  for tbl in
-    select c.relname
-    from pg_class c
-    join pg_namespace ns on ns.oid = c.relnamespace
-    join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id'
-    where ns.nspname = 'public'
-      and c.relkind = 'r'
-      and not a.attisdropped
-    order by c.relname
-  loop
+  for tbl in select c.relname from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind = 'r' and not a.attisdropped order by c.relname loop
     perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', stranger), true);
     perform set_config('request.jwt.claim.sub', stranger::text, true);
     execute 'set local role authenticated';
@@ -116,13 +102,10 @@ begin
       execute 'reset role';
 
       if n = 0 then
-        insert into rls_result (check_name, detail, verdict)
-        values (format('stranger reads %s', tbl), format('%s rows visible', n), 'pass');
+        insert into rls_result (check_name, detail, verdict) values (format('stranger reads %s', tbl), format('%s rows visible', n), 'pass');
       else
         leaked := leaked + 1;
-        insert into rls_result (check_name, detail, verdict)
-        values (format('stranger reads %s', tbl),
-                format('%s rows visible — expected 0', n), 'FAIL');
+        insert into rls_result (check_name, detail, verdict) values (format('stranger reads %s', tbl), format('%s rows visible — expected 0', n), 'FAIL');
       end if;
     exception when insufficient_privilege then
       -- Zero rows because the policy scoped them out, and zero rows because
@@ -130,26 +113,14 @@ begin
       -- the grant, so this is a finding rather than a pass.
       execute 'reset role';
       unresolved := unresolved + 1;
-      insert into rls_result (check_name, detail, verdict)
-      values (format('stranger reads %s', tbl),
-              format('no SELECT grant for authenticated — the app cannot read this either: %s', sqlerrm),
-              'CHECK');
+      insert into rls_result (check_name, detail, verdict) values (format('stranger reads %s', tbl), format('no SELECT grant for authenticated — the app cannot read this either: %s', sqlerrm), 'CHECK');
     end;
   end loop;
 
   -- ── 2. The control: the same tables, as a real member ────────────────────
   -- Without this the suite would pass just as happily against a database that
   -- denied everybody everything, which is not the property anyone wants.
-  for tbl in
-    select c.relname
-    from pg_class c
-    join pg_namespace ns on ns.oid = c.relnamespace
-    join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id'
-    where ns.nspname = 'public'
-      and c.relkind = 'r'
-      and not a.attisdropped
-    order by c.relname
-  loop
+  for tbl in select c.relname from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind = 'r' and not a.attisdropped order by c.relname loop
     -- Only tables that actually hold rows can demonstrate anything. An empty
     -- table returning nothing to its owner is not evidence of a broken policy.
     execute format('select count(*) from public.%I where household_id = %L', tbl, household) into n;
@@ -164,21 +135,15 @@ begin
       execute 'reset role';
 
       if n > 0 then
-        insert into rls_result (check_name, detail, verdict)
-        values (format('member reads %s', tbl), format('%s rows visible', n), 'pass');
+        insert into rls_result (check_name, detail, verdict) values (format('member reads %s', tbl), format('%s rows visible', n), 'pass');
       else
         blind := blind + 1;
-        insert into rls_result (check_name, detail, verdict)
-        values (format('member reads %s', tbl),
-                'no rows visible to a member of the household that owns them', 'FAIL');
+        insert into rls_result (check_name, detail, verdict) values (format('member reads %s', tbl), 'no rows visible to a member of the household that owns them', 'FAIL');
       end if;
     exception when insufficient_privilege then
       execute 'reset role';
       unresolved := unresolved + 1;
-      insert into rls_result (check_name, detail, verdict)
-      values (format('member reads %s', tbl),
-              format('no SELECT grant for authenticated — the app cannot read this either: %s', sqlerrm),
-              'CHECK');
+      insert into rls_result (check_name, detail, verdict) values (format('member reads %s', tbl), format('no SELECT grant for authenticated — the app cannot read this either: %s', sqlerrm), 'CHECK');
     end;
   end loop;
 
@@ -188,15 +153,10 @@ begin
     perform set_config('request.jwt.claim.sub', stranger::text, true);
     execute 'set local role authenticated';
 
-    execute format(
-      'insert into public.animals (household_id, user_id, name, species, is_active)
-       values (%L, %L, %L, %L, true)',
-      household, stranger, 'RLS probe', 'Test');
+    execute format( 'insert into public.animals (household_id, user_id, name, species, is_active) values (%L, %L, %L, %L, true)', household, stranger, 'RLS probe', 'Test');
 
     execute 'reset role';
-    insert into rls_result (check_name, detail, verdict)
-    values ('stranger inserts an animal',
-            'the insert was ACCEPTED — a policy is letting outsiders write', 'FAIL');
+    insert into rls_result (check_name, detail, verdict) values ('stranger inserts an animal', 'the insert was ACCEPTED — a policy is letting outsiders write', 'FAIL');
     leaked := leaked + 1;
   exception when insufficient_privilege or check_violation or foreign_key_violation then
     execute 'reset role';
@@ -206,13 +166,10 @@ begin
     -- exactly the false comfort the rest of this file exists to avoid. The
     -- message is the only thing that tells them apart.
     if sqlerrm like '%row-level security%' then
-      insert into rls_result (check_name, detail, verdict)
-      values ('stranger inserts an animal', format('rejected by policy: %s', sqlerrm), 'pass');
+      insert into rls_result (check_name, detail, verdict) values ('stranger inserts an animal', format('rejected by policy: %s', sqlerrm), 'pass');
     else
       unresolved := unresolved + 1;
-      insert into rls_result (check_name, detail, verdict)
-      values ('stranger inserts an animal',
-              format('rejected, but not by a policy — inconclusive: %s', sqlerrm), 'CHECK');
+      insert into rls_result (check_name, detail, verdict) values ('stranger inserts an animal', format('rejected, but not by a policy — inconclusive: %s', sqlerrm), 'CHECK');
     end if;
   end;
 
@@ -241,15 +198,10 @@ begin
     perform set_config('request.jwt.claim.sub', stranger::text, true);
     execute 'set local role authenticated';
 
-    execute format(
-      'insert into public.household_members (household_id, user_id, role, status)
-       values (%L, %L, %L, %L)',
-      household, stranger, 'owner', 'active');
+    execute format( 'insert into public.household_members (household_id, user_id, role, status) values (%L, %L, %L, %L)', household, stranger, 'owner', 'active');
 
     execute 'reset role';
-    insert into rls_result (check_name, detail, verdict)
-    values ('stranger joins as owner',
-            'the insert was ACCEPTED — anyone can grant themselves a household', 'FAIL');
+    insert into rls_result (check_name, detail, verdict) values ('stranger joins as owner', 'the insert was ACCEPTED — anyone can grant themselves a household', 'FAIL');
     leaked := leaked + 1;
   exception when insufficient_privilege or check_violation or foreign_key_violation then
     execute 'reset role';
@@ -259,72 +211,46 @@ begin
     -- did exist it would have succeeded.
     if sqlstate = '23503' then
       unresolved := unresolved + 1;
-      insert into rls_result (check_name, detail, verdict)
-      values ('stranger joins as owner',
-              'blocked by the foreign key, not by a policy — inconclusive. '
-              || 'The stranger could not be given an auth.users row, so this '
-              || 'check cannot tell a working policy from a missing one.',
-              'CHECK');
+      insert into rls_result (check_name, detail, verdict) values ('stranger joins as owner', 'blocked by the foreign key, not by a policy — inconclusive. ' || 'The stranger could not be given an auth.users row, so this ' || 'check cannot tell a working policy from a missing one.', 'CHECK');
     elsif sqlerrm like '%row-level security%' then
-      insert into rls_result (check_name, detail, verdict)
-      values ('stranger joins as owner',
-              format('rejected by policy%s: %s',
-                     case when stranger_exists then ' (with the foreign key satisfied)' else '' end,
-                     sqlerrm),
-              'pass');
+      insert into rls_result (check_name, detail, verdict) values ('stranger joins as owner', format('rejected by policy%s: %s', case when stranger_exists then ' (with the foreign key satisfied)' else '' end, sqlerrm), 'pass');
     else
       unresolved := unresolved + 1;
-      insert into rls_result (check_name, detail, verdict)
-      values ('stranger joins as owner',
-              format('rejected, but not by a policy — inconclusive: %s', sqlerrm), 'CHECK');
+      insert into rls_result (check_name, detail, verdict) values ('stranger joins as owner', format('rejected, but not by a policy — inconclusive: %s', sqlerrm), 'CHECK');
     end if;
   end;
 
   -- ── 5. A member moves their own row into another household ───────────────
   -- Mass assignment. Zero rows affected is the pass: the row exists and is
   -- theirs, so a policy that allowed the reassignment would report one.
-  declare
-    other_household uuid := '00000000-0000-0000-0000-0000000000aa';
+  declare other_household uuid := '00000000-0000-0000-0000-0000000000aa';
     moved bigint;
   begin
     perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', member_id), true);
     perform set_config('request.jwt.claim.sub', member_id::text, true);
     execute 'set local role authenticated';
 
-    execute format(
-      'update public.animals set household_id = %L where household_id = %L',
-      other_household, household);
+    execute format( 'update public.animals set household_id = %L where household_id = %L', other_household, household);
     get diagnostics moved = row_count;
 
     execute 'reset role';
     if moved = 0 then
-      insert into rls_result (check_name, detail, verdict)
-      values ('member reassigns an animal to another household',
-              '0 rows updated', 'pass');
+      insert into rls_result (check_name, detail, verdict) values ('member reassigns an animal to another household', '0 rows updated', 'pass');
     else
       leaked := leaked + 1;
-      insert into rls_result (check_name, detail, verdict)
-      values ('member reassigns an animal to another household',
-              format('%s rows updated — expected 0', moved), 'FAIL');
+      insert into rls_result (check_name, detail, verdict) values ('member reassigns an animal to another household', format('%s rows updated — expected 0', moved), 'FAIL');
     end if;
   exception when insufficient_privilege or check_violation or foreign_key_violation then
     execute 'reset role';
     if sqlerrm like '%row-level security%' then
-      insert into rls_result (check_name, detail, verdict)
-      values ('member reassigns an animal to another household',
-              format('rejected by policy: %s', sqlerrm), 'pass');
+      insert into rls_result (check_name, detail, verdict) values ('member reassigns an animal to another household', format('rejected by policy: %s', sqlerrm), 'pass');
     else
       unresolved := unresolved + 1;
-      insert into rls_result (check_name, detail, verdict)
-      values ('member reassigns an animal to another household',
-              format('rejected, but not by a policy — inconclusive: %s', sqlerrm), 'CHECK');
+      insert into rls_result (check_name, detail, verdict) values ('member reassigns an animal to another household', format('rejected, but not by a policy — inconclusive: %s', sqlerrm), 'CHECK');
     end if;
   end;
 
-  insert into rls_result (check_name, detail, verdict)
-  values ('SUMMARY',
-          format('%s leak(s), %s blind spot(s), %s unresolved', leaked, blind, unresolved),
-          case when leaked = 0 and blind = 0 and unresolved = 0 then 'pass' else 'FAIL' end);
+  insert into rls_result (check_name, detail, verdict) values ('SUMMARY', format('%s leak(s), %s blind spot(s), %s unresolved', leaked, blind, unresolved), case when leaked = 0 and blind = 0 and unresolved = 0 then 'pass' else 'FAIL' end);
 end $$;
 
 select seq, check_name, detail, verdict from rls_result order by seq;
@@ -337,18 +263,12 @@ select seq, check_name, detail, verdict from rls_result order by seq;
 -- `with check (true)`, and called the run a pass. A result that proves nothing
 -- has to read as "not proven" rather than as "fine".
 do $$
-declare
-  failed int;
-  unresolved int;
+declare failed int; unresolved int;
 begin
-  select count(*) filter (where verdict = 'FAIL'),
-         count(*) filter (where verdict = 'CHECK')
-    into failed, unresolved
-  from rls_result;
+  select count(*) filter (where verdict = 'FAIL'), count(*) filter (where verdict = 'CHECK') into failed, unresolved from rls_result;
 
   if failed > 0 or unresolved > 0 then
-    raise exception 'NEGATIVE RLS TEST NOT PASSED: % failure(s), % unresolved — read the table above',
-      failed, unresolved;
+    raise exception 'NEGATIVE RLS TEST NOT PASSED: % failure(s), % unresolved — read the table above', failed, unresolved;
   end if;
   raise notice 'Negative RLS test passed.';
 end $$;
