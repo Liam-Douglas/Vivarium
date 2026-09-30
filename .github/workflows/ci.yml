@@ -89,6 +89,40 @@ jobs:
       # install one here rather than to add a postinstall to every job.
       - run: npm run render
 
+  rls-test:
+    name: RLS test
+    runs-on: ubuntu-latest
+    # A throwaway PostgreSQL for the fixture to be built in. Nothing here
+    # touches the real database — the test that runs against production is run
+    # by hand, and this only checks that it would still notice a hole.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          # Local to the job and reachable only from it. The password exists
+          # because the image requires one, not because it guards anything.
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      # Setting PGHOST is what tells the script to connect over TCP rather than
+      # becoming the postgres unix user, which is how it runs on a laptop.
+      PGHOST: localhost
+      PGPORT: 5432
+      PGUSER: postgres
+      PGPASSWORD: postgres
+    steps:
+      - uses: actions/checkout@v4
+      # No npm ci: the script is bash and psql, and the runner image ships the
+      # PostgreSQL client. If a future image drops it, the script says it
+      # cannot reach the server rather than reporting a pass.
+      - run: ./scripts/check-rls-test.sh
+
   schema-types:
     name: Schema types
     runs-on: ubuntu-latest
