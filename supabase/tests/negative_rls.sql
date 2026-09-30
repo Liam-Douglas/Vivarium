@@ -36,6 +36,15 @@
 -- an observation. Proving it outright needs a second household with a real
 -- member, which is a fixture this database does not have.
 --
+-- ── A note on formatting, so nobody tidies it back ──────────────────────────
+--
+-- The set_config calls below are each on one long line. They were written
+-- across two, and the Supabase SQL editor cut the statement at the line break
+-- and reported a syntax error at the continuation. The same file ran cleanly
+-- under psql, so this is the editor's statement splitting rather than the SQL.
+--
+-- Wrapping them again would reintroduce that, so they stay long.
+
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
 -- One row per check, with a verdict. The final statement raises an exception
@@ -98,8 +107,7 @@ begin
       and not a.attisdropped
     order by c.relname
   loop
-    perform set_config('request.jwt.claims',
-      json_build_object('sub', stranger, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', stranger), true);
     perform set_config('request.jwt.claim.sub', stranger::text, true);
     execute 'set local role authenticated';
 
@@ -147,8 +155,7 @@ begin
     execute format('select count(*) from public.%I where household_id = %L', tbl, household) into n;
     continue when n = 0;
 
-    perform set_config('request.jwt.claims',
-      json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', member_id), true);
     perform set_config('request.jwt.claim.sub', member_id::text, true);
     execute 'set local role authenticated';
 
@@ -177,8 +184,7 @@ begin
 
   -- ── 3. A stranger writes into the household ──────────────────────────────
   begin
-    perform set_config('request.jwt.claims',
-      json_build_object('sub', stranger, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', stranger), true);
     perform set_config('request.jwt.claim.sub', stranger::text, true);
     execute 'set local role authenticated';
 
@@ -231,8 +237,7 @@ begin
   end;
 
   begin
-    perform set_config('request.jwt.claims',
-      json_build_object('sub', stranger, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', stranger), true);
     perform set_config('request.jwt.claim.sub', stranger::text, true);
     execute 'set local role authenticated';
 
@@ -282,8 +287,7 @@ begin
     other_household uuid := '00000000-0000-0000-0000-0000000000aa';
     moved bigint;
   begin
-    perform set_config('request.jwt.claims',
-      json_build_object('sub', member_id, 'role', 'authenticated')::text, true);
+    perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', member_id), true);
     perform set_config('request.jwt.claim.sub', member_id::text, true);
     execute 'set local role authenticated';
 
