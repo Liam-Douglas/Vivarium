@@ -325,47 +325,6 @@ export interface Database {
           created_at?: string | null
         }
       }
-      equipment: {
-        Row: {
-          id: string
-          household_id: string
-          enclosure_id: string | null
-          user_id: string
-          name: string
-          equipment_type: string | null
-          installed_at: string | null
-          replace_every_days: number | null
-          last_replaced_at: string | null
-          notes: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          household_id: string
-          enclosure_id?: string | null
-          user_id: string
-          name: string
-          equipment_type?: string | null
-          installed_at?: string | null
-          replace_every_days?: number | null
-          last_replaced_at?: string | null
-          notes?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          household_id?: string
-          enclosure_id?: string | null
-          user_id?: string
-          name?: string
-          equipment_type?: string | null
-          installed_at?: string | null
-          replace_every_days?: number | null
-          last_replaced_at?: string | null
-          notes?: string | null
-          created_at?: string | null
-        }
-      }
       exit_records: {
         Row: {
           id: string
