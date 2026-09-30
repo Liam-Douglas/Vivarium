@@ -255,12 +255,20 @@ without `security_invoker` — and fails if any goes unnoticed. It runs in CI as
 PostgreSQL service container — so the thing that checks the test now runs on
 every pull request rather than when somebody remembers.
 
-**Still not proven:** that a member of household B cannot read household A.
-The stranger here belongs to nothing. Both cases go through the same
-`app_is_household_member(household_id)` and the same policy expression, so the
-argument is strong, but it is an argument rather than an observation, and
-proving it outright needs a second household with a real member — a fixture
-this database does not have.
+**Now proven.** The earlier runs showed only that a stranger — a uuid
+belonging to nothing — sees nothing. That is the same predicate but not the
+same sentence: what a keeper cares about is that *the other person with an
+account* cannot see their animals.
+
+There is no second household here to borrow, so check 6 builds one inside the
+rolled-back transaction: a user, a household, a membership and one animal. The
+check is generic — for every household-scoped relation, what that member can
+see must equal what their own household holds. Larger means they are reading
+somebody else.
+
+Verified against a deliberately broken schema as well as a correct one. With a
+loose read policy on `animals` the row reads `sees 3 but owns only 1 — reading
+another household`.
 
 ## The weight column, and the two fixes that depended on it
 
