@@ -60,26 +60,26 @@ begin;
 
 create temp table rls_result (seq serial, check_name text, detail text, verdict text) on commit drop;
 
+-- The variables the block below works with, and why they are what they are.
+--
+--   stranger        a signed-in user who is a member of nothing. Not in
+--                   auth.users, which does not matter for the reads: nothing
+--                   there needs the foreign key, and auth.uid() takes the
+--                   claim rather than the table. Check 4 gives it a row.
+--   member_id,      a real active member and the household they are in, read
+--   household       from the database rather than pasted, so the test cannot
+--                   be run against the wrong ids.
+--   leaked          rows a stranger could see, or writes that were accepted.
+--   blind           tables a member could NOT see their own rows in.
+--   unresolved      checks that proved nothing either way. Counted apart and
+--                   treated as a failure of the suite: the point of this file
+--                   is that "no error" must never be read as "proven".
+--   stranger_exists whether check 4 can be conclusive. See check 4.
+--
+-- declare is one line for the same reason every statement is. See the note
+-- above about the editor.
 do $$
-declare
-  -- A signed-in user who is a member of nothing. Not in auth.users, which does
-  -- not matter: nothing here inserts a row that would need the foreign key,
-  -- and auth.uid() reads the claim rather than the table.
-  stranger uuid := '00000000-0000-0000-0000-0000000000ff';
-  -- The control: a real active member, and the household they are in. Read
-  -- rather than pasted, so the test cannot be run against the wrong ids.
-  member_id uuid;
-  household uuid;
-  tbl text;
-  n bigint;
-  leaked int := 0;
-  blind int := 0;
-  -- Checks that neither proved nor disproved anything. Counted separately and
-  -- treated as a failure of the suite: the point of this file is that "no
-  -- error" must never be read as "proven".
-  unresolved int := 0;
-  -- Whether the escalation check below can be conclusive. See check 4.
-  stranger_exists boolean := false;
+declare stranger uuid := '00000000-0000-0000-0000-0000000000ff'; member_id uuid; household uuid; tbl text; n bigint; leaked int := 0; blind int := 0; unresolved int := 0; stranger_exists boolean := false;
 begin
   select hm.user_id, hm.household_id into member_id, household from public.household_members hm where hm.status = 'active' order by hm.joined_at nulls last limit 1;
 
