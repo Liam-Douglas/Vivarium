@@ -196,7 +196,8 @@ observation rather than an argument.
 
 Three things the run itself showed, none of them failures:
 
-- **Eight of the twenty-two were empty** at the time of the run:
+- **Eight of the twenty-two were empty** at the time of the run (`equipment`
+  has since been dropped, so a re-run scans twenty-one):
   `weight_logs`, `health_events`, `medication_schedules`, `vet_contacts`,
   `breeding_records`, `exit_records`, `equipment` and `incubations`. The
   negative half still holds for them (a leak would have shown), but the
@@ -290,7 +291,7 @@ that is correctly hidden and one that can never appear are the same screen.
 
 Both turned up in the negative RLS test as tables nothing in `src/` reads.
 
-**`equipment` is superseded**, and `0008` drops it. Its columns are
+**`equipment` is superseded**, and `0008` dropped it on 30 September 2026. Its columns are
 `care_tasks` under other names — `replace_every_days` is `frequency_days`,
 `last_replaced_at` is `last_done_at`, `equipment_type` is `kind`, and both hang
 off an enclosure. `0004` says `care_tasks` exists for "cleaning, weighing, and

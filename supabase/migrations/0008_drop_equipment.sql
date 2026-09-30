@@ -1,8 +1,13 @@
 -- ============================================================================
 -- 0008 — Drop the equipment table
 --
--- Apply in the Supabase SQL editor. This one destroys a table, so read the
--- pre-check below before running it: it refuses rather than dropping data.
+-- APPLIED 30 September 2026. The verification below reported equipment absent
+-- and incubations present, which is the whole point of this file: one table
+-- removed, one deliberately left alone.
+--
+-- Safe to re-run — it reports that there is nothing to drop. This one destroys
+-- a table, so read the pre-check before running it anywhere else: it refuses
+-- rather than dropping data.
 -- ============================================================================
 --
 -- ── Why this table and not the other one ────────────────────────────────────
