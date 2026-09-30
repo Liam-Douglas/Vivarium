@@ -49,10 +49,13 @@
 -- ── Pre-check ───────────────────────────────────────────────────────────────
 -- Same shape as 0006: refuse with a named exception rather than destroying
 -- something on the assumption that a check done once still holds.
+-- One statement per line, however long, and declare joined up with its
+-- declarations. The Supabase SQL editor cuts statements at line breaks inside
+-- them and reports a syntax error at the continuation; negative_rls.sql hit
+-- that twice before it was written this way. Rewrapping this for readability
+-- would bring it straight back.
 do $$
-declare
-  n bigint;
-  refs text;
+declare n bigint; refs text;
 begin
   if to_regclass('public.equipment') is null then
     raise notice 'public.equipment does not exist — nothing to drop.';
@@ -66,9 +69,7 @@ begin
 
   -- Anything pointing at it would break, and a cascade would take that with
   -- it. Neither is acceptable without somebody deciding so first.
-  select string_agg(format('%s.%s', c.conrelid::regclass, c.conname), ', ') into refs
-  from pg_constraint c
-  where c.contype = 'f' and c.confrelid = 'public.equipment'::regclass;
+  select string_agg(format('%s.%s', c.conrelid::regclass, c.conname), ', ') into refs from pg_constraint c where c.contype = 'f' and c.confrelid = 'public.equipment'::regclass;
 
   if refs is not null then
     raise exception 'REFUSING TO DROP: public.equipment is referenced by %', refs;
@@ -81,7 +82,4 @@ end $$;
 -- ── Verification ────────────────────────────────────────────────────────────
 -- Expect equipment absent and incubations present: the second row is the
 -- point, since this migration is as much about what it leaves alone.
-select
-  t.name,
-  case when to_regclass('public.' || t.name) is null then 'absent' else 'present' end as state
-from (values ('equipment'), ('incubations')) as t(name);
+select t.name, case when to_regclass('public.' || t.name) is null then 'absent' else 'present' end as state from (values ('equipment'), ('incubations')) as t(name);
