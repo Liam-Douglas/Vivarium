@@ -223,8 +223,7 @@ begin
   -- ── 5. A member moves their own row into another household ───────────────
   -- Mass assignment. Zero rows affected is the pass: the row exists and is
   -- theirs, so a policy that allowed the reassignment would report one.
-  declare other_household uuid := '00000000-0000-0000-0000-0000000000aa';
-    moved bigint;
+  declare other_household uuid := '00000000-0000-0000-0000-0000000000aa'; moved bigint;
   begin
     perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', member_id), true);
     perform set_config('request.jwt.claim.sub', member_id::text, true);
