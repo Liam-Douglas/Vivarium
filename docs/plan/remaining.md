@@ -196,11 +196,15 @@ observation rather than an argument.
 
 Three things the run itself showed, none of them failures:
 
-- **`weight_logs` is empty.** So is `health_events`, `medication_schedules`,
-  `vet_contacts`, `breeding_records`, `exit_records`, `equipment` and
-  `incubations` — eight of the twenty-two. The negative half still holds for
-  them (a leak would have shown), but the control could not run, so *scoping*
-  is demonstrated only on the thirteen that hold rows.
+- **Eight of the twenty-two were empty** at the time of the run:
+  `weight_logs`, `health_events`, `medication_schedules`, `vet_contacts`,
+  `breeding_records`, `exit_records`, `equipment` and `incubations`. The
+  negative half still holds for them (a leak would have shown), but the
+  control could not run, so *scoping* is demonstrated only on the fourteen
+  that held rows.
+
+  `weight_logs` is no longer empty — a weight was logged on 30 September to
+  check the two fixes below — so a re-run now covers fifteen.
 - **`feeder_stock` is covered, and passed.** The loops read views, and a
   separate check asks the database whether each view carries
   `security_invoker` — without it a view runs as its owner, which owns the
@@ -254,6 +258,34 @@ The stranger here belongs to nothing. Both cases go through the same
 argument is strong, but it is an argument rather than an observation, and
 proving it outright needs a second household with a real member — a fixture
 this database does not have.
+
+## The weight column, and the two fixes that depended on it
+
+`animals.weight_grams` is written by nothing in the app: not `createAnimal`,
+not `AnimalForm`, and not the weight form, which only inserts a `weight_logs`
+row. Two things read it, and both were wrong in different ways.
+
+**AnimalDetail's "Current weight" card** rendered an em dash for every animal
+in the app, with the trend badge computed from the logs sitting beside it —
+`—+150`, a change against nothing. It reads the logs now, keeping the column as
+a fallback for an imported animal with no weigh-ins.
+
+**FeedingLogForm's meal-size suggestion** read the same column but is guarded
+on its derived numbers, so it rendered nothing rather than nonsense. A feature
+that shipped, typechecked, passed review and never once drew.
+
+**Confirmed in production, 30 September 2026:** with a weight logged, the
+"Current weight" card shows the figure. That is the first time it has.
+
+Both were found by rendering the page rather than by reading it, which is the
+argument for `npm run render` in one line.
+
+## What is still only read, never written
+
+`Settings.tsx:140` exports `Weight (g)` from `animals.weight_grams`, so that
+column is blank in the spreadsheet for every animal not imported with one. Left
+alone because changing it changes a file format, which is a decision rather
+than a fix.
 
 ## Out of scope
 
