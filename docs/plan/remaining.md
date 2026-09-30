@@ -196,7 +196,8 @@ observation rather than an argument.
 
 Three things the run itself showed, none of them failures:
 
-- **Eight of the twenty-two were empty** at the time of the run:
+- **Eight of the twenty-two were empty** at the time of the run (`equipment`
+  has since been dropped, so a re-run scans twenty-one):
   `weight_logs`, `health_events`, `medication_schedules`, `vet_contacts`,
   `breeding_records`, `exit_records`, `equipment` and `incubations`. The
   negative half still holds for them (a leak would have shown), but the
@@ -216,8 +217,10 @@ Three things the run itself showed, none of them failures:
   `useFeederInventory` is using the grouped query rather than silently falling
   back to the per-item path.
 - **`equipment` and `incubations` exist and the client never reads them.**
-  Neither appears in any `.from()` in `src/`. They are covered by RLS, so this
-  is not a hole; it is either unfinished work or dead schema.
+  Neither appears in any `.from()` in `src/`, and neither is created by a
+  migration here — they predate the migration history and appear in `0001`
+  only as things to apply policies to. Resolved differently, because they are
+  not the same case; see below.
 
 ## The negative RLS test — how it was built
 
@@ -283,6 +286,34 @@ Both were found by rendering the page rather than by reading it, which is the
 argument for `npm run render` in one line. Neither could have been found by
 looking at the app: an em dash reads as "not weighed yet", and a suggestion
 that is correctly hidden and one that can never appear are the same screen.
+
+## `equipment`, dropped — and `incubations`, deliberately kept
+
+Both turned up in the negative RLS test as tables nothing in `src/` reads.
+
+**`equipment` is superseded**, and `0008` dropped it on 30 September 2026. Its columns are
+`care_tasks` under other names — `replace_every_days` is `frequency_days`,
+`last_replaced_at` is `last_done_at`, `equipment_type` is `kind`, and both hang
+off an enclosure. `0004` says `care_tasks` exists for "cleaning, weighing, and
+anything else a keeper repeats on a schedule"; replacing a UV bulb every six
+months is that, and `care_tasks` does it with an `is_active` flag, an
+`animal_id` and a completion log behind it. Two answers to one question is the
+shape this project has spent most of its effort removing.
+
+**`incubations` is not dead and is not dropped.** It carries a
+`breeding_record_id` foreign key into `breeding_records`, which the app does
+use, and columns nothing else has: `start_date`, `expected_hatch_date`,
+`actual_hatch_date`, `temperature_c`, `humidity_percent`, `incubation_medium`,
+`hatchlings`. It is a designed extension of a built feature that was never
+wired to a screen. Dropping it would throw that design away to save nothing.
+
+If incubation tracking is ever wanted, the table is already there and already
+scoped by RLS; what is missing is the UI under the Records tab's breeding
+section.
+
+`0008` refuses rather than dropping if the table holds a row or anything
+references it. Both refusals were exercised against a local copy, along with a
+re-run against an already-dropped table, before the file was committed.
 
 ## What is still only read, never written
 
