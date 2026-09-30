@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { Import } from '@/pages/Import'
 import { signOutAndClearCaches } from '@/lib/session'
+import { latestWeightByAnimal } from '@/lib/latestWeights'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
 import { useToast } from '@/components/ui/Toast'
@@ -135,9 +136,20 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
         utils.book_append_sheet(wb, utils.json_to_sheet(rows), name)
       }
 
+      // The Animals sheet's weight column read animals.weight_grams, which
+      // nothing in the app writes — so it exported a blank cell for every
+      // animal not imported with one, while the Weight log sheet below carried
+      // the real figures. Same source as the app now: the latest weigh-in,
+      // with the column kept as a fallback for an imported animal that has no
+      // logs yet.
+      const latestWeight = latestWeightByAnimal(
+        (animals ?? []) as { id: string; weight_grams?: number | null }[],
+        weightLogs as { animal_id: string; logged_at: string; weight_grams: number }[]
+      )
+
       sheet((animals ?? []).map((a) => ({
         Name: a.name, Species: a.species, Morph: a.morph ?? '', Sex: a.sex ?? '',
-        DOB: a.date_of_birth ?? '', 'Weight (g)': a.weight_grams ?? '', Notes: a.notes ?? '',
+        DOB: a.date_of_birth ?? '', 'Weight (g)': latestWeight.get(a.id as string) ?? '', Notes: a.notes ?? '',
         'Feeding frequency (days)': a.feeding_frequency_days ?? '', 'Last fed': a.last_fed_at ?? '',
         Active: a.is_active ? 'Yes' : 'No',
       })), 'Animals')
