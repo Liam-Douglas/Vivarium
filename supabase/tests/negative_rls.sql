@@ -50,6 +50,19 @@
 -- Comments are free to wrap: they are not statements, and the file got past
 -- plenty of them before failing.
 
+-- ── Run against production on 30 September 2026 ────────────────────────────
+--
+-- 38 checks, 0 leaks, 0 blind spots, 0 unresolved. Twenty-one tables returned
+-- nothing to a stranger, thirteen returned their rows to a member, and all
+-- three write probes were refused by a policy rather than by a grant or a
+-- foreign key.
+--
+-- Two limits of that run, so it is not read as covering more than it did.
+-- Eight of the twenty-one tables were empty, so the control could not run for
+-- them and only the negative half holds. And feeder_stock is a view, which
+-- `relkind = 'r'` below excludes; 0003 gives it security_invoker = true, but
+-- this file has never exercised it.
+--
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
 -- One row per check, with a verdict. The final statement raises an exception
