@@ -52,19 +52,23 @@
 
 -- ── Run against production on 30 September 2026 ────────────────────────────
 --
--- 38 checks, 0 leaks, 0 blind spots, 0 unresolved. Twenty-one tables returned
--- nothing to a stranger, thirteen returned their rows to a member, and all
--- three write probes were refused by a policy rather than by a grant or a
--- foreign key.
+-- 41 checks, 0 leaks, 0 blind spots, 0 unresolved. Twenty-two relations
+-- returned nothing to a stranger, fourteen returned their rows to a member,
+-- and all three write probes were refused by a policy rather than by a grant
+-- or a foreign key.
 --
--- One limit of that run, so it is not read as covering more than it did:
--- eight of the twenty-one tables were empty, so the control could not run for
--- them and only the negative half holds.
+-- feeder_stock passed all three of its checks. The third is the one that had
+-- never been observed: security_invoker is set on the live view, where every
+-- previous claim about it came from reading 0003. Its SELECT grant is there
+-- too — that check reported a count rather than CHECK — so the app is using
+-- the grouped query rather than quietly falling back to the per-item one.
 --
--- That run also missed feeder_stock entirely — it is a view, and the loops
--- took ordinary tables only. Views are covered now, both by reading them and
--- by asking the database whether security_invoker is set, so the numbers above
--- are the last run under the narrower version.
+-- One limit, so the pass is not read as broader than it is: eight of the
+-- twenty-two were empty (breeding_records, equipment, exit_records,
+-- health_events, incubations, medication_schedules, vet_contacts,
+-- weight_logs). A leak would still have shown, so the negative half holds for
+-- them; the control could not run, so scoping is demonstrated on the fourteen
+-- that hold rows.
 --
 -- ── Reading the result ──────────────────────────────────────────────────────
 --

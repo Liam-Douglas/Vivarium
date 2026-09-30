@@ -182,10 +182,14 @@ arithmetic that left is tested rather than inlined.
 
 ## The negative RLS test — run, and passed
 
-**30 September 2026, against production.** 38 checks, 0 leaks, 0 blind spots,
-0 unresolved. Twenty-one household-scoped tables returned nothing to a
-stranger; thirteen returned their rows to a member; all three write probes
+**30 September 2026, against production.** 41 checks, 0 leaks, 0 blind spots,
+0 unresolved. Twenty-two household-scoped relations returned nothing to a
+stranger; fourteen returned their rows to a member; all three write probes
 were refused by a policy rather than by a grant or a foreign key.
+
+`feeder_stock` passed all three of its checks, including the one that reads
+`security_invoker` out of the live catalog. Every previous statement about that
+option in this project came from reading `0003`.
 
 That is the first statement about these policies in this project that is an
 observation rather than an argument.
@@ -194,17 +198,19 @@ Three things the run itself showed, none of them failures:
 
 - **`weight_logs` is empty.** So is `health_events`, `medication_schedules`,
   `vet_contacts`, `breeding_records`, `exit_records`, `equipment` and
-  `incubations` — eight of the twenty-one. The negative half still holds for
+  `incubations` — eight of the twenty-two. The negative half still holds for
   them (a leak would have shown), but the control could not run, so *scoping*
   is demonstrated only on the thirteen that hold rows.
-- **`feeder_stock` was not covered by that run.** It is a view, and the loops
-  took ordinary tables only. **Now fixed:** the loops read views too, and a
+- **`feeder_stock` is covered, and passed.** The loops read views, and a
   separate check asks the database whether each view carries
   `security_invoker` — without it a view runs as its owner, which owns the
   base tables, so RLS on them is bypassed and the reads would pass for the
   wrong reason. A materialised view holding a `household_id` is reported
-  outright, since it cannot honour the caller's RLS at all. Needs one more
-  production run to be observed rather than argued.
+  outright, since it cannot honour the caller's RLS at all; there are none.
+  A side finding: the stranger check on the view reported a count rather than
+  `CHECK`, so `authenticated` does hold `SELECT` on it and
+  `useFeederInventory` is using the grouped query rather than silently falling
+  back to the per-item path.
 - **`equipment` and `incubations` exist and the client never reads them.**
   Neither appears in any `.from()` in `src/`. They are covered by RLS, so this
   is not a hole; it is either unfinished work or dead schema.
