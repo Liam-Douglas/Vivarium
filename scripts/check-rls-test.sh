@@ -35,6 +35,17 @@ fresh_db() {
   run_sql "$1" "$WORK/fixture.sql"
 }
 
+# A break case is judged by psql exiting non-zero, so anything that stops psql
+# working — no server, no permission, a typo in a path — reads as "the test
+# caught it". Every break would report a pass against a database that is not
+# there. Check the server answers before trusting any of that.
+if ! su postgres -c "psql -q -c 'select 1'" >/dev/null 2>&1; then
+  echo "Cannot reach PostgreSQL as the postgres user."
+  echo "Start it first (service postgresql start) — without it every check below"
+  echo "would report a pass for the wrong reason."
+  exit 1
+fi
+
 failures=0
 
 echo "The test passes against a correct schema"

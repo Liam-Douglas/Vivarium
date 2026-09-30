@@ -197,10 +197,14 @@ Three things the run itself showed, none of them failures:
   `incubations` — eight of the twenty-one. The negative half still holds for
   them (a leak would have shown), but the control could not run, so *scoping*
   is demonstrated only on the thirteen that hold rows.
-- **`feeder_stock` was not covered.** The loop takes `relkind = 'r'`, which is
-  ordinary tables; `feeder_stock` is a view. `0003` gives it
-  `security_invoker = true`, so it should respect the caller's RLS, but this
-  test did not exercise it and should not be read as having done so.
+- **`feeder_stock` was not covered by that run.** It is a view, and the loops
+  took ordinary tables only. **Now fixed:** the loops read views too, and a
+  separate check asks the database whether each view carries
+  `security_invoker` — without it a view runs as its owner, which owns the
+  base tables, so RLS on them is bypassed and the reads would pass for the
+  wrong reason. A materialised view holding a `household_id` is reported
+  outright, since it cannot honour the caller's RLS at all. Needs one more
+  production run to be observed rather than argued.
 - **`equipment` and `incubations` exist and the client never reads them.**
   Neither appears in any `.from()` in `src/`. They are covered by RLS, so this
   is not a hole; it is either unfinished work or dead schema.

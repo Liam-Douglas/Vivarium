@@ -71,6 +71,13 @@ create table public.vet_contacts (
   name text not null
 );
 
+-- A view over a household-scoped table, matching feeder_stock: without
+-- security_invoker it would run as its owner and bypass RLS on the base table
+-- entirely, which is what breaks/05 removes to check the test notices.
+create or replace view public.feeder_stock with (security_invoker = true) as
+  select animal_id as feeder_item_id, household_id, count(*)::bigint as current_stock
+  from public.feeding_logs group by animal_id, household_id;
+
 create or replace function public.app_is_household_member(hid uuid)
 returns boolean language sql security definer set search_path = public stable as $$
   select exists (
@@ -81,6 +88,7 @@ $$;
 
 grant usage on schema public, auth to authenticated;
 grant select, insert, update, delete on all tables in schema public to authenticated;
+grant select on public.feeder_stock to authenticated;
 grant execute on function public.app_is_household_member(uuid) to authenticated;
 grant execute on function auth.uid() to authenticated;
 
