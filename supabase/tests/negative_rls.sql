@@ -57,11 +57,14 @@
 -- three write probes were refused by a policy rather than by a grant or a
 -- foreign key.
 --
--- Two limits of that run, so it is not read as covering more than it did.
--- Eight of the twenty-one tables were empty, so the control could not run for
--- them and only the negative half holds. And feeder_stock is a view, which
--- `relkind = 'r'` below excludes; 0003 gives it security_invoker = true, but
--- this file has never exercised it.
+-- One limit of that run, so it is not read as covering more than it did:
+-- eight of the twenty-one tables were empty, so the control could not run for
+-- them and only the negative half holds.
+--
+-- That run also missed feeder_stock entirely — it is a view, and the loops
+-- took ordinary tables only. Views are covered now, both by reading them and
+-- by asking the database whether security_invoker is set, so the numbers above
+-- are the last run under the narrower version.
 --
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
@@ -92,7 +95,7 @@ create temp table rls_result (seq serial, check_name text, detail text, verdict 
 -- declare is one line for the same reason every statement is. See the note
 -- above about the editor.
 do $$
-declare stranger uuid := '00000000-0000-0000-0000-0000000000ff'; member_id uuid; household uuid; tbl text; n bigint; leaked int := 0; blind int := 0; unresolved int := 0; stranger_exists boolean := false;
+declare stranger uuid := '00000000-0000-0000-0000-0000000000ff'; member_id uuid; household uuid; tbl text; viewopts text; n bigint; leaked int := 0; blind int := 0; unresolved int := 0; stranger_exists boolean := false;
 begin
   select hm.user_id, hm.household_id into member_id, household from public.household_members hm where hm.status = 'active' order by hm.joined_at nulls last limit 1;
 
@@ -101,11 +104,11 @@ begin
     return;
   end if;
 
-  -- ── 1. A stranger reads every household-scoped table ──────────────────────
+  -- ── 1. A stranger reads every household-scoped table and view ────────────
   -- Derived from the schema rather than listed, so a table added later is
   -- covered by this test the day it appears instead of the day somebody
   -- remembers to add it here.
-  for tbl in select c.relname from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind = 'r' and not a.attisdropped order by c.relname loop
+  for tbl in select c.relname from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind in ('r','v') and not a.attisdropped order by c.relname loop
     perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', stranger), true);
     perform set_config('request.jwt.claim.sub', stranger::text, true);
     execute 'set local role authenticated';
@@ -130,10 +133,10 @@ begin
     end;
   end loop;
 
-  -- ── 2. The control: the same tables, as a real member ────────────────────
+  -- ── 2. The control: the same relations, as a real member ─────────────────
   -- Without this the suite would pass just as happily against a database that
   -- denied everybody everything, which is not the property anyone wants.
-  for tbl in select c.relname from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind = 'r' and not a.attisdropped order by c.relname loop
+  for tbl in select c.relname from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind in ('r','v') and not a.attisdropped order by c.relname loop
     -- Only tables that actually hold rows can demonstrate anything. An empty
     -- table returning nothing to its owner is not evidence of a broken policy.
     execute format('select count(*) from public.%I where household_id = %L', tbl, household) into n;
@@ -158,6 +161,26 @@ begin
       unresolved := unresolved + 1;
       insert into rls_result (check_name, detail, verdict) values (format('member reads %s', tbl), format('no SELECT grant for authenticated — the app cannot read this either: %s', sqlerrm), 'CHECK');
     end;
+  end loop;
+
+  -- ── 2b. Views must carry security_invoker ────────────────────────────────
+  -- A view without it runs as its owner, which here is postgres, and postgres
+  -- owns the base tables — so RLS on them is bypassed entirely and the reads
+  -- above would pass for the wrong reason. feeder_stock is the only one today
+  -- (0003 sets it); this asks the database rather than trusting the migration.
+  --
+  -- A materialised view cannot honour the caller's RLS at all, so one holding
+  -- a household_id is reported whatever its options say.
+  for tbl, viewopts in select c.relname, coalesce(array_to_string(c.reloptions, ','), '') || case when c.relkind = 'm' then ' MATERIALISED' else '' end from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind in ('v','m') and not a.attisdropped order by c.relname loop
+    if viewopts like '%MATERIALISED%' then
+      leaked := leaked + 1;
+      insert into rls_result (check_name, detail, verdict) values (format('view %s honours the caller', tbl), 'materialised views cannot apply the caller RLS at all', 'FAIL');
+    elsif lower(viewopts) like '%security_invoker=true%' or lower(viewopts) like '%security_invoker=on%' then
+      insert into rls_result (check_name, detail, verdict) values (format('view %s honours the caller', tbl), format('security_invoker set (%s)', viewopts), 'pass');
+    else
+      leaked := leaked + 1;
+      insert into rls_result (check_name, detail, verdict) values (format('view %s honours the caller', tbl), format('no security_invoker — runs as its owner and bypasses RLS on the base tables (options: %s)', case when viewopts = '' then 'none' else viewopts end), 'FAIL');
+    end if;
   end loop;
 
   -- ── 3. A stranger writes into the household ──────────────────────────────
