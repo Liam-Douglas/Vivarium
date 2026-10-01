@@ -355,12 +355,16 @@ select seq, check_name, detail, verdict from rls_result order by seq;
 -- `with check (true)`, and called the run a pass. A result that proves nothing
 -- has to read as "not proven" rather than as "fine".
 do $$
-declare failed int; unresolved int;
+declare failed int; unresolved int; detail text;
 begin
   select count(*) filter (where verdict = 'FAIL'), count(*) filter (where verdict = 'CHECK') into failed, unresolved from rls_result;
-
+  -- The message carries the failing rows, not just a count. An exception
+  -- replaces the result table in the Supabase SQL editor rather than appearing
+  -- beside it, so "read the table above" was advice nobody could take: the
+  -- check that exists to stop a leak being skimmed past was hiding the leak.
+  select string_agg(format('%s [%s] %s', r.verdict, r.check_name, r.detail), E'\n  ' order by r.seq) into detail from rls_result r where r.verdict in ('FAIL', 'CHECK');
   if failed > 0 or unresolved > 0 then
-    raise exception 'NEGATIVE RLS TEST NOT PASSED: % failure(s), % unresolved — read the table above', failed, unresolved;
+    raise exception E'NEGATIVE RLS TEST NOT PASSED: % failure(s), % unresolved\n  %', failed, unresolved, detail;
   end if;
   raise notice 'Negative RLS test passed.';
 end $$;
