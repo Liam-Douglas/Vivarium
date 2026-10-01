@@ -67,6 +67,20 @@ fi
 
 failures=0
 
+# The fixture is only useful while it demands what production demands. One that
+# demands less accepts inserts the live database refuses, so the test passes
+# here and fails there — which is exactly what happened to check 6's probe
+# household and the households.created_by column. This compares the fixture
+# against src/lib/database.types.ts before anything else runs.
+echo "The fixture requires what production requires"
+if node "$HERE/scripts/check-fixture-shape.mjs"; then
+  echo "  ok"
+else
+  echo "  FAIL — see above; the fixture is laxer than the live schema"
+  failures=$((failures + 1))
+fi
+echo
+
 echo "The test passes against a correct schema"
 fresh_db rls_ok
 if as_super psql -d rls_ok -v ON_ERROR_STOP=1 -f "$WORK/negative_rls.sql" >/dev/null 2>&1; then

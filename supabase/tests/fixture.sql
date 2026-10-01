@@ -30,9 +30,15 @@ $$;
 
 create table auth.users (id uuid primary key);
 
+-- created_by is here because production has it: NOT NULL, no default. The
+-- fixture did not, so check-rls-test.sh passed a negative_rls.sql whose check 6
+-- could not build its probe household against the real database at all.
+-- scripts/check-fixture-shape.mjs now compares this file against
+-- src/lib/database.types.ts so the two cannot drift apart again quietly.
 create table public.households (
   id uuid primary key default gen_random_uuid(),
   name text not null,
+  created_by uuid not null references auth.users(id),
   invite_code text
 );
 
@@ -54,11 +60,15 @@ create table public.animals (
   is_active boolean not null default true
 );
 
+-- prey_type is NOT NULL with no default in production too. It has nothing to do
+-- with RLS; it is here because check-fixture-shape.mjs found it missing on its
+-- first run, which is the drift this fixture is meant not to have.
 create table public.feeding_logs (
   id uuid primary key default gen_random_uuid(),
   household_id uuid not null references public.households(id) on delete cascade,
   user_id uuid not null references auth.users(id),
   animal_id uuid not null references public.animals(id) on delete cascade,
+  prey_type text not null,
   fed_at timestamptz not null default now()
 );
 
@@ -111,11 +121,11 @@ end $$;
 
 -- Seed: one household, one active member, two animals, one feeding.
 insert into auth.users (id) values ('11111111-1111-1111-1111-111111111111');
-insert into public.households (id, name) values ('22222222-2222-2222-2222-222222222222', 'Fixture');
+insert into public.households (id, name, created_by) values ('22222222-2222-2222-2222-222222222222', 'Fixture', '11111111-1111-1111-1111-111111111111');
 insert into public.household_members (household_id, user_id, role, status, joined_at)
 values ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'owner', 'active', now());
 insert into public.animals (id, household_id, user_id, name, species)
 values ('33333333-3333-3333-3333-333333333333', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'Suki', 'Ball python'),
        ('33333333-3333-3333-3333-333333333334', '22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', 'Benji', 'Ball python');
-insert into public.feeding_logs (household_id, user_id, animal_id)
-values ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333');
+insert into public.feeding_logs (household_id, user_id, animal_id, prey_type)
+values ('22222222-2222-2222-2222-222222222222', '11111111-1111-1111-1111-111111111111', '33333333-3333-3333-3333-333333333333', 'Mouse');

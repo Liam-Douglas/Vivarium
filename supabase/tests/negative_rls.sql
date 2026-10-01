@@ -73,6 +73,13 @@
 -- them; the control could not run, so scoping is demonstrated on the fourteen
 -- that hold rows.
 --
+-- Check 6 was added after that run and has not been through production yet.
+-- Its first attempt did not get as far as a verdict: the probe household would
+-- not build, because households.created_by is NOT NULL with no default and the
+-- insert did not supply it. The check reported CHECK rather than a pass, which
+-- is the behaviour the CHECK verdict exists for, and the fixture now carries
+-- the same column so scripts/check-rls-test.sh would have said so first.
+--
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
 -- One row per check, with a verdict. The final statement raises an exception
@@ -305,9 +312,17 @@ begin
   -- The check is generic and does not need to know what was inserted: for
   -- every household-scoped relation, what this member can see must equal what
   -- their own household holds. Larger means they are reading somebody else.
+  --
+  -- households.created_by is NOT NULL with no default, so the insert has to
+  -- supply it. The first version of this check did not, and production refused
+  -- the fixture with "null value in column created_by" — reported honestly as
+  -- CHECK rather than as a pass, but still a round trip spent on a column
+  -- database.types.ts had recorded all along. scripts/check-fixture-shape.mjs
+  -- now holds the test fixture to the same NOT NULL columns, so the next one
+  -- of these fails locally instead.
   begin
     insert into auth.users (id) values (other_user);
-    insert into public.households (id, name) values (probe_household, 'RLS probe household');
+    insert into public.households (id, name, created_by) values (probe_household, 'RLS probe household', other_user);
     insert into public.household_members (household_id, user_id, role, status) values (probe_household, other_user, 'owner', 'active');
     insert into public.animals (household_id, user_id, name, species, is_active) values (probe_household, other_user, 'RLS probe animal', 'Test', true);
     second_household_built := true;
