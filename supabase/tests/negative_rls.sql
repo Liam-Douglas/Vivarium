@@ -73,12 +73,33 @@
 -- them; the control could not run, so scoping is demonstrated on the fourteen
 -- that hold rows.
 --
--- Check 6 was added after that run and has not been through production yet.
--- Its first attempt did not get as far as a verdict: the probe household would
--- not build, because households.created_by is NOT NULL with no default and the
--- insert did not supply it. The check reported CHECK rather than a pass, which
--- is the behaviour the CHECK verdict exists for, and the fixture now carries
--- the same column so scripts/check-rls-test.sh would have said so first.
+-- ── Run against production on 1 October 2026, with check 6 ─────────────────
+--
+-- 62 checks, 0 leaks, 0 blind spots, 0 unresolved. Twenty-one relations this
+-- time rather than twenty-two: equipment is gone, which is 0008 confirmed from
+-- outside the migration that did it.
+--
+-- Check 6 is the one this run was for, and two of its twenty-one rows are the
+-- ones carrying evidence:
+--
+--   other household reads animals             sees 1, owns 1
+--   other household reads household_members   sees 1, owns 1
+--
+-- The real household holds thirteen animals and two members. The probe member
+-- saw one of each — their own — and none of the rest. That is the sentence a
+-- keeper cares about, observed rather than argued.
+--
+-- The other nineteen rows read "sees 0, owns 0", which is consistent with
+-- correct scoping and proves nothing by itself: the probe household holds no
+-- feeding logs, no enclosures, no expenses. They stay because the equality test
+-- is generic — the day the probe is given one of those rows, that relation
+-- starts carrying evidence too, with no change to this file.
+--
+-- Check 6's first attempt did not get as far as a verdict: the probe household
+-- would not build, because households.created_by is NOT NULL with no default
+-- and the insert did not supply it. The check reported CHECK rather than a
+-- pass, which is the behaviour the CHECK verdict exists for, and the fixture
+-- now carries the same column so scripts/check-rls-test.sh says so first.
 --
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
