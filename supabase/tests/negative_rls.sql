@@ -21,20 +21,23 @@
 -- PostgREST would have set, which is the only way `auth.uid()` returns
 -- anything and the only way the policies are consulted at all.
 --
--- ── Why there is no second account here ─────────────────────────────────────
+-- ── The two people this tests as ────────────────────────────────────────────
 --
--- Both users in auth.users are active members of the one household, so there
--- is no "other household" to read from. The stranger is therefore a uuid that
--- belongs to nothing — which tests the same predicate. Every policy scopes
--- through app_is_household_member(household_id), and that is false for a
--- non-member whether they belong to another household or to none at all.
+-- A stranger, first: a uuid that belongs to nothing. Every policy scopes
+-- through app_is_household_member(household_id), which is false for them, so
+-- every household-scoped relation must come back empty.
 --
--- That does leave one thing unproven, and it is worth being precise about:
--- this shows a stranger sees nothing, not that a member of household B sees
--- nothing of household A. Those go through the same function and the same
--- policy expression, so the case is strong, but it is an argument rather than
--- an observation. Proving it outright needs a second household with a real
--- member, which is a fixture this database does not have.
+-- Then a member of a different household, which is the sentence a keeper
+-- actually cares about — not "somebody with no account sees nothing" but "the
+-- other person with an account cannot see my animals". There is no second
+-- household in this database to borrow, so check 6 builds one: a user, a
+-- household, a membership and one animal, inside the transaction that is
+-- rolled back. Nothing survives it.
+--
+-- That check is generic and does not need to know what it inserted. For every
+-- household-scoped relation, what the second member can see must equal what
+-- their own household holds. Larger means they are reading somebody else, and
+-- the row says so: "sees 3 but owns only 1 — reading another household".
 --
 -- ── A note on formatting, so nobody tidies it back ──────────────────────────
 --
@@ -70,6 +73,34 @@
 -- them; the control could not run, so scoping is demonstrated on the fourteen
 -- that hold rows.
 --
+-- ── Run against production on 1 October 2026, with check 6 ─────────────────
+--
+-- 62 checks, 0 leaks, 0 blind spots, 0 unresolved. Twenty-one relations this
+-- time rather than twenty-two: equipment is gone, which is 0008 confirmed from
+-- outside the migration that did it.
+--
+-- Check 6 is the one this run was for, and two of its twenty-one rows are the
+-- ones carrying evidence:
+--
+--   other household reads animals             sees 1, owns 1
+--   other household reads household_members   sees 1, owns 1
+--
+-- The real household holds thirteen animals and two members. The probe member
+-- saw one of each — their own — and none of the rest. That is the sentence a
+-- keeper cares about, observed rather than argued.
+--
+-- The other nineteen rows read "sees 0, owns 0", which is consistent with
+-- correct scoping and proves nothing by itself: the probe household holds no
+-- feeding logs, no enclosures, no expenses. They stay because the equality test
+-- is generic — the day the probe is given one of those rows, that relation
+-- starts carrying evidence too, with no change to this file.
+--
+-- Check 6's first attempt did not get as far as a verdict: the probe household
+-- would not build, because households.created_by is NOT NULL with no default
+-- and the insert did not supply it. The check reported CHECK rather than a
+-- pass, which is the behaviour the CHECK verdict exists for, and the fixture
+-- now carries the same column so scripts/check-rls-test.sh says so first.
+--
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
 -- One row per check, with a verdict. The final statement raises an exception
@@ -99,7 +130,7 @@ create temp table rls_result (seq serial, check_name text, detail text, verdict 
 -- declare is one line for the same reason every statement is. See the note
 -- above about the editor.
 do $$
-declare stranger uuid := '00000000-0000-0000-0000-0000000000ff'; member_id uuid; household uuid; tbl text; viewopts text; n bigint; leaked int := 0; blind int := 0; unresolved int := 0; stranger_exists boolean := false;
+declare stranger uuid := '00000000-0000-0000-0000-0000000000ff'; other_user uuid := '00000000-0000-0000-0000-0000000000bb'; probe_household uuid := '00000000-0000-0000-0000-0000000000cc'; theirs bigint; second_household_built boolean := false; member_id uuid; household uuid; tbl text; viewopts text; n bigint; leaked int := 0; blind int := 0; unresolved int := 0; stranger_exists boolean := false;
 begin
   select hm.user_id, hm.household_id into member_id, household from public.household_members hm where hm.status = 'active' order by hm.joined_at nulls last limit 1;
 
@@ -289,6 +320,64 @@ begin
     end if;
   end;
 
+  -- ── 6. A member of ANOTHER household ─────────────────────────────────────
+  -- The thing every earlier version of this file said it could not show. The
+  -- stranger above belongs to nothing, which tests the same predicate but is
+  -- not the same sentence: what a keeper wants to know is that the other
+  -- person with an account cannot see their animals.
+  --
+  -- There is no second household to borrow, so one is built here — a user, a
+  -- household, a membership and one animal — inside the transaction that is
+  -- rolled back. Nothing survives.
+  --
+  -- The check is generic and does not need to know what was inserted: for
+  -- every household-scoped relation, what this member can see must equal what
+  -- their own household holds. Larger means they are reading somebody else.
+  --
+  -- households.created_by is NOT NULL with no default, so the insert has to
+  -- supply it. The first version of this check did not, and production refused
+  -- the fixture with "null value in column created_by" — reported honestly as
+  -- CHECK rather than as a pass, but still a round trip spent on a column
+  -- database.types.ts had recorded all along. scripts/check-fixture-shape.mjs
+  -- now holds the test fixture to the same NOT NULL columns, so the next one
+  -- of these fails locally instead.
+  begin
+    insert into auth.users (id) values (other_user);
+    insert into public.households (id, name, created_by) values (probe_household, 'RLS probe household', other_user);
+    insert into public.household_members (household_id, user_id, role, status) values (probe_household, other_user, 'owner', 'active');
+    insert into public.animals (household_id, user_id, name, species, is_active) values (probe_household, other_user, 'RLS probe animal', 'Test', true);
+    second_household_built := true;
+  exception when others then
+    -- auth.users and households are not ours to understand in detail. If the
+    -- fixture cannot be built, say so rather than reporting a pass.
+    second_household_built := false;
+    insert into rls_result (check_name, detail, verdict) values ('member of another household', format('could not build a second household to test with — inconclusive: %s', sqlerrm), 'CHECK');
+    unresolved := unresolved + 1;
+  end;
+
+  if second_household_built then
+    for tbl in select c.relname from pg_class c join pg_namespace ns on ns.oid = c.relnamespace join pg_attribute a on a.attrelid = c.oid and a.attname = 'household_id' where ns.nspname = 'public' and c.relkind in ('r','v') and not a.attisdropped order by c.relname loop
+      execute format('select count(*) from public.%I where household_id = %L', tbl, probe_household) into theirs;
+      perform set_config('request.jwt.claims', format('{"sub":"%s","role":"authenticated"}', other_user), true);
+      perform set_config('request.jwt.claim.sub', other_user::text, true);
+      execute 'set local role authenticated';
+      begin
+        execute format('select count(*) from public.%I', tbl) into n;
+        execute 'reset role';
+        if n = theirs then
+          insert into rls_result (check_name, detail, verdict) values (format('other household reads %s', tbl), format('sees %s, owns %s', n, theirs), 'pass');
+        else
+          leaked := leaked + 1;
+          insert into rls_result (check_name, detail, verdict) values (format('other household reads %s', tbl), format('sees %s but owns only %s — reading another household', n, theirs), 'FAIL');
+        end if;
+      exception when insufficient_privilege then
+        execute 'reset role';
+        unresolved := unresolved + 1;
+        insert into rls_result (check_name, detail, verdict) values (format('other household reads %s', tbl), format('no SELECT grant for authenticated: %s', sqlerrm), 'CHECK');
+      end;
+    end loop;
+  end if;
+
   insert into rls_result (check_name, detail, verdict) values ('SUMMARY', format('%s leak(s), %s blind spot(s), %s unresolved', leaked, blind, unresolved), case when leaked = 0 and blind = 0 and unresolved = 0 then 'pass' else 'FAIL' end);
 end $$;
 
@@ -302,12 +391,16 @@ select seq, check_name, detail, verdict from rls_result order by seq;
 -- `with check (true)`, and called the run a pass. A result that proves nothing
 -- has to read as "not proven" rather than as "fine".
 do $$
-declare failed int; unresolved int;
+declare failed int; unresolved int; detail text;
 begin
   select count(*) filter (where verdict = 'FAIL'), count(*) filter (where verdict = 'CHECK') into failed, unresolved from rls_result;
-
+  -- The message carries the failing rows, not just a count. An exception
+  -- replaces the result table in the Supabase SQL editor rather than appearing
+  -- beside it, so "read the table above" was advice nobody could take: the
+  -- check that exists to stop a leak being skimmed past was hiding the leak.
+  select string_agg(format('%s [%s] %s', r.verdict, r.check_name, r.detail), E'\n  ' order by r.seq) into detail from rls_result r where r.verdict in ('FAIL', 'CHECK');
   if failed > 0 or unresolved > 0 then
-    raise exception 'NEGATIVE RLS TEST NOT PASSED: % failure(s), % unresolved — read the table above', failed, unresolved;
+    raise exception E'NEGATIVE RLS TEST NOT PASSED: % failure(s), % unresolved\n  %', failed, unresolved, detail;
   end if;
   raise notice 'Negative RLS test passed.';
 end $$;

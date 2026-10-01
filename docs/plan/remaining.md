@@ -182,6 +182,30 @@ arithmetic that left is tested rather than inlined.
 
 ## The negative RLS test — run, and passed
 
+**1 October 2026, against production, with the cross-household check.** 62
+checks, 0 leaks, 0 blind spots, 0 unresolved. The run that matters, because it
+is the first one that tests as a *second keeper with an account* rather than as
+a stranger who belongs to nothing.
+
+Two of its twenty-one rows carry the evidence, and it is worth being precise
+about which, because nineteen of them do not:
+
+- **`other household reads animals`: sees 1, owns 1.** The probe household
+  holds one animal. The real household holds thirteen. A member of the probe
+  household saw their own and none of the thirteen.
+- **`other household reads household_members`: sees 1, owns 1.** Their own
+  membership row, not the real household's two.
+
+The other nineteen read `sees 0, owns 0`. That is consistent with correct
+scoping and proves nothing on its own: the probe household has no feeding logs,
+no enclosures, no expenses, so zero is the right answer either way. They are
+worth keeping because the day the probe is given one of those rows the check
+starts carrying evidence for that relation too, with no change to the file.
+
+The equality test is what makes this generic. It does not need to know what was
+inserted — `sees` must equal `owns` — so a relation added to the schema later is
+covered the day it appears.
+
 **30 September 2026, against production.** 41 checks, 0 leaks, 0 blind spots,
 0 unresolved. Twenty-two household-scoped relations returned nothing to a
 stranger; fourteen returned their rows to a member; all three write probes
@@ -205,7 +229,11 @@ Three things the run itself showed, none of them failures:
   that held rows.
 
   `weight_logs` is no longer empty — a weight was logged on 30 September to
-  check the two fixes below — so a re-run now covers fifteen.
+  check the two fixes below — so the 1 October re-run covered fifteen of
+  twenty-one, with six still empty: `breeding_records`, `exit_records`,
+  `health_events`, `incubations`, `medication_schedules` and `vet_contacts`.
+  `equipment` is absent from that run's table entirely, which is `0008`
+  confirmed from the outside.
 - **`feeder_stock` is covered, and passed.** The loops read views, and a
   separate check asks the database whether each view carries
   `security_invoker` — without it a view runs as its owner, which owns the
@@ -255,12 +283,20 @@ without `security_invoker` — and fails if any goes unnoticed. It runs in CI as
 PostgreSQL service container — so the thing that checks the test now runs on
 every pull request rather than when somebody remembers.
 
-**Still not proven:** that a member of household B cannot read household A.
-The stranger here belongs to nothing. Both cases go through the same
-`app_is_household_member(household_id)` and the same policy expression, so the
-argument is strong, but it is an argument rather than an observation, and
-proving it outright needs a second household with a real member — a fixture
-this database does not have.
+**Now proven.** The earlier runs showed only that a stranger — a uuid
+belonging to nothing — sees nothing. That is the same predicate but not the
+same sentence: what a keeper cares about is that *the other person with an
+account* cannot see their animals.
+
+There is no second household here to borrow, so check 6 builds one inside the
+rolled-back transaction: a user, a household, a membership and one animal. The
+check is generic — for every household-scoped relation, what that member can
+see must equal what their own household holds. Larger means they are reading
+somebody else.
+
+Verified against a deliberately broken schema as well as a correct one. With a
+loose read policy on `animals` the row reads `sees 3 but owns only 1 — reading
+another household`.
 
 ## The weight column, and the two fixes that depended on it
 

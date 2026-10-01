@@ -118,9 +118,10 @@ jobs:
       PGPASSWORD: postgres
     steps:
       - uses: actions/checkout@v4
-      # No npm ci: the script is bash and psql, and the runner image ships the
-      # PostgreSQL client. If a future image drops it, the script says it
-      # cannot reach the server rather than reporting a pass.
+      # No npm ci: the script is bash, psql and one node script that imports
+      # nothing outside node itself, and the runner image ships both the
+      # PostgreSQL client and node. If a future image drops psql, the script
+      # says it cannot reach the server rather than reporting a pass.
       - run: ./scripts/check-rls-test.sh
 
   schema-types:
