@@ -13,7 +13,7 @@ import {
   createVetContact, updateVetContact, deleteVetContact, recalculateLastFedAt,
   getFeedingLogs, getSheddingLogs, getWeightLogs, getAllExpensesComplete,
   getMedicationLogs, getAllFeederStockEvents, getHealthEvents,
-  getAcquisitionRecords, getExitRecords, getBreedingRecords,
+  getAcquisitionRecords, getExitRecords, getBreedingRecords, getIncubations,
   getMedicationSchedules, getFeederItems, getVetContacts, getEnclosures,
 } from '@/lib/queries'
 import { Header } from '@/components/layout/Header'
@@ -101,7 +101,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
       // out most of what the app tracks entirely.
       const [
         animals, feedingLogs, sheddingLogs, weightLogs, expenses,
-        healthEvents, acquisitions, exits, breeding,
+        healthEvents, acquisitions, exits, breeding, incubations,
         medSchedules, medLogs, feederItems, stockEvents, vets, enclosures,
       ] = await Promise.all([
         getAnimals(householdId),
@@ -113,6 +113,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
         getAcquisitionRecords(householdId),
         getExitRecords(householdId),
         getBreedingRecords(householdId),
+        getIncubations(householdId),
         getMedicationSchedules(householdId),
         getMedicationLogs(householdId),
         getFeederItems(householdId),
@@ -191,6 +192,20 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
         'Clutch size': r.clutch_size ?? '', 'Eggs fertile': r.eggs_fertile ?? '',
         'Hatch date': r.hatch_date ?? '', Notes: r.notes ?? '',
       })), 'Breeding')
+
+      // Incubations export beside breeding because this file's whole point is
+      // that the backup holds everything the app tracks. A table with a screen
+      // and no sheet is the gap the header comment above describes.
+      sheet((incubations ?? []).map((r) => ({
+        Animal: animalName(r), Start: r.start_date,
+        'Expected hatch': r.expected_hatch_date ?? '',
+        'Actual hatch': r.actual_hatch_date ?? '',
+        'Clutch size': r.clutch_size ?? '', 'Eggs fertile': r.eggs_fertile ?? '',
+        Hatchlings: r.hatchlings ?? '',
+        'Temp (C)': r.temperature_c ?? '', 'Humidity (%)': r.humidity_percent ?? '',
+        Medium: r.incubation_medium ?? '', Outcome: r.outcome ?? '',
+        Notes: r.notes ?? '',
+      })), 'Incubation')
 
       sheet((medSchedules ?? []).map((m) => ({
         Animal: animalName(m), Medication: m.name, Dosage: m.dosage ?? '',

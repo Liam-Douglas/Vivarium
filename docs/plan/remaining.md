@@ -17,6 +17,7 @@ it says what it was for.
 | `equipment` dropped, `incubations` kept | `0008` applied 30 September 2026 | `equipment` absent from the 1 October RLS run's relation list |
 | The Settings export column | fixed | `lib/latestWeights` and its tests |
 | The negative RLS test | run and passed, 1 October 2026 | 62 checks, 0 leaks, 0 blind spots, 0 unresolved |
+| The incubations UI | shipped 2 October 2026 | `lib/incubationStatus` with tests, and a render scenario that draws the section |
 
 Test counts are deliberately not in that table. The prose below quotes the
 numbers as they stood when each phase shipped, and at least one had already
@@ -24,8 +25,9 @@ rotted by the time this was written — Phase 2's "47 tests" is 57 today, becaus
 Phase 3 folded shed intervals into `lib/shedStatus` and grew it. `npm test` is
 the only count that cannot be stale.
 
-What is genuinely left is under **What is actually left**, below, and it is one
-unbuilt feature.
+Nothing is outstanding. The last unbuilt item — the incubations UI — shipped on
+2 October 2026; **What is actually left**, below, says so and why that leaves the
+list empty.
 
 ### The misreading this restructuring exists to prevent
 
@@ -42,16 +44,25 @@ file: state first, story second, everywhere.
 
 ## What is actually left
 
-**The incubations UI.** `incubations` is a designed extension of a built
-feature that was never wired to a screen — see the section on it below for why
-it was kept rather than dropped. The table exists, is scoped by RLS, and carries
-columns nothing else has (`start_date`, `expected_hatch_date`,
-`actual_hatch_date`, `temperature_c`, `humidity_percent`, `incubation_medium`,
-`hatchlings`). What is missing is the UI under the Records tab's breeding
-section. It is a feature, not exposure: nothing is wrong today, there is simply
-a table no screen reads.
+**Nothing.** The last item here was the incubations UI, and it shipped on 2
+October 2026 — `IncubationSection` under the Records tab, below Breeding, with a
+modal, a hatch on the timeline, and a sheet in the Settings export.
 
-That is the whole list.
+Everything derived is in `lib/incubationStatus`, tested, rather than inline in
+the JSX: what a record's state is, how long it has run, how long until the
+expected date, and the hatch rate. Three decisions it makes are worth knowing
+about, because each could defensibly have gone the other way:
+
+- **An actual hatch date outranks an expected one.** What happened beats what
+  was predicted.
+- **A clutch with no expected date is never overdue.** Nobody stated a target,
+  so nothing can be missed — the same reasoning that keeps a never-weighed
+  animal out of the stale-weight list.
+- **`outcome` is shown but never interpreted.** The column is free text and no
+  migration constrains it, so reading meaning into "failed" or "infertile" would
+  put a second source of truth beside the dates and let the two disagree.
+
+If something else turns up, it goes here.
 
 ## The bucket flag — observed, 2 October 2026
 
@@ -436,9 +447,11 @@ use, and columns nothing else has: `start_date`, `expected_hatch_date`,
 `hatchlings`. It is a designed extension of a built feature that was never
 wired to a screen. Dropping it would throw that design away to save nothing.
 
-If incubation tracking is ever wanted, the table is already there and already
-scoped by RLS; what is missing is the UI under the Records tab's breeding
-section.
+**It is wired up now.** The UI shipped on 2 October 2026, under the Records tab
+below Breeding — see **What is actually left** above. Keeping the table rather
+than dropping it turned out to be the cheaper decision by a wide margin: the
+feature was a component, a hook, four query functions and a pure module, with no
+migration at all.
 
 `0008` refuses rather than dropping if the table holds a row or anything
 references it. Both refusals were exercised against a local copy, along with a

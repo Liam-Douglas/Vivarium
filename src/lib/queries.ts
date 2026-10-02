@@ -457,6 +457,33 @@ export async function deleteBreedingRecord(id: string) {
   if (error) throw error
 }
 
+// ─── Incubations ─────────────────────────────────────────────────────────────
+//
+// Ordered by start_date descending to match breeding records, with id as the
+// tiebreak so two clutches started the same day do not swap places between
+// reads. lib/incubationStatus derives everything else from the columns.
+
+export async function getIncubations(householdId: string, animalId?: string) {
+  return fetchAllRows((from, to) => {
+    let query = supabase.from('incubations').select('*').eq('household_id', householdId)
+      .order('start_date', { ascending: false }).order('id', { ascending: false })
+    if (animalId) query = query.eq('animal_id', animalId)
+    return query.range(from, to)
+  })
+}
+export async function createIncubation(r: { household_id: string; animal_id: string; user_id: string; start_date: string; breeding_record_id?: string; expected_hatch_date?: string; actual_hatch_date?: string; clutch_size?: number; eggs_fertile?: number; hatchlings?: number; temperature_c?: number; humidity_percent?: number; incubation_medium?: string; outcome?: string; notes?: string }) {
+  const { error } = await supabase.from('incubations').insert(r)
+  if (error) throw error
+}
+export async function updateIncubation(id: string, r: { start_date?: string; breeding_record_id?: string | null; expected_hatch_date?: string | null; actual_hatch_date?: string | null; clutch_size?: number | null; eggs_fertile?: number | null; hatchlings?: number | null; temperature_c?: number | null; humidity_percent?: number | null; incubation_medium?: string | null; outcome?: string | null; notes?: string | null }) {
+  const { error } = await supabase.from('incubations').update(r).eq('id', id)
+  if (error) throw error
+}
+export async function deleteIncubation(id: string) {
+  const { error } = await supabase.from('incubations').delete().eq('id', id)
+  if (error) throw error
+}
+
 // ─── Feeder inventory ────────────────────────────────────────────────────────
 
 export async function getFeederItems(householdId: string) {
