@@ -11,7 +11,7 @@ it says what it was for.
 
 | Phase | State | What that rests on |
 |---|---|---|
-| 1 — Signed photo URLs, then `0002` | shipped; `0002` applied 21 September 2026 | `lib/photoPaths` and `lib/signedUrlCache`, both tested; no `getPublicUrl` anywhere in `src/` |
+| 1 — Signed photo URLs, then `0002` | shipped; `0002` applied 21 September 2026 | `lib/photoPaths` and `lib/signedUrlCache`, both tested; no `getPublicUrl` anywhere in `src/`; bucket observed private 2 October 2026 |
 | 2 — The quiet states | shipped | four pure modules, all tested |
 | 3 — AnimalDetail, slices 2 and 3 | shipped | `npm run render`, which found two live defects in the process |
 | `equipment` dropped, `incubations` kept | `0008` applied 30 September 2026 | `equipment` absent from the 1 October RLS run's relation list |
@@ -24,9 +24,8 @@ rotted by the time this was written — Phase 2's "47 tests" is 57 today, becaus
 Phase 3 folded shed intervals into `lib/shedStatus` and grew it. `npm test` is
 the only count that cannot be stale.
 
-What is genuinely left is under **What is actually left**, below, and it is
-short: one unbuilt feature, and one claim nobody has yet observed from outside
-the Supabase dashboard.
+What is genuinely left is under **What is actually left**, below, and it is one
+unbuilt feature.
 
 ### The misreading this restructuring exists to prevent
 
@@ -52,20 +51,36 @@ columns nothing else has (`start_date`, `expected_hatch_date`,
 section. It is a feature, not exposure: nothing is wrong today, there is simply
 a table no screen reads.
 
-**One claim in this file rests on nothing observable.** Everything else here can
-be checked from the repository or from a SQL run — but the `animal-photos`
-bucket's `public` flag is a Dashboard setting, and `0002` records the toggle
-being switched off on 21 September without anything having confirmed it since.
-The last line of `0002` is the query that settles it:
+That is the whole list.
 
-```sql
-select id, public from storage.buckets where id = 'animal-photos';
+## The bucket flag — observed, 2 October 2026
+
+The one claim in this file that rested on nothing observable now rests on
+something. Everything else here can be checked from the repository or from a SQL
+run, but the `animal-photos` bucket's `public` flag is a Dashboard setting, and
+`0002` recorded the toggle being switched off on 21 September 2026 without
+anything having confirmed it since. The last line of `0002` is the query that
+settles it, and it was run:
+
+```
+ id            | public
+ animal-photos | false
 ```
 
-`public` should read `false`. Worth running once, so the phase's central claim
-is an observation rather than a note someone wrote at the time. The negative RLS
-test does not cover storage, so nothing else in the suite would notice if that
-toggle were ever flipped back.
+So Phase 1 is closed on an observation rather than on a note somebody wrote at
+the time, which is the same distinction the negative RLS test was built to make
+about the table policies.
+
+**A standing gap, recorded rather than fixed.** Nothing watches that flag. The
+negative RLS test covers `public` schema relations and does not touch storage, so
+if the bucket were ever toggled public again no test in the suite would notice —
+the three bucket policies still scope to `app_is_household_member`, so a
+cross-household read stays blocked either way, but an anonymous fetch of a raw
+object URL would start working again. Extending the test to storage means
+reaching `storage.objects`, which is owned by `supabase_storage_admin` and so is
+not readable the way the rest of the suite reads `pg_class` — `storage.buckets`
+is, which is why the check above is a single query and not a loop. Worth doing if
+photo privacy ever needs to hold without a person remembering to look.
 
 ## Phase 1 — Signed photo URLs, then `0002` — shipped
 
@@ -79,7 +94,8 @@ use. 17 tests across the two pure modules as of 1 October 2026, and
 it went.
 
 The one part of this phase that nothing in the repository can confirm is the
-bucket's `public` flag — see **What is actually left** above for the query.
+bucket's `public` flag. It was read directly on 2 October 2026 and came back
+`false` — see **The bucket flag** above.
 
 ### The problem, as it stood before any of that
 
