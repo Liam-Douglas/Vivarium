@@ -15,14 +15,21 @@ coherent if you stop after any of them.
 | ✓ | Surface what already exists | M | shipped |
 | ✓ | Navigation and action parity | S | shipped |
 | ✓ | Make it responsive | L | shipped |
-| 6 | The quiet states | M | 1, 5 |
+| ✓ | The quiet states | M | shipped — see `remaining.md`, phase 2 |
+
+**All six phases are shipped.** What is left of this plan's descendants is tracked in
+`remaining.md`, which also carries the record of what each phase found.
 
 **Phase 2 note.** Folding the Feeding and Vitals tabs into Timeline was dropped: both
 hold charts (per-month feedings, the growth chart with its localStorage target-weight
 feature, and the shed-interval chart) that Timeline's event filters cannot represent.
-Tabs stay at six pending a decision on where those charts should live.
+Tabs stay at six, and that is now a decision rather than a pending one — see
+`remaining.md`, "Decisions taken".
 
 ## Defects found while planning
+
+All four were fixed; they are kept here as the record of what planning turned up.
+The present tense below describes each defect as it stood at the time.
 
 1. **Enclosure batch feed does not deduct feeder stock.** `handleBatchFeed` in
    `pages/Animals.tsx` uses the legacy `createFeedingLog` + `updateAnimal` pair while
@@ -51,5 +58,5 @@ No Supabase migration is required. `medication_logs`, `medication_schedules`,
 loops the existing RPC rather than adding `log_feedings` (decision 6); vitest was added
 early, before Phase 3 rather than before Phase 6 (decision 7).
 
-The remaining open question is where the Feeding and Vitals tab charts should live —
-see the Phase 2 note above.
+That last open question — where the Feeding and Vitals tab charts should live — is
+closed: they stay, per the Phase 2 note above.

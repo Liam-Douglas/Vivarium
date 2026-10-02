@@ -1,29 +1,116 @@
-# Remaining work
+# Remaining work, and the record of what is no longer remaining
 
-Everything still outstanding after the hardening, feeding-log, resilience,
-reminders, schema-types and follow-through plans. Ordered by exposure: the one
-item with a live security dimension first, then the last unshipped phase of the
-original build order, then the refactor that has been deferred twice on purpose.
+**All three phases below have shipped.** This file keeps them because what each
+one *found* is worth more than the plan was — but that is also what makes it
+easy to misread. Each phase section was written as a plan, so it opens by
+describing a problem in the present tense. **Those descriptions are historical.**
+The table is the current state, and each section now says what it shipped before
+it says what it was for.
 
-| | Phase | Size | Needs Liam |
-|---|---|---|---|
-| ✓ | 1 — Signed photo URLs, then `0002` | M | applied — see `0002`'s header |
-| ✓ | 2 — The quiet states | M | no |
-| ✓ | 3 — AnimalDetail, slices 2 and 3 | L | no |
+## Status, 1 October 2026
 
-## Phase 1 — Signed photo URLs, then `0002`
+| Phase | State | What that rests on |
+|---|---|---|
+| 1 — Signed photo URLs, then `0002` | shipped; `0002` applied 21 September 2026 | `lib/photoPaths` and `lib/signedUrlCache`, both tested; no `getPublicUrl` anywhere in `src/`; bucket observed private 2 October 2026 |
+| 2 — The quiet states | shipped | four pure modules, all tested |
+| 3 — AnimalDetail, slices 2 and 3 | shipped | `npm run render`, which found two live defects in the process |
+| `equipment` dropped, `incubations` kept | `0008` applied 30 September 2026 | `equipment` absent from the 1 October RLS run's relation list |
+| The Settings export column | fixed | `lib/latestWeights` and its tests |
+| The negative RLS test | run and passed, 1 October 2026 | 62 checks, 0 leaks, 0 blind spots, 0 unresolved |
 
-The photo bucket is public. Anyone holding an object URL can read that photo
-without being signed in. This has been blocked since the security work, for a
-reason that is worth restating precisely: `0002` makes the bucket private, and
-the client reads photos with `getPublicUrl()` (`queries.ts:924` and `:1130`), so
-applying it first turns every photo in the app into a broken image — existing
-rows included, because the absolute URLs already stored in `animals.photo_url`
-and `animal_photos.url` stop resolving.
+Test counts are deliberately not in that table. The prose below quotes the
+numbers as they stood when each phase shipped, and at least one had already
+rotted by the time this was written — Phase 2's "47 tests" is 57 today, because
+Phase 3 folded shed intervals into `lib/shedStatus` and grew it. `npm test` is
+the only count that cannot be stale.
 
-EXIF GPS is stripped before upload (`lib/image.ts`), so the worst case — a photo
-leaking where it was taken — is already closed. What remains is that the photos
-themselves are readable by anyone with a link.
+What is genuinely left is under **What is actually left**, below, and it is one
+unbuilt feature.
+
+### The misreading this restructuring exists to prevent
+
+On 1 October I read Phase 1's opening line — "The photo bucket is public" — as
+current state, and told Liam twice that it was the last item carrying live
+exposure, including offering to start work on it. It had been applied on 21
+September. The tick in the table said so and `0002`'s header said so; the prose
+three lines under that tick said the opposite, in the present tense, and the
+prose is what I read.
+
+A plan that outlives its execution stops being a plan and becomes a record, and
+a record that still reads as a plan will be acted on. Hence the shape of this
+file: state first, story second, everywhere.
+
+## What is actually left
+
+**The incubations UI.** `incubations` is a designed extension of a built
+feature that was never wired to a screen — see the section on it below for why
+it was kept rather than dropped. The table exists, is scoped by RLS, and carries
+columns nothing else has (`start_date`, `expected_hatch_date`,
+`actual_hatch_date`, `temperature_c`, `humidity_percent`, `incubation_medium`,
+`hatchlings`). What is missing is the UI under the Records tab's breeding
+section. It is a feature, not exposure: nothing is wrong today, there is simply
+a table no screen reads.
+
+That is the whole list.
+
+## The bucket flag — observed, 2 October 2026
+
+The one claim in this file that rested on nothing observable now rests on
+something. Everything else here can be checked from the repository or from a SQL
+run, but the `animal-photos` bucket's `public` flag is a Dashboard setting, and
+`0002` recorded the toggle being switched off on 21 September 2026 without
+anything having confirmed it since. The last line of `0002` is the query that
+settles it, and it was run:
+
+```
+ id            | public
+ animal-photos | false
+```
+
+So Phase 1 is closed on an observation rather than on a note somebody wrote at
+the time, which is the same distinction the negative RLS test was built to make
+about the table policies.
+
+**A standing gap, recorded rather than fixed.** Nothing watches that flag. The
+negative RLS test covers `public` schema relations and does not touch storage, so
+if the bucket were ever toggled public again no test in the suite would notice —
+the three bucket policies still scope to `app_is_household_member`, so a
+cross-household read stays blocked either way, but an anonymous fetch of a raw
+object URL would start working again. Extending the test to storage means
+reaching `storage.objects`, which is owned by `supabase_storage_admin` and so is
+not readable the way the rest of the suite reads `pg_class` — `storage.buckets`
+is, which is why the check above is a single query and not a loop. Worth doing if
+photo privacy ever needs to hold without a person remembering to look.
+
+## Phase 1 — Signed photo URLs, then `0002` — shipped
+
+**Shipped, and `0002` applied on 21 September 2026.** `uploadAnimalPhoto` and
+`uploadAdditionalPhoto` return the storage path rather than a URL;
+`lib/photoPaths.ts` normalises a stored value to a path whether it is already one
+or a legacy absolute URL; `lib/signedUrlCache.ts` signs in batches and caches by
+path with its expiry; `hooks/useSignedPhotoUrls.ts` is what the render sites
+use. 17 tests across the two pure modules as of 1 October 2026, and
+`getPublicUrl` appears nowhere in `src/` except inside a comment explaining why
+it went.
+
+The one part of this phase that nothing in the repository can confirm is the
+bucket's `public` flag. It was read directly on 2 October 2026 and came back
+`false` — see **The bucket flag** above.
+
+### The problem, as it stood before any of that
+
+The photo bucket **was** public: anyone holding an object URL could read that
+photo without being signed in. The work sat blocked for a reason worth restating,
+because it is why the ordering mattered — `0002` makes the bucket private, and
+the client read photos with `getPublicUrl()`, so applying it first would have
+turned every photo in the app into a broken image, existing rows included,
+because the absolute URLs already stored in `animals.photo_url` and
+`animal_photos.url` would stop resolving.
+
+EXIF GPS was already stripped before upload (`lib/image.ts`), so the worst case —
+a photo leaking where it was taken — was closed before this phase began. What
+this phase closed was that the photos themselves were readable by anyone holding
+a link.
 
 **What applying it found.** The bucket already carried three policies, each
 scoping to `bucket_id` and nothing else, so every signed-in user could read,
@@ -40,46 +127,45 @@ carried was never needed — RLS is already on. Storage policies go through the
 Dashboard. `0002` now documents that.
 
 **The client change.** Stop storing an absolute URL. `uploadAnimalPhoto` and
-`uploadAdditionalPhoto` already compute the storage path before asking for a
-URL; they should return that path instead. Rendering then resolves a path to a
-signed URL at display time.
+`uploadAdditionalPhoto` already computed the storage path before asking for a
+URL, so they return that path instead, and rendering resolves a path to a signed
+URL at display time.
 
-No data migration is needed. The path is recoverable from every URL already
-stored — it is whatever follows `/object/public/animal-photos/`. So the
-resolver takes either shape and normalises, which is the whole compatibility
-story:
+No data migration was needed. The path is recoverable from every URL already
+stored — it is whatever follows `/object/public/animal-photos/` — so the resolver
+takes either shape and normalises, which is the whole compatibility story:
 
 - `lib/photoPaths.ts` — pure, tested: given a stored value, return the storage
   path, whether that value is already a path or a legacy absolute URL. The cases
-  worth pinning are a legacy URL, a bare path, a URL with a query string, and a
-  value that is neither.
-- A resolver that signs a batch of paths and caches by path until shortly before
-  expiry. Signed URLs expire, so a cached `<img src>` that outlives its
-  signature is the obvious new failure — the cache holds the expiry, not just
+  pinned are a legacy URL, a bare path, a URL with a query string, and a value
+  that is neither.
+- `lib/signedUrlCache.ts` signs a batch of paths and caches by path until shortly
+  before expiry. Signed URLs expire, so a cached `<img src>` outliving its
+  signature was the obvious new failure — the cache holds the expiry, not just
   the URL.
 
-**Render sites.** Four: `AnimalCard` (`:28`), `AnimalDetail`'s hero (`:835`) and
-its gallery and lightbox (`:1036`), and `AnimalForm`'s preview (`:39`).
+**Render sites.** Four, reached through `hooks/useSignedPhotoUrls.ts`:
+`AnimalCard`, `AnimalDetail`'s hero, its gallery and lightbox, and `AnimalForm`'s
+preview.
 
-**Ordering, which is the part that bites.** The client change must be merged
-*and deployed* before `0002` is applied. Signing works on a public bucket, so
-the client change is safe to ship on its own and the two steps genuinely can be
-separated. Apply it first and every photo breaks
-until the deploy lands. The phase therefore ends with a step only Liam can take,
-and the migration must not be pasted early.
+**Ordering, which was the part that bit.** The client change had to be merged
+*and deployed* before `0002` was applied. Signing works on a public bucket, so
+the client change was safe to ship on its own and the two steps genuinely
+separated. Applying the migration first would have broken every photo until the
+deploy landed. That is why the phase ended with a step only Liam could take, and
+why the migration was not to be pasted early — it wasn't.
 
-## Phase 2 — The quiet states
+## Phase 2 — The quiet states — shipped
 
-The last unshipped phase of the original build order
-(`vivarium-build-order.html`, phase 6). Its dependencies — phases 1 and 5 of
-that plan — are both long shipped, so nothing blocks it.
+**Shipped: all three items**, in `lib/shedStatus.ts`, `lib/animalState.ts`,
+`lib/feederProjection.ts` and `lib/worthALook.ts`, with 47 tests between them at
+the time — 57 now, `lib/shedStatus` having grown in Phase 3.
+This was the last unshipped phase of the original build order
+(`vivarium-build-order.html`, phase 6).
 
-The reasoning still holds: the dashboard is built out of exceptions, and on a
-well-run collection that is blank most days. Three items, and the current code
-is further along than the original plan assumed.
+The reasoning that motivated it: the dashboard is built out of exceptions, and on
+a well-run collection that is blank most days.
 
-**Shipped.** All three, in `lib/shedStatus.ts`, `lib/animalState.ts`,
-`lib/feederProjection.ts` and `lib/worthALook.ts`, with 47 tests between them.
 Two things came out differently from the plan below, both deliberate:
 
 - **A never-weighed animal is not a stale weight.** It is a different condition
@@ -97,6 +183,11 @@ state of an animal, and it is what keeps "Nothing due today" from being a lie on
 an untracked collection, so it stays visible whether or not there is a queue.
 "Worth a look" is a separate section that appears only when the queue is
 empty.
+
+### The plan, and the code as it stood when it was written
+
+Line numbers below are from before the work; they are kept as written rather
+than chased, since what these paragraphs are for now is the reasoning.
 
 **"Coming up".** The queue already reaches three days ahead
 (`Dashboard.tsx:203`), so this is not a new section but a widening. Recommend
@@ -127,7 +218,14 @@ Pure arithmetic over two arrays, so it lands in `lib/feederProjection.ts` with
 tests, and the threshold stays as the fallback for items nothing is scheduled
 against.
 
-## Phase 3 — AnimalDetail, slices 2 and 3
+## Phase 3 — AnimalDetail, slices 2 and 3 — shipped
+
+**Shipped:** `lib/weightStats`, `lib/healthStats`, shed intervals folded into
+`lib/shedStatus`, and `WeightSection`, `SheddingSection`, `HealthEventsSection`
+and a shared `RecordActions` lifted out of the page. 1915 lines to 1720, and the
+arithmetic that left is tested rather than inlined.
+
+### Why it was deferred twice, and why that reasoning was wrong
 
 1908 lines holding twelve domains. Slice 1 — adopting the shared feeding editor
 — shipped and closed two defects that had stayed open precisely because the page
@@ -161,11 +259,6 @@ And the defects were not hypothetical. Rendering the page found two:
   inline one had no cap on a gap too long to be a cycle and silently depended
   on the query's newest-first order, so this card and the dashboard's "Worth a
   look" could name different dates for the same animal.
-
-Shipped: `lib/weightStats`, `lib/healthStats`, shed intervals folded into
-`lib/shedStatus`, and `WeightSection`, `SheddingSection`, `HealthEventsSection`
-and a shared `RecordActions` out of the page. 1915 lines to 1720, and the
-arithmetic that left is tested rather than inlined.
 
 ## Decisions taken
 

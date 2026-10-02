@@ -78,6 +78,23 @@
 -- identifies the owning household. app_is_household_member checks
 -- status = 'active', unlike the inline subqueries 0001 replaced.
 --
+-- ── Confirmed from the catalog on 2 October 2026 ────────────────────────────
+--
+-- The verification query at the bottom of this file was run against production:
+--
+--   id            | public
+--   animal-photos | false
+--
+-- Until then the private bucket was a note somebody wrote at the time of the
+-- toggle, which is the kind of claim the negative RLS test exists to replace
+-- with an observation. Now it is one.
+--
+-- Nothing watches it, though. supabase/tests/negative_rls.sql walks public
+-- schema relations and does not touch storage, so a bucket toggled public again
+-- would fail no test. The three policies below still scope to
+-- app_is_household_member, so a cross-household read stays blocked either way;
+-- what would come back is an anonymous fetch of a raw object URL.
+--
 -- ── Prerequisite, and why the order matters ─────────────────────────────────
 --
 -- The client had to stop reading photos through getPublicUrl() first. It now
