@@ -89,11 +89,15 @@
 -- toggle, which is the kind of claim the negative RLS test exists to replace
 -- with an observation. Now it is one.
 --
--- Nothing watches it, though. supabase/tests/negative_rls.sql walks public
--- schema relations and does not touch storage, so a bucket toggled public again
--- would fail no test. The three policies below still scope to
--- app_is_household_member, so a cross-household read stays blocked either way;
--- what would come back is an anonymous fetch of a raw object URL.
+-- Something watches it now. negative_rls.sql gained two storage checks on
+-- 6 October 2026: check 7 reads this bucket's public flag, and check 8 reads
+-- the policies below out of pg_policies and fails any that mention the bucket
+-- without consulting app_is_household_member. They are separate checks because
+-- they fail apart — exactly as this file found: a private bucket with
+-- bucket-only policies looks fixed and is not.
+--
+-- Still only as often as somebody runs the file by hand, which is true of all
+-- of its checks.
 --
 -- ── Prerequisite, and why the order matters ─────────────────────────────────
 --

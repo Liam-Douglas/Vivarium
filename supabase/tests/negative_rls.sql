@@ -39,6 +39,24 @@
 -- their own household holds. Larger means they are reading somebody else, and
 -- the row says so: "sees 3 but owns only 1 — reading another household".
 --
+-- ── And the photo bucket, which is not a table ──────────────────────────────
+--
+-- Checks 7 and 8 cover storage, which everything above does not: the rest of
+-- this file walks public-schema relations and never reaches it, so the bucket
+-- could have been flipped public and no check would have moved.
+--
+-- Two checks rather than one, because they fail apart. 0002 found the bucket
+-- carrying three policies that tested bucket_id and nothing else — so every
+-- signed-in user reached every household's folder — and recorded that making
+-- the bucket private would have closed the anonymous-link hole, left that one
+-- open, and looked like it had worked. breaks/06 and breaks/07 are those two
+-- states, and each trips exactly one of the checks while the other passes.
+--
+-- Weaker than the rest of the file, and worth saying so: storage.objects
+-- belongs to supabase_storage_admin, so its rows cannot be read here the way
+-- animals can. Check 8 reads policy text out of pg_policies rather than
+-- exercising a policy, which is why its row names what it inspected.
+--
 -- ── A note on formatting, so nobody tidies it back ──────────────────────────
 --
 -- Every statement below is on one line, however long, and that is deliberate.
@@ -130,7 +148,7 @@ create temp table rls_result (seq serial, check_name text, detail text, verdict 
 -- declare is one line for the same reason every statement is. See the note
 -- above about the editor.
 do $$
-declare stranger uuid := '00000000-0000-0000-0000-0000000000ff'; other_user uuid := '00000000-0000-0000-0000-0000000000bb'; probe_household uuid := '00000000-0000-0000-0000-0000000000cc'; theirs bigint; second_household_built boolean := false; member_id uuid; household uuid; tbl text; viewopts text; n bigint; leaked int := 0; blind int := 0; unresolved int := 0; stranger_exists boolean := false;
+declare stranger uuid := '00000000-0000-0000-0000-0000000000ff'; other_user uuid := '00000000-0000-0000-0000-0000000000bb'; probe_household uuid := '00000000-0000-0000-0000-0000000000cc'; theirs bigint; second_household_built boolean := false; member_id uuid; household uuid; tbl text; viewopts text; n bigint; leaked int := 0; blind int := 0; unresolved int := 0; stranger_exists boolean := false; bucket_public boolean; polqual text; storage_policies int := 0; storage_unscoped int := 0;
 begin
   select hm.user_id, hm.household_id into member_id, household from public.household_members hm where hm.status = 'active' order by hm.joined_at nulls last limit 1;
 
@@ -377,6 +395,66 @@ begin
       end;
     end loop;
   end if;
+
+  -- ── 7. The photo bucket is private ───────────────────────────────────────
+  -- The one claim about this app's storage that nothing watched. 0002 turned
+  -- the bucket private on 21 September 2026 and recorded it; the flag was read
+  -- back from the catalog on 2 October and was false. Neither of those is a
+  -- test, so nothing would have noticed it being flipped back.
+  --
+  -- storage.objects belongs to supabase_storage_admin and the SQL editor
+  -- cannot read its rows, but storage.buckets and pg_policies are both
+  -- readable as postgres — which is all these two checks need.
+  begin
+    select b.public into bucket_public from storage.buckets b where b.id = 'animal-photos';
+
+    if bucket_public is null then
+      unresolved := unresolved + 1;
+      insert into rls_result (check_name, detail, verdict) values ('photo bucket is private', 'no animal-photos bucket found — this test cannot say anything about it', 'CHECK');
+    elsif bucket_public then
+      leaked := leaked + 1;
+      insert into rls_result (check_name, detail, verdict) values ('photo bucket is private', 'the bucket is PUBLIC — anyone holding an object URL reads that photo without signing in', 'FAIL');
+    else
+      insert into rls_result (check_name, detail, verdict) values ('photo bucket is private', 'public = false', 'pass');
+    end if;
+  exception when others then
+    unresolved := unresolved + 1;
+    insert into rls_result (check_name, detail, verdict) values ('photo bucket is private', format('could not read storage.buckets — inconclusive: %s', sqlerrm), 'CHECK');
+  end;
+
+  -- ── 8. Storage policies scope by household, not just by bucket ───────────
+  -- The other half, and the one 0002 found the hard way. The bucket already
+  -- carried three policies that checked bucket_id and nothing else, so every
+  -- signed-in user could read, overwrite and upload into every household's
+  -- folder. Making the bucket private would have closed the anonymous hole,
+  -- left that one open, and looked like it had worked.
+  --
+  -- So: any policy that mentions the bucket must also consult
+  -- app_is_household_member. Reading the policy text rather than exercising it
+  -- because the rows are not ours to read, which is a weaker check than the
+  -- rest of this file and is why it names what it inspected.
+  begin
+    for polqual in select coalesce(p.qual, '') || ' ' || coalesce(p.with_check, '') from pg_policies p where p.schemaname = 'storage' and p.tablename = 'objects' order by p.policyname loop
+      continue when polqual not like '%animal-photos%';
+      storage_policies := storage_policies + 1;
+
+      if polqual not like '%app_is_household_member%' then
+        leaked := leaked + 1;
+        storage_unscoped := storage_unscoped + 1;
+        insert into rls_result (check_name, detail, verdict) values ('storage policies scope by household', format('a policy on the bucket checks bucket_id and nothing else — every signed-in user reaches every household folder: %s', polqual), 'FAIL');
+      end if;
+    end loop;
+
+    if storage_policies = 0 then
+      unresolved := unresolved + 1;
+      insert into rls_result (check_name, detail, verdict) values ('storage policies scope by household', 'no policy on storage.objects mentions the bucket — either they are named differently or the app cannot read photos at all', 'CHECK');
+    elsif storage_unscoped = 0 then
+      insert into rls_result (check_name, detail, verdict) values ('storage policies scope by household', format('%s policy expression(s) mention the bucket, all of them consulting app_is_household_member', storage_policies), 'pass');
+    end if;
+  exception when others then
+    unresolved := unresolved + 1;
+    insert into rls_result (check_name, detail, verdict) values ('storage policies scope by household', format('could not read pg_policies — inconclusive: %s', sqlerrm), 'CHECK');
+  end;
 
   insert into rls_result (check_name, detail, verdict) values ('SUMMARY', format('%s leak(s), %s blind spot(s), %s unresolved', leaked, blind, unresolved), case when leaked = 0 and blind = 0 and unresolved = 0 then 'pass' else 'FAIL' end);
 end $$;
