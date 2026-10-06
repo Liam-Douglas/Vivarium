@@ -1,0 +1,11 @@
+-- The photo bucket flipped back to public.
+--
+-- The policies are untouched and still scope by household, so every check that
+-- exercises the public schema passes: a stranger still reads nothing, a member
+-- still reads their own, and the cross-household probe still sees only its own
+-- animal. Nothing in the suite noticed this until check 7 existed — which is
+-- the whole reason it does.
+--
+-- What it costs in production: anyone holding an object URL fetches that photo
+-- with no account at all.
+update storage.buckets set public = true where id = 'animal-photos';

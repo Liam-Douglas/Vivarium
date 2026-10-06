@@ -18,6 +18,7 @@ it says what it was for.
 | The Settings export column | fixed | `lib/latestWeights` and its tests |
 | The negative RLS test | run and passed, 1 October 2026 | 62 checks, 0 leaks, 0 blind spots, 0 unresolved |
 | The incubations UI | shipped 2 October 2026 | `lib/incubationStatus` with tests, and a render scenario that draws the section |
+| The photo bucket is watched | checks added 6 October 2026 | two checks in `negative_rls.sql`, each proved by its own break case |
 
 Test counts are deliberately not in that table. The prose below quotes the
 numbers as they stood when each phase shipped, and at least one had already
@@ -82,16 +83,32 @@ So Phase 1 is closed on an observation rather than on a note somebody wrote at
 the time, which is the same distinction the negative RLS test was built to make
 about the table policies.
 
-**A standing gap, recorded rather than fixed.** Nothing watches that flag. The
-negative RLS test covers `public` schema relations and does not touch storage, so
-if the bucket were ever toggled public again no test in the suite would notice —
-the three bucket policies still scope to `app_is_household_member`, so a
-cross-household read stays blocked either way, but an anonymous fetch of a raw
-object URL would start working again. Extending the test to storage means
-reaching `storage.objects`, which is owned by `supabase_storage_admin` and so is
-not readable the way the rest of the suite reads `pg_class` — `storage.buckets`
-is, which is why the check above is a single query and not a loop. Worth doing if
-photo privacy ever needs to hold without a person remembering to look.
+**That gap is closed, 6 October 2026.** It was recorded here as a standing gap —
+nothing watched the flag, because the negative RLS test walked `public` schema
+relations and never reached storage. It now has two checks:
+
+- **Check 7** reads the bucket's `public` flag and fails if it is true.
+- **Check 8** reads the policies on `storage.objects` out of `pg_policies` and
+  fails any that mention the bucket without consulting
+  `app_is_household_member`.
+
+Two rather than one because **they fail apart**, which is the lesson `0002`
+learned the hard way: the bucket already carried three policies testing
+`bucket_id` and nothing else, so every signed-in user reached every household's
+folder, and making the bucket private would have closed the anonymous-link hole,
+left that one open, and looked like it had worked. `breaks/06_public_bucket.sql`
+and `breaks/07_unscoped_storage_policy.sql` are those two states, and each trips
+exactly one check while the other passes — demonstrated, not asserted.
+
+Check 8 is weaker than the rest of the file and says so in its own row: it reads
+policy *text* rather than exercising a policy, because `storage.objects` belongs
+to `supabase_storage_admin` and its rows cannot be read the way `animals` can.
+`storage.buckets` and `pg_policies` both can, as `postgres`, which is what makes
+these two checks possible at all.
+
+What has not changed: the file still only runs when somebody runs it. That is
+true of all sixty-odd checks in it, and making it continuous is a scheduled-job
+decision rather than a fix.
 
 ## Phase 1 — Signed photo URLs, then `0002` — shipped
 

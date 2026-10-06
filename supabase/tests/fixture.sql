@@ -119,6 +119,51 @@ begin
   end loop;
 end $$;
 
+-- ── A miniature of Supabase storage ─────────────────────────────────────────
+--
+-- Enough of it for negative_rls.sql to check the photo bucket: the `public`
+-- flag, and whether the policies on objects scope by household or only by
+-- bucket. Those are the two halves of what 0002 found — making the bucket
+-- private closes the anonymous-link hole and leaves the cross-household one
+-- wide open, while looking like it worked.
+--
+-- storage.objects is owned by supabase_storage_admin in a real project and is
+-- not ours to create there. Here it is an ordinary table, which is the point:
+-- the checks read pg_policies and storage.buckets, both of which postgres can
+-- read in production too.
+create schema if not exists storage;
+
+create table storage.buckets (id text primary key, public boolean not null default false);
+
+create table storage.objects (
+  id uuid primary key default gen_random_uuid(),
+  bucket_id text not null references storage.buckets(id),
+  name text not null
+);
+
+-- Supabase's helper: the object path split on '/', so [1] is the first folder.
+-- Object names are `<household_id>/<animal_id>/<file>`, so that segment is the
+-- owning household.
+create or replace function storage.foldername(name text) returns text[]
+language sql immutable as $$ select string_to_array(name, '/') $$;
+
+grant usage on schema storage to authenticated;
+grant select, insert, update on storage.objects to authenticated;
+grant select on storage.buckets to authenticated;
+
+alter table storage.objects enable row level security;
+
+create policy animal_photos_select on storage.objects for select to authenticated
+  using (bucket_id = 'animal-photos' and public.app_is_household_member(((storage.foldername(name))[1])::uuid));
+create policy animal_photos_insert on storage.objects for insert to authenticated
+  with check (bucket_id = 'animal-photos' and public.app_is_household_member(((storage.foldername(name))[1])::uuid));
+create policy animal_photos_update on storage.objects for update to authenticated
+  using (bucket_id = 'animal-photos' and public.app_is_household_member(((storage.foldername(name))[1])::uuid))
+  with check (bucket_id = 'animal-photos' and public.app_is_household_member(((storage.foldername(name))[1])::uuid));
+
+-- Private, as production has been since 21 September 2026.
+insert into storage.buckets (id, public) values ('animal-photos', false);
+
 -- Seed: one household, one active member, two animals, one feeding.
 insert into auth.users (id) values ('11111111-1111-1111-1111-111111111111');
 insert into public.households (id, name, created_by) values ('22222222-2222-2222-2222-222222222222', 'Fixture', '11111111-1111-1111-1111-111111111111');
