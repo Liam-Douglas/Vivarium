@@ -24,6 +24,7 @@ import { totalCostCents } from '@/lib/healthStats'
 import { RecordActions } from '@/components/ui/RecordActions'
 import { WeightSection } from '@/components/animals/WeightSection'
 import { SheddingSection } from '@/components/animals/SheddingSection'
+import { IncubationSection } from '@/components/animals/IncubationSection'
 import { HealthEventsSection } from '@/components/animals/HealthEventsSection'
 import { useEnclosures } from '@/hooks/useEnclosures'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
@@ -52,6 +53,8 @@ import { useExitRecords } from '@/hooks/useExitRecords'
 import type { ExitRecord } from '@/hooks/useExitRecords'
 import { useBreedingRecords } from '@/hooks/useBreedingRecords'
 import type { BreedingRecord } from '@/hooks/useBreedingRecords'
+import { useIncubations } from '@/hooks/useIncubations'
+import type { Incubation } from '@/hooks/useIncubations'
 import { useAnimalPhotos } from '@/hooks/useAnimalPhotos'
 import { useMedicationSchedules } from '@/hooks/useMedicationSchedules'
 import type { MedicationSchedule } from '@/hooks/useMedicationSchedules'
@@ -59,6 +62,7 @@ import {
   createAcquisitionRecord, updateAcquisitionRecord, deleteAcquisitionRecord,
   createExitRecord, updateExitRecord, deleteExitRecord,
   createBreedingRecord, updateBreedingRecord, deleteBreedingRecord,
+  createIncubation, updateIncubation, deleteIncubation,
   createExpense,
 } from '@/lib/queries'
 
@@ -89,6 +93,7 @@ export function AnimalDetail() {
   const { data: acquisitionRecords, refresh: refreshAcquisition } = useAcquisitionRecords(id)
   const { data: exitRecords, refresh: refreshExit } = useExitRecords(id)
   const { data: breedingRecords, refresh: refreshBreeding } = useBreedingRecords(id)
+  const { data: incubations, refresh: refreshIncubations } = useIncubations(id)
   const { data: animalPhotos, refresh: refreshPhotos } = useAnimalPhotos(id)
   // Hero and gallery signed together: they are the same bucket and often the
   // same photo, and one call beats one per thumbnail.
@@ -157,6 +162,22 @@ export function AnimalDetail() {
   const [breedHatchDate, setBreedHatchDate] = useState('')
   const [breedNotes, setBreedNotes] = useState('')
   const [savingBreed, setSavingBreed] = useState(false)
+
+  // ── Incubation state ──────────────────────────────────────────────────────
+  const [incubationOpen, setIncubationOpen] = useState(false)
+  const [editingIncubation, setEditingIncubation] = useState<Incubation | null>(null)
+  const [incStartDate, setIncStartDate] = useState(new Date().toISOString().split('T')[0])
+  const [incExpectedDate, setIncExpectedDate] = useState('')
+  const [incActualDate, setIncActualDate] = useState('')
+  const [incClutchSize, setIncClutchSize] = useState('')
+  const [incEggsFertile, setIncEggsFertile] = useState('')
+  const [incHatchlings, setIncHatchlings] = useState('')
+  const [incTemperature, setIncTemperature] = useState('')
+  const [incHumidity, setIncHumidity] = useState('')
+  const [incMedium, setIncMedium] = useState('')
+  const [incOutcome, setIncOutcome] = useState('')
+  const [incNotes, setIncNotes] = useState('')
+  const [savingIncubation, setSavingIncubation] = useState(false)
 
   // ── Photos ────────────────────────────────────────────────────────────────
   const photoInputRef = useRef<HTMLInputElement>(null)
@@ -530,6 +551,37 @@ export function AnimalDetail() {
     })
   }
 
+  // ── Incubation handlers ───────────────────────────────────────────────────
+  // num() keeps a blank field out of the write. Number('') is 0, so a plain
+  // Number() here would turn "I did not count the eggs" into "there were none",
+  // and lib/incubationStatus deliberately treats those as different facts.
+  const num = (value: string) => (value.trim() === '' ? undefined : Number(value))
+
+  function openAddIncubation() { setEditingIncubation(null); setIncStartDate(new Date().toISOString().split('T')[0]); setIncExpectedDate(''); setIncActualDate(''); setIncClutchSize(''); setIncEggsFertile(''); setIncHatchlings(''); setIncTemperature(''); setIncHumidity(''); setIncMedium(''); setIncOutcome(''); setIncNotes(''); setIncubationOpen(true) }
+  function openEditIncubation(r: Incubation) { setEditingIncubation(r); setIncStartDate(r.start_date); setIncExpectedDate(r.expected_hatch_date ?? ''); setIncActualDate(r.actual_hatch_date ?? ''); setIncClutchSize(r.clutch_size != null ? String(r.clutch_size) : ''); setIncEggsFertile(r.eggs_fertile != null ? String(r.eggs_fertile) : ''); setIncHatchlings(r.hatchlings != null ? String(r.hatchlings) : ''); setIncTemperature(r.temperature_c != null ? String(r.temperature_c) : ''); setIncHumidity(r.humidity_percent != null ? String(r.humidity_percent) : ''); setIncMedium(r.incubation_medium ?? ''); setIncOutcome(r.outcome ?? ''); setIncNotes(r.notes ?? ''); setIncubationOpen(true) }
+  async function handleSaveIncubation() {
+    if (!user || !householdId || !id) return
+    setSavingIncubation(true)
+    try {
+      if (editingIncubation) {
+        await updateIncubation(editingIncubation.id, { start_date: incStartDate, expected_hatch_date: incExpectedDate || null, actual_hatch_date: incActualDate || null, clutch_size: num(incClutchSize) ?? null, eggs_fertile: num(incEggsFertile) ?? null, hatchlings: num(incHatchlings) ?? null, temperature_c: num(incTemperature) ?? null, humidity_percent: num(incHumidity) ?? null, incubation_medium: incMedium || null, outcome: incOutcome || null, notes: incNotes || null })
+        showToast('Incubation updated', 'success')
+      } else {
+        await createIncubation({ household_id: householdId, animal_id: id, user_id: user.id, start_date: incStartDate, expected_hatch_date: incExpectedDate || undefined, actual_hatch_date: incActualDate || undefined, clutch_size: num(incClutchSize), eggs_fertile: num(incEggsFertile), hatchlings: num(incHatchlings), temperature_c: num(incTemperature), humidity_percent: num(incHumidity), incubation_medium: incMedium || undefined, outcome: incOutcome || undefined, notes: incNotes || undefined })
+        showToast('Incubation recorded', 'success')
+      }
+      refreshIncubations(); setIncubationOpen(false)
+    } catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    finally { setSavingIncubation(false) }
+  }
+  function handleDeleteIncubation(r: Incubation) {
+    requestConfirm('Delete incubation', 'This incubation record will be permanently deleted.', async () => {
+      setConfirmDialog(null)
+      try { await deleteIncubation(r.id); refreshIncubations(); showToast('Deleted', 'success') }
+      catch (e) { showToast(e instanceof Error ? e.message : (e as { message?: string })?.message ?? 'Error', 'error') }
+    })
+  }
+
   function handleDeactivate() {
     if (!id) return
     requestConfirm(
@@ -610,6 +662,10 @@ export function AnimalDetail() {
     acquisitionRecords.forEach((l) => events.push({ id: `a-${l.id}`, date: new Date(l.acquired_at), type: 'acquisition', icon: '🏷️', label: 'Acquired', detail: l.source_name ?? l.source ?? '', color: '#8fbe5a' }))
     exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: '🚪', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: '#c45a5a' }))
     breedingRecords.forEach((l) => events.push({ id: `b-${l.id}`, date: new Date(l.pairing_date), type: 'breeding', icon: '🥚', label: l.paired_with_name ? `Paired with ${l.paired_with_name}` : 'Pairing', detail: l.outcome ?? '', color: '#a87ac4' }))
+    // Only hatches, not starts: a clutch going into the incubator is a state
+    // that lasts weeks, and the timeline is a list of moments. The section
+    // above is where a running incubation is visible.
+    incubations.filter((l) => l.actual_hatch_date).forEach((l) => events.push({ id: `i-${l.id}`, date: new Date(l.actual_hatch_date as string), type: 'breeding', icon: '🌡️', label: l.hatchlings != null ? `${l.hatchlings} hatched` : 'Clutch hatched', detail: l.outcome ?? '', color: '#a87ac4' }))
     return events.sort((a, b) => b.date.getTime() - a.date.getTime())
   })()
 
@@ -1492,6 +1548,15 @@ export function AnimalDetail() {
                 </div>
               )}
             </div>
+
+            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+
+            <IncubationSection
+              incubations={incubations}
+              onAdd={openAddIncubation}
+              onEdit={openEditIncubation}
+              onDelete={handleDeleteIncubation}
+            />
           </div>
         )}
       </div>
@@ -1558,6 +1623,33 @@ export function AnimalDetail() {
           <div className="flex gap-2">
             <Button variant="secondary" fullWidth onClick={() => setBreedingOpen(false)}>Cancel</Button>
             <Button fullWidth onClick={handleSaveBreeding} loading={savingBreed}>Save</Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Incubation modal */}
+      <Modal open={incubationOpen} onClose={() => setIncubationOpen(false)} title={editingIncubation ? 'Edit incubation' : 'Add incubation'}>
+        <div className="flex flex-col gap-4">
+          <Input label="Start date" type="date" value={incStartDate} onChange={(e) => setIncStartDate(e.target.value)} />
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Expected hatch" type="date" value={incExpectedDate} onChange={(e) => setIncExpectedDate(e.target.value)} />
+            <Input label="Actual hatch" type="date" value={incActualDate} onChange={(e) => setIncActualDate(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Input label="Clutch" type="number" min={0} value={incClutchSize} onChange={(e) => setIncClutchSize(e.target.value)} placeholder="—" />
+            <Input label="Fertile" type="number" min={0} value={incEggsFertile} onChange={(e) => setIncEggsFertile(e.target.value)} placeholder="—" />
+            <Input label="Hatched" type="number" min={0} value={incHatchlings} onChange={(e) => setIncHatchlings(e.target.value)} placeholder="—" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Input label="Temperature (°C)" type="number" step="0.1" value={incTemperature} onChange={(e) => setIncTemperature(e.target.value)} placeholder="—" />
+            <Input label="Humidity (%)" type="number" min={0} max={100} value={incHumidity} onChange={(e) => setIncHumidity(e.target.value)} placeholder="—" />
+          </div>
+          <Input label="Medium" value={incMedium} onChange={(e) => setIncMedium(e.target.value)} placeholder="Vermiculite, perlite, SIM…" />
+          <Input label="Outcome" value={incOutcome} onChange={(e) => setIncOutcome(e.target.value)} placeholder="How it went" />
+          <Textarea label="Notes" value={incNotes} onChange={(e) => setIncNotes(e.target.value)} rows={2} />
+          <div className="flex gap-2">
+            <Button variant="secondary" fullWidth onClick={() => setIncubationOpen(false)}>Cancel</Button>
+            <Button fullWidth onClick={handleSaveIncubation} loading={savingIncubation}>Save</Button>
           </div>
         </div>
       </Modal>

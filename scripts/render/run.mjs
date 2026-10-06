@@ -26,6 +26,28 @@ const SETTLE_MS = 20000
 /** How long any single Playwright action may block before the loop retries it. */
 const ACTION_TIMEOUT_MS = 2000
 
+// How long a browser teardown may take before the run gives up on it. Closing
+// is milliseconds when it works at all, so this is generous and still ends a
+// hang in seconds rather than hours.
+const CLOSE_MS = 15000
+
+/**
+ * Resolve `promise`, or give up after `ms` and say which step stalled.
+ *
+ * The runner's own waits are all bounded — actions by setDefaultTimeout, the
+ * settle loop by its deadline — but Playwright's lifecycle calls are not, and
+ * an unbounded one in CI reads as a cancelled job rather than a failing test.
+ */
+function withDeadline(promise, ms, what) {
+  let timer
+  return Promise.race([
+    promise.finally(() => clearTimeout(timer)),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`${what} did not finish within ${ms}ms`)), ms)
+    }),
+  ])
+}
+
 const args = process.argv.slice(2)
 const flags = new Set(args.filter((a) => a.startsWith('--')))
 const filters = args.filter((a) => !a.startsWith('--'))
@@ -114,6 +136,18 @@ async function main() {
       const context = await browser.newContext({
         viewport: { width: 420, height: 1000 },
         deviceScaleFactor: 2,
+        // The built page loads registerSW.js, so every context was installing
+        // the app's service worker. A registered worker keeps its context
+        // alive, and context.close() waits for it with no timeout of its own —
+        // which is how one CI run sat in `npm run render` for six hours after
+        // the ninth scenario and was killed at GitHub's job limit, reporting
+        // "cancelled" rather than pass or fail.
+        //
+        // Blocking it is not a workaround: nothing here tests offline
+        // behaviour, the scenarios assert on a first render, and a worker
+        // serving one scenario's fixtures from cache to the next would be a
+        // bug in the harness rather than a finding about the app.
+        serviceWorkers: 'block',
       })
       // Playwright waits 30 seconds on an action by default, which is longer
       // than this runner's whole settle window: a click on a button React had
@@ -191,10 +225,14 @@ async function main() {
           .filter(Boolean).map((l) => '            ' + l).join('\n') || '            (empty)'}`)
       }
 
-      await context.close()
+      // Belt and braces for the hang above: blocking the worker removes the
+      // cause we found, and this bounds the damage of any other teardown that
+      // never returns. A context left open costs one browser's memory for the
+      // rest of the run; a close that hangs costs the whole run.
+      await withDeadline(context.close(), CLOSE_MS, 'context.close()')
     }
   } finally {
-    await browser.close()
+    await withDeadline(browser.close(), CLOSE_MS, 'browser.close()').catch(() => {})
     stop()
   }
 

@@ -24,6 +24,7 @@ import type { Expense } from '@/hooks/useExpenses'
 import type { FeederItem, FeederStockEvent } from '@/hooks/useFeederInventory'
 import type { FeedingLog } from '@/hooks/useFeedingLogs'
 import type { HealthEvent } from '@/hooks/useHealthEvents'
+import type { Incubation } from '@/hooks/useIncubations'
 import type { MedicationLog } from '@/hooks/useMedicationLogs'
 import type { MedicationSchedule } from '@/hooks/useMedicationSchedules'
 import type { SheddingLog } from '@/hooks/useSheddingLogs'
@@ -58,6 +59,7 @@ export type _FeederStockEvents = Assert<RowSatisfies<TableRow<'feeder_stock_even
 // base interface is checked.
 export type _FeedingLogs = Assert<RowSatisfies<TableRow<'feeding_logs'>, Omit<FeedingLog, 'animals'>>>
 export type _HealthEvents = Assert<RowSatisfies<TableRow<'health_events'>, HealthEvent>>
+export type _Incubations = Assert<RowSatisfies<TableRow<'incubations'>, Incubation>>
 export type _MedicationLogs = Assert<RowSatisfies<TableRow<'medication_logs'>, MedicationLog>>
 export type _MedicationSchedules = Assert<RowSatisfies<TableRow<'medication_schedules'>, MedicationSchedule>>
 export type _SheddingLogs = Assert<RowSatisfies<TableRow<'shedding_logs'>, Omit<SheddingLog, 'animals'>>>

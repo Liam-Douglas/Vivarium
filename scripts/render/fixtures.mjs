@@ -144,3 +144,21 @@ export function medicationLog(scheduleId, animalId, over = {}) {
     ...over,
   }
 }
+
+/**
+ * A clutch in the incubator. Defaults to one started 40 days ago with no
+ * expected date, which lib/incubationStatus reads as running and not late —
+ * nobody stated a target, so nothing can be missed.
+ */
+export function incubation(animalId, over = {}) {
+  return {
+    id: id('incubation'), ...owned(), animal_id: animalId,
+    breeding_record_id: null,
+    start_date: daysAgo(40),
+    expected_hatch_date: null, actual_hatch_date: null,
+    clutch_size: null, eggs_fertile: null, hatchlings: null,
+    temperature_c: null, humidity_percent: null, incubation_medium: null,
+    outcome: null, notes: null, created_at: daysAgo(40),
+    ...over,
+  }
+}
