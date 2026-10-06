@@ -16,9 +16,9 @@ it says what it was for.
 | 3 — AnimalDetail, slices 2 and 3 | shipped | `npm run render`, which found two live defects in the process |
 | `equipment` dropped, `incubations` kept | `0008` applied 30 September 2026 | `equipment` absent from the 1 October RLS run's relation list |
 | The Settings export column | fixed | `lib/latestWeights` and its tests |
-| The negative RLS test | run and passed, 1 October 2026 | 62 checks, 0 leaks, 0 blind spots, 0 unresolved |
+| The negative RLS test | run and passed, 6 October 2026 | 64 checks, 0 leaks, 0 blind spots, 0 unresolved |
 | The incubations UI | shipped 2 October 2026 | `lib/incubationStatus` with tests, and a render scenario that draws the section |
-| The photo bucket is watched | checks added 6 October 2026 | two checks in `negative_rls.sql`, each proved by its own break case |
+| The photo bucket is watched | checks added and run 6 October 2026 | two checks in `negative_rls.sql`, each proved by its own break case, both passing against production |
 
 Test counts are deliberately not in that table. The prose below quotes the
 numbers as they stood when each phase shipped, and at least one had already
@@ -302,6 +302,30 @@ And the defects were not hypothetical. Rendering the page found two:
   regression on today's behaviour.
 
 ## The negative RLS test — run, and passed
+
+**6 October 2026, against production, with storage. 64 checks, 0 leaks, 0 blind
+spots, 0 unresolved.** The two new rows are the first thing this project has
+ever observed about the photo bucket:
+
+| check | detail |
+|---|---|
+| `photo bucket is private` | `public = false` |
+| `storage policies scope by household` | 3 policy expressions mention the bucket, all consulting `app_is_household_member` |
+
+Three is the count `0002` recorded — select, insert and update, each *edited in
+place* on 21 September rather than added beside the originals, because
+permissive policies are OR'd and adding beside them would have changed nothing.
+A different count here would not be a leak, but it would mean the policy set has
+moved since, and that is worth knowing.
+
+The control counts moved with ordinary use since 1 October: `feeding_logs` 320 →
+327, `shedding_logs` 78 → 79, `feeder_items` 5 → 4. That is the test reading live
+data rather than a fixture, which is why it is run by hand against production.
+
+Still six relations empty, so the control ran on fifteen of twenty-one.
+`incubations` is among them: its screen shipped on 2 October and no clutch has
+been recorded yet, so a leak would have shown but scoping is not demonstrated
+for it. It will be the first time a clutch is logged.
 
 **1 October 2026, against production, with the cross-household check.** 62
 checks, 0 leaks, 0 blind spots, 0 unresolved. The run that matters, because it

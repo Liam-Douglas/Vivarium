@@ -119,6 +119,31 @@
 -- pass, which is the behaviour the CHECK verdict exists for, and the fixture
 -- now carries the same column so scripts/check-rls-test.sh says so first.
 --
+-- ── Run against production on 6 October 2026, with storage ─────────────────
+--
+-- 64 checks, 0 leaks, 0 blind spots, 0 unresolved. The first run that says
+-- anything about the photo bucket:
+--
+--   photo bucket is private              public = false
+--   storage policies scope by household  3 policy expression(s) mention the
+--                                        bucket, all consulting
+--                                        app_is_household_member
+--
+-- Three is the number 0002 recorded — select, insert and update, each edited in
+-- place on 21 September rather than added beside the originals. A different
+-- count here would not be a leak but would mean the policy set has moved since.
+--
+-- The control counts moved with ordinary use since 1 October: feeding_logs 320
+-- to 327, shedding_logs 78 to 79, feeder_items 5 to 4. That is the test reading
+-- live data rather than a fixture, which is the whole reason it is run by hand
+-- against production.
+--
+-- Still six relations empty, so the control ran on fifteen of twenty-one:
+-- breeding_records, exit_records, health_events, incubations,
+-- medication_schedules and vet_contacts. incubations is among them because its
+-- screen shipped on 2 October and no clutch has been recorded yet — a leak
+-- would still have shown, but scoping is not demonstrated for it.
+--
 -- ── Reading the result ──────────────────────────────────────────────────────
 --
 -- One row per check, with a verdict. The final statement raises an exception
