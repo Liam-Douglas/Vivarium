@@ -17,6 +17,7 @@ jobs:
   lint:
     name: Lint
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -29,6 +30,7 @@ jobs:
   test:
     name: Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -41,6 +43,7 @@ jobs:
   build:
     name: Typecheck & build
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -71,6 +74,13 @@ jobs:
   render:
     name: Render
     runs-on: ubuntu-latest
+    # Every job here carries a timeout because a job without one inherits
+    # GitHub's six-hour limit, and this one spent all six: a service worker the
+    # built page registers kept a browser context alive, context.close() waited
+    # on it forever, and the run was killed reporting "cancelled" — which reads
+    # as neither a pass nor a failure. The cause is fixed in run.mjs; this is so
+    # the next unbounded wait costs minutes instead of a working day.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -92,6 +102,7 @@ jobs:
   rls-test:
     name: RLS test
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # A throwaway PostgreSQL for the fixture to be built in. Nothing here
     # touches the real database — the test that runs against production is run
     # by hand, and this only checks that it would still notice a hole.
@@ -127,6 +138,7 @@ jobs:
   schema-types:
     name: Schema types
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     # Only meaningful against a base: it asks what this branch changed.
     if: github.event_name == 'pull_request'
     steps:
