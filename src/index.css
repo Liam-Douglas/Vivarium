@@ -258,6 +258,39 @@ textarea:focus-visible {
   to { opacity: 1; }
 }
 
+/* The iOS switch, drawn on a real checkbox so forms keep their semantics:
+   the thumb slides on the drawer curve and the track fills with colour. */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 51px;
+  height: 31px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--color-fill-2);
+  cursor: pointer;
+  transition: background-color 250ms var(--ease-out);
+}
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 3px 1px rgba(0, 0, 0, 0.06);
+  transition: transform 300ms var(--ease-drawer);
+}
+.switch:checked { background: var(--color-tint); }
+.switch-red:checked { background: var(--color-red); }
+.switch-orange:checked { background: var(--color-orange); }
+.switch:checked::before { transform: translateX(20px); }
+.switch:disabled { opacity: 0.4; cursor: default; }
+
 /* The Things-style check-off: the tick lands with a small overshoot. */
 @keyframes check-pop {
   0% { transform: scale(0.5); opacity: 0; }
@@ -272,6 +305,9 @@ textarea:focus-visible {
   /* Fewer and gentler, not none: things still fade, nothing travels. */
   .check-pop {
     animation: fade-in 200ms ease both;
+  }
+  .switch::before {
+    transition-duration: 0ms;
   }
   .sheet-panel,
   .sheet-panel[data-open] {

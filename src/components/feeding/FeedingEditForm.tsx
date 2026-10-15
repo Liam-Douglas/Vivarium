@@ -79,14 +79,14 @@ export function FeedingEditForm({ log, onSaved, onCancel }: FeedingEditFormProps
 
       <Input label="Date & time" type="datetime-local" value={fedAt} onChange={(e) => setFedAt(e.target.value)} />
 
-      <label className="flex items-center gap-3 cursor-pointer">
+      <label className="flex items-center justify-between gap-3 min-h-11 px-4 py-1.5 rounded-[10px] bg-fill cursor-pointer">
+        <span className="text-[17px] text-label">Animal refused food</span>
         <input
           type="checkbox"
           checked={refused}
           onChange={(e) => setRefused(e.target.checked)}
-          className="w-4 h-4 accent-red"
+          className="switch switch-red"
         />
-        <span className="text-sm" style={{ color: 'var(--color-label)' }}>Animal refused food</span>
       </label>
 
       <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Optional notes…" />

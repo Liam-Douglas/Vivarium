@@ -1690,9 +1690,9 @@ export function AnimalDetail() {
           <Input label="Frequency (days)" type="number" min={1} value={medFreqDays} onChange={(e) => setMedFreqDays(e.target.value)} placeholder="e.g. 1 for daily, 7 for weekly" />
           <Textarea label="Notes" value={medNotes} onChange={(e) => setMedNotes(e.target.value)} rows={2} placeholder="Instructions, side effects…" />
           {editingMed && (
-            <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={!editingMed.is_active} onChange={(e) => { updateMedicationSchedule(editingMed.id, { is_active: !e.target.checked }).then(refreshMedications) }} className="w-4 h-4 accent-red" />
-              <span className="text-sm" style={{ color: 'var(--color-label-2)' }}>Archive this medication</span>
+            <label className="flex items-center justify-between gap-3 min-h-11 px-4 py-1.5 rounded-[10px] bg-fill cursor-pointer">
+              <span className="text-[17px] text-label">Archive this medication</span>
+              <input type="checkbox" checked={!editingMed.is_active} onChange={(e) => { updateMedicationSchedule(editingMed.id, { is_active: !e.target.checked }).then(refreshMedications) }} className="switch switch-red" />
             </label>
           )}
           <div className="flex gap-2">
@@ -1787,9 +1787,9 @@ export function AnimalDetail() {
       <Modal open={shedOpen} onClose={() => setShedOpen(false)} title={editingShed ? 'Edit shed' : 'Log shed'}>
         <div className="flex flex-col gap-4">
           <Input label="Date" type="date" value={shedDate} onChange={(e) => setShedDate(e.target.value)} />
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="w-4 h-4 accent-tint" />
-            <span className="text-sm" style={{ color: 'var(--color-label)' }}>Complete shed</span>
+          <label className="flex items-center justify-between gap-3 min-h-11 px-4 py-1.5 rounded-[10px] bg-fill cursor-pointer">
+            <span className="text-[17px] text-label">Complete shed</span>
+            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="switch" />
           </label>
           <Textarea label="Notes" value={shedNotes} onChange={(e) => setShedNotes(e.target.value)} rows={2} />
           <div className="flex gap-2">
@@ -1813,9 +1813,9 @@ export function AnimalDetail() {
           <Input label="Cost (AUD)" type="number" min={0} step={0.01} value={healthCost} onChange={(e) => setHealthCost(e.target.value)} placeholder="0.00" />
           <Textarea label="Notes" value={healthNotes} onChange={(e) => setHealthNotes(e.target.value)} rows={2} />
           {!editingHealth && healthCost && Number(healthCost) > 0 && (
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={healthAddToExpenses} onChange={(e) => setHealthAddToExpenses(e.target.checked)} className="accent-tint" />
-              <span className="text-sm" style={{ color: 'var(--color-label-2)' }}>Also add to expenses</span>
+            <label className="flex items-center justify-between gap-3 min-h-11 px-4 py-1.5 rounded-[10px] bg-fill cursor-pointer">
+              <span className="text-[17px] text-label">Also add to expenses</span>
+              <input type="checkbox" checked={healthAddToExpenses} onChange={(e) => setHealthAddToExpenses(e.target.checked)} className="switch" />
             </label>
           )}
           <div className="flex gap-2">

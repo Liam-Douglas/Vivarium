@@ -907,9 +907,9 @@ export function Dashboard() {
             {animals.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
           </Select>
           <Input label="Date" type="date" value={shedDate} onChange={(e) => setShedDate(e.target.value)} />
-          <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="w-4 h-4 accent-tint" />
-            <span className="text-sm" style={{ color: 'var(--color-label)' }}>Complete shed</span>
+          <label className="flex items-center justify-between gap-3 min-h-11 px-4 py-1.5 rounded-[10px] bg-fill cursor-pointer">
+            <span className="text-[17px] text-label">Complete shed</span>
+            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="switch" />
           </label>
           <Textarea label="Notes" value={shedNotes} onChange={(e) => setShedNotes(e.target.value)} rows={2} />
           <div className="flex gap-2">

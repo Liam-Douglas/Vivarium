@@ -167,7 +167,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
 
       {/* Prey type with search */}
       <div className="relative">
-        <label className="text-sm font-medium block mb-1.5" style={{ color: 'var(--color-label-2)' }}>Prey type *</label>
+        <label htmlFor="prey-type" className="text-[13px] font-medium text-label-2 px-1 block mb-1.5">Prey type *</label>
         <input
           type="text"
           value={preyType || preySearch}
@@ -178,26 +178,25 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
           }}
           onFocus={() => setShowPreyList(true)}
           placeholder="Search prey types…"
-          className="w-full rounded-xl px-4 py-2.5 text-sm border border-separator focus:outline-none focus:border-tint"
-          style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-label)' }}
+          id="prey-type"
+          className="w-full rounded-[10px] px-3.5 py-2.5 min-h-11 text-[17px] bg-fill text-label placeholder:text-label-3 border-0 outline-none transition-shadow duration-150 focus:ring-2 focus:ring-tint"
         />
         {showPreyList && (
           <div
-            className="absolute z-20 w-full mt-1 rounded-xl overflow-auto shadow-xl"
-            style={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', maxHeight: 240 }}
+            className="absolute z-20 w-full mt-1.5 rounded-xl overflow-auto bg-surface-2 shadow-[0_12px_32px_rgba(0,0,0,0.2)]"
+            style={{ maxHeight: 240 }}
           >
             {PREY_TYPES.map((cat) => {
               const items = cat.items.filter((i) => i.name.toLowerCase().includes(preySearch.toLowerCase()))
               if (items.length === 0) return null
               return (
                 <div key={cat.category}>
-                  <div className="px-3 py-1.5 text-xs font-semibold" style={{ color: 'var(--color-label-2)' }}>{cat.category}</div>
+                  <div className="px-4 pt-2.5 pb-1 text-[13px] font-semibold text-label-2">{cat.category}</div>
                   {items.map((item) => (
                     <button
                       key={item.name}
                       type="button"
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-fill"
-                      style={{ color: 'var(--color-label)' }}
+                      className="w-full text-left px-4 min-h-11 text-[17px] text-label hover:bg-fill active:bg-fill"
                       onClick={() => {
                         setPreyType(item.name)
                         setPreySearch('')
@@ -214,8 +213,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
             {filteredPrey.length === 0 && preySearch && (
               <button
                 type="button"
-                className="w-full text-left px-4 py-2.5 text-sm hover:bg-fill"
-                style={{ color: 'var(--color-tint)' }}
+                className="w-full text-left px-4 min-h-11 text-[17px] text-tint hover:bg-fill active:bg-fill"
                 onClick={() => {
                   setPreyType(preySearch)
                   setPreySearch('')
@@ -231,7 +229,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
 
       {/* Prey weight recommendation */}
       {preyType && preyWeight && (
-        <p className="text-xs -mt-2" style={{ color: 'var(--color-tint)' }}>
+        <p className="text-[13px] -mt-2 px-1 text-tint">
           {/* The two ends round together below about 12g, and "1–1g" reads as
               a mistake rather than as advice. */}
           Recommended prey: {preyWeight.minGrams === preyWeight.maxGrams
@@ -265,14 +263,14 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
         onChange={(e) => setFedAt(e.target.value)}
       />
 
-      <label className="flex items-center gap-3 cursor-pointer">
+      <label className="flex items-center justify-between gap-3 min-h-11 px-4 py-1.5 rounded-[10px] bg-fill cursor-pointer">
+        <span className="text-[17px] text-label">Animal refused food</span>
         <input
           type="checkbox"
           checked={refused}
           onChange={(e) => setRefused(e.target.checked)}
-          className="w-4 h-4 accent-red"
+          className="switch switch-red"
         />
-        <span className="text-sm" style={{ color: 'var(--color-label)' }}>Animal refused food</span>
       </label>
 
       <Textarea
