@@ -830,7 +830,7 @@ export function Dashboard() {
         <div
           data-open={fabOpen || undefined}
           className={`fade-away fixed inset-0 z-0 transition-opacity duration-200 ease-out ${fabOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
-          style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
+          style={{ backgroundColor: 'var(--color-scrim)', backdropFilter: 'blur(2px)' }}
           onClick={() => setFabOpen(false)}
         />
 

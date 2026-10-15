@@ -4,58 +4,298 @@
   "title": "Design System: Vivarium",
   "extensions": {
     "colorMeta": {
-      "night-soil": { "role": "neutral", "displayName": "Night Soil", "canonical": "#1a1a18", "tonalRamp": ["#0d0d0c", "#1a1a18", "#242420", "#2e2e2a", "#505048", "#9f9684", "#cfc9bb", "#f0ece0"] },
-      "bark": { "role": "neutral", "displayName": "Bark", "canonical": "#242420" },
-      "moss-stone": { "role": "neutral", "displayName": "Moss Stone", "canonical": "#2e2e2a" },
-      "leaf": { "role": "primary", "displayName": "Leaf", "canonical": "#8fbe5a", "tonalRamp": ["#26331a", "#3b5228", "#557a39", "#6f9e48", "#8fbe5a", "#a8cf7e", "#c4e0a6", "#e2f0d3"] },
-      "lamp-amber": { "role": "secondary", "displayName": "Lamp Amber", "canonical": "#d4924a" },
-      "clay-red": { "role": "secondary", "displayName": "Clay Red", "canonical": "#c45a5a" },
-      "fern-green": { "role": "tertiary", "displayName": "Fern Green", "canonical": "#5a9e6a" },
-      "pond-blue": { "role": "tertiary", "displayName": "Pond Blue", "canonical": "#5a8fbe" },
-      "parchment": { "role": "neutral", "displayName": "Parchment", "canonical": "#f0ece0" },
-      "dry-grass": { "role": "neutral", "displayName": "Dry Grass", "canonical": "#a8a090" },
-      "sand": { "role": "neutral", "displayName": "Sand", "canonical": "#9f9684" },
-      "ink-shadow": { "role": "neutral", "displayName": "Ink Shadow", "canonical": "#505048" }
+      "keeper-green": {
+        "role": "primary",
+        "displayName": "Keeper Green",
+        "canonical": "#1E7A35",
+        "dark": "#30D158",
+        "token": "--color-tint"
+      },
+      "overdue-red": {
+        "role": "secondary",
+        "displayName": "Overdue Red",
+        "canonical": "#D70015",
+        "dark": "#FF453A",
+        "token": "--color-red"
+      },
+      "due-orange": {
+        "role": "secondary",
+        "displayName": "Due Orange",
+        "canonical": "#C93400",
+        "dark": "#FF9F0A",
+        "token": "--color-orange"
+      },
+      "weight-blue": {
+        "role": "tertiary",
+        "displayName": "Weight Blue",
+        "canonical": "#0040DD",
+        "dark": "#409CFF",
+        "token": "--color-blue"
+      },
+      "breeding-purple": {
+        "role": "tertiary",
+        "displayName": "Breeding Purple",
+        "canonical": "#8944AB",
+        "dark": "#BF5AF2",
+        "token": "--color-purple"
+      },
+      "grouped-background": {
+        "role": "neutral",
+        "displayName": "Grouped Background",
+        "canonical": "#F2F2F7",
+        "dark": "#000000",
+        "token": "--color-bg"
+      },
+      "cell": {
+        "role": "neutral",
+        "displayName": "Cell",
+        "canonical": "#FFFFFF",
+        "dark": "#1C1C1E",
+        "token": "--color-surface"
+      },
+      "elevated": {
+        "role": "neutral",
+        "displayName": "Elevated",
+        "canonical": "#FFFFFF",
+        "dark": "#2C2C2E",
+        "token": "--color-surface-2"
+      },
+      "label": {
+        "role": "neutral",
+        "displayName": "Label",
+        "canonical": "#000000",
+        "dark": "#FFFFFF",
+        "token": "--color-label"
+      },
+      "secondary-label": {
+        "role": "neutral",
+        "displayName": "Secondary Label",
+        "canonical": "#6C6C70",
+        "dark": "#98989F",
+        "token": "--color-label-2"
+      },
+      "tertiary-label": {
+        "role": "neutral",
+        "displayName": "Tertiary Label",
+        "canonical": "#8E8E93",
+        "dark": "#6E6E73",
+        "token": "--color-label-3"
+      }
     },
     "typographyMeta": {
-      "display": { "displayName": "Display", "purpose": "An animal's name on its profile." },
-      "headline": { "displayName": "Headline", "purpose": "Page titles and the dashboard greeting." },
-      "title": { "displayName": "Title", "purpose": "Section headings, card names, modal titles." },
-      "body": { "displayName": "Body", "purpose": "Rows, forms, descriptions." },
-      "label": { "displayName": "Label", "purpose": "Uppercase section labels and metadata." }
+      "large-title": {
+        "displayName": "Large Title",
+        "purpose": "One per screen; collapses into the bar on scroll."
+      },
+      "title-1": {
+        "displayName": "Title 1",
+        "purpose": "Big figures in summary tiles; the app name at sign-in."
+      },
+      "title-2": {
+        "displayName": "Title 2",
+        "purpose": "Compact tile figures, card and sheet titles."
+      },
+      "title-3": {
+        "displayName": "Title 3",
+        "purpose": "A screen's own section headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Every list row and field."
+      },
+      "subhead": {
+        "displayName": "Subhead",
+        "purpose": "Secondary row text, explanations, small buttons."
+      },
+      "footnote": {
+        "displayName": "Footnote",
+        "purpose": "Row subtitles, list headers and footers."
+      },
+      "caption-2": {
+        "displayName": "Caption 2",
+        "purpose": "Chart axes and the heatmap; the 11pt floor."
+      },
+      "tab-label": {
+        "displayName": "Tab label",
+        "purpose": "Tab bar only."
+      }
     },
     "shadows": [
-      { "name": "float", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "FAB, speed dial, toasts." },
-      { "name": "dialog", "value": "0 25px 50px -12px rgb(0 0 0 / 0.25)", "purpose": "Modals over a 70% black scrim." }
+      {
+        "name": "popover",
+        "value": "0 8px 24px rgba(0,0,0,0.16)",
+        "dark": "0 8px 24px rgba(0,0,0,0.5)",
+        "token": "--shadow-popover",
+        "purpose": "Menus, the prey list, toasts, chart tooltips."
+      },
+      {
+        "name": "segment",
+        "value": "0 3px 8px rgba(0,0,0,0.12), 0 3px 1px rgba(0,0,0,0.04)",
+        "purpose": "The raised segment of a segmented control."
+      },
+      {
+        "name": "app-icon",
+        "value": "0 4px 12px rgba(0,0,0,0.12)",
+        "purpose": "The brand mark at sign-in size."
+      }
     ],
     "motion": [
-      { "name": "control", "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Tailwind default transitions on buttons and cards (transition-all today)." }
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "token": "--ease-out",
+        "purpose": "Entrances, press feedback, popovers (160ms), the check-pop (320ms)."
+      },
+      {
+        "name": "ease-drawer",
+        "value": "cubic-bezier(0.32, 0.72, 0, 1)",
+        "token": "--ease-drawer",
+        "purpose": "Sheets (300ms in, 220ms out), the More sheet, switches, toasts."
+      },
+      {
+        "name": "spring-selection",
+        "value": "spring bounce 0.12 duration 0.32s",
+        "source": "src/lib/motion.ts SPRING_SELECTION",
+        "purpose": "Segmented controls and the profile's section capsule."
+      },
+      {
+        "name": "spring-push",
+        "value": "spring bounce 0 duration 0.42s",
+        "source": "src/lib/motion.ts SPRING_PUSH",
+        "purpose": "Push and pop between screens, with a 220ms fade."
+      },
+      {
+        "name": "press",
+        "value": "150ms ease-out, opacity 0.7, scale 0.98",
+        "purpose": "Buttons and pressable tiles."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "fade only",
+        "purpose": "Under prefers-reduced-motion every travel and scale drops away and the fade remains."
+      }
     ],
     "breakpoints": [
-      { "name": "sm", "value": "640px" },
-      { "name": "md", "value": "768px" },
-      { "name": "lg", "value": "1024px" }
+      {
+        "name": "sm",
+        "value": "640px",
+        "purpose": "Sheets become centred dialogs; bar buttons gain labels."
+      },
+      {
+        "name": "md",
+        "value": "768px",
+        "purpose": "Tab bar becomes the sidebar; bar buttons share the title line."
+      },
+      {
+        "name": "lg",
+        "value": "1024px",
+        "purpose": "Two-column Today and profile; 32px gutter."
+      }
     ]
   },
   "components": [
-    { "name": "Primary Button", "kind": "button", "refersTo": "button-primary", "description": "The one filled action per view.", "html": "<button class=\"ds-btn-primary\">Save feeding</button>", "css": ".ds-btn-primary{background:#8fbe5a;color:#1a1a18;border:0;border-radius:12px;padding:8px 16px;font:500 14px 'DM Sans',system-ui,sans-serif;transition:opacity 150ms}.ds-btn-primary:active{opacity:.85}.ds-btn-primary:focus-visible{outline:2px solid #8fbe5a;outline-offset:2px}" },
-    { "name": "Secondary Button", "kind": "button", "refersTo": "button-secondary", "description": "Cancel and alternate actions.", "html": "<button class=\"ds-btn-secondary\">Cancel</button>", "css": ".ds-btn-secondary{background:transparent;color:#f0ece0;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 16px;font:500 14px 'DM Sans',system-ui,sans-serif}.ds-btn-secondary:hover{background:rgba(255,255,255,.05)}.ds-btn-secondary:focus-visible{outline:2px solid #8fbe5a;outline-offset:2px}" },
-    { "name": "Feed Row Action", "kind": "custom", "refersTo": "button-primary", "description": "The tinted in-list action on the Today queue.", "html": "<button class=\"ds-feed\">Feed</button>", "css": ".ds-feed{background:rgba(143,190,90,.12);color:#8fbe5a;border:1px solid rgba(143,190,90,.3);border-radius:12px;padding:10px 14px;font:500 15px 'DM Sans',system-ui,sans-serif}.ds-feed:focus-visible{outline:2px solid #8fbe5a;outline-offset:2px}" },
-    { "name": "Text Input", "kind": "input", "refersTo": "input", "description": "Night Soil well with a Leaf focus border.", "html": "<input class=\"ds-input\" placeholder=\"Search animals…\">", "css": ".ds-input{background:#1a1a18;color:#f0ece0;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 16px;font:400 16px 'DM Sans',system-ui,sans-serif;outline:none}.ds-input:focus{border-color:#8fbe5a}" },
-    { "name": "Status Chip", "kind": "chip", "refersTo": "chip", "description": "Filter chip carrying a status tone.", "html": "<button class=\"ds-chip\">Overdue 2</button>", "css": ".ds-chip{background:transparent;color:#c45a5a;border:1px solid rgba(196,90,90,.35);border-radius:9999px;padding:6px 12px;font:500 14px 'DM Sans',system-ui,sans-serif}" },
-    { "name": "Card", "kind": "card", "refersTo": "card", "description": "Default Bark surface with a hairline.", "html": "<div class=\"ds-card\"><strong>Nagini</strong><br><span>Ball python · Pastel Clown</span></div>", "css": ".ds-card{background:#242420;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px;color:#f0ece0;font:400 14px 'DM Sans',system-ui,sans-serif}.ds-card span{color:#a8a090;font-size:12px}" }
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The one filled action per view.",
+      "html": "<button class=\"ds-btn\">Save feeding</button>",
+      "css": ".ds-btn{background:#1E7A35;color:#fff;border:0;border-radius:12px;height:44px;padding:0 16px;font:600 17px -apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;transition:opacity 150ms cubic-bezier(.23,1,.32,1),transform 150ms cubic-bezier(.23,1,.32,1)}.ds-btn:active{opacity:.7;transform:scale(.98)}.ds-btn:focus-visible{outline:2px solid #1E7A35;outline-offset:2px}"
+    },
+    {
+      "name": "Row Action Capsule",
+      "kind": "button",
+      "refersTo": "row-action-capsule",
+      "description": "The in-row action on Today's Feed now list.",
+      "html": "<button class=\"ds-cap\">Feed</button>",
+      "css": ".ds-cap{background:color-mix(in srgb,#1E7A35 14%,transparent);color:#1E7A35;border:0;border-radius:9999px;height:30px;padding:0 16px;font:600 15px -apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif}"
+    },
+    {
+      "name": "List Section",
+      "kind": "card",
+      "refersTo": "list-section",
+      "description": "An inset grouped list with a hairline inset separator.",
+      "html": "<div class=\"ds-sec\"><div class=\"ds-row\">Nagini<span>4 days overdue</span></div><div class=\"ds-row\">Kobe<span>Due today</span></div></div>",
+      "css": ".ds-sec{background:#fff;border-radius:12px;overflow:hidden;font:400 17px -apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;color:#000}.ds-row{display:flex;justify-content:space-between;align-items:center;min-height:44px;padding:0 16px;position:relative}.ds-row+.ds-row:before{content:'';position:absolute;top:0;left:16px;right:0;height:.5px;background:rgba(60,60,67,.29)}.ds-row span{font-size:15px;color:#D70015}.ds-row+.ds-row span{color:#C93400}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "text-field",
+      "description": "Filled field with a tint ring on focus.",
+      "html": "<input class=\"ds-in\" placeholder=\"Search\">",
+      "css": ".ds-in{background:rgba(118,118,128,.12);color:#000;border:0;border-radius:10px;height:44px;padding:0 14px;font:400 17px -apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;outline:none}.ds-in:focus{box-shadow:0 0 0 2px #1E7A35}"
+    },
+    {
+      "name": "Segmented Control",
+      "kind": "custom",
+      "refersTo": "segmented-control",
+      "description": "iOS segmented control; the segment slides on the selection spring.",
+      "html": "<div class=\"ds-seg\"><span class=\"on\">Animals</span><span>Enclosures</span></div>",
+      "css": ".ds-seg{display:flex;background:rgba(118,118,128,.12);border-radius:9px;padding:2px;font:600 13px -apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif}.ds-seg span{flex:1;text-align:center;padding:6px 12px;border-radius:7px}.ds-seg .on{background:#fff;box-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04)}"
+    },
+    {
+      "name": "Summary Tile",
+      "kind": "card",
+      "refersTo": "summary-tile",
+      "description": "Health-style figure tile.",
+      "html": "<div class=\"ds-tile\"><p>Overdue</p><strong>2</strong></div>",
+      "css": ".ds-tile{background:#fff;border-radius:12px;padding:12px 14px;font-family:-apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif}.ds-tile p{margin:0;font:600 15px -apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;color:#D70015}.ds-tile strong{font:700 28px/34px -apple-system,BlinkMacSystemFont,system-ui,'Segoe UI',Roboto,sans-serif;color:#000}"
+    }
   ],
   "narrative": {
-    "northStar": "The Keeper's Field Journal",
-    "overview": "Vivarium looks like a well-kept notebook used in the evening beside the enclosures: warm near-black paper, serif headings set like journal entries, and a single leaf-green ink reserved for what the keeper can act on. It is dark-only on purpose.",
-    "keyCharacteristics": ["Dark-only, warm-tinted neutrals (never pure black or blue-grey).", "Playfair Display for headings and names; DM Sans for everything a keeper reads quickly.", "One accent (leaf green) for actions and \"on schedule\"; amber and red only for urgency.", "Flat tonal layering: surfaces step up in lightness instead of casting shadows.", "Rounded, soft-cornered containers (12px) and pill chips."],
-    "rules": [
-      { "name": "The Earned Colour Rule", "body": "Amber and red appear only when an animal or task needs something.", "section": "colors" },
-      { "name": "The One Ink Rule", "body": "Leaf green marks what can be tapped or what is going well. If an element is neither, it is grey.", "section": "colors" },
-      { "name": "The Serif-For-Names Rule", "body": "Playfair is for names and headings only. Data, counts, buttons and labels are DM Sans.", "section": "typography" },
-      { "name": "The Lamp-Off Rule", "body": "Surfaces are flat at rest. Nothing glows.", "section": "elevation" }
+    "northStar": "The Native Keeper",
+    "overview": "The reptile-keeping app Apple could have shipped: iOS conventions played straight, at Things 3's level of finish, with the keeper's evening round as the only content. Calm and grey by default, colour spent only on what needs doing, light and dark from the phone.",
+    "keyCharacteristics": [
+      "iOS system conventions at full fidelity; no custom chrome.",
+      "Light and dark from the phone, with Apple's increased-contrast variants where needed for AA.",
+      "One tint, system green, for what can be tapped and what is going well.",
+      "Red and orange only for an animal or task that needs something.",
+      "Inset grouped lists and summary tiles as the containers.",
+      "SF Pro on Apple's text styles; 11pt floor."
     ],
-    "dos": ["Do keep every surface warm: Night Soil, Bark and Moss Stone, never #000 or a blue-grey.", "Do use status colour only for status, and pair it with words.", "Do set animal names and headings in Playfair Display and everything else in DM Sans.", "Do keep form controls at 16px on phones; pinch-zoom stays enabled.", "Do show loading, failed and empty as three different states."],
-    "donts": ["Don't add a light theme or bright surfaces.", "Don't use gradients, glows or decorative shadows on cards.", "Don't introduce a second accent hue for actions.", "Don't gamify (streaks, badges, celebratory motion)."]
+    "rules": [
+      {
+        "name": "The Earned Colour Rule",
+        "body": "Red and orange mean an animal or a task needs something; never a cost, category or decoration.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Tint Rule",
+        "body": "Green marks what can be tapped and what is going well; anything else is a label grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Eleven Point Floor",
+        "body": "Nothing outside the tab bar is set below 11px.",
+        "section": "typography"
+      },
+      {
+        "name": "The Figures Rule",
+        "body": "Counts, weights, money and days use tabular numerals.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Cell Rule",
+        "body": "A list section or tile never casts a shadow or carries a border.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use the semantic tokens so both appearances follow.",
+      "Do build screens from large title, grouped list sections and summary tiles.",
+      "Do keep figures tabular and on the type ramp.",
+      "Do give every motion a fade-only path under Reduce Motion, and animate transform and opacity only.",
+      "Do use the named springs and curves rather than new ones.",
+      "Do show loading, failed and empty as three different states."
+    ],
+    "donts": [
+      "Don't put a border or shadow on a list section, tile or card.",
+      "Don't carry status in a coloured stripe down a row's edge.",
+      "Don't use emoji as icons.",
+      "Don't use red or orange for anything that does not need doing.",
+      "Don't load a web font or add a second accent hue.",
+      "Don't gamify beyond the check-off."
+    ]
   }
 }
