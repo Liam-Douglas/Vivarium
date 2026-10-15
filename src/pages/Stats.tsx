@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { format, startOfYear } from 'date-fns'
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { useAnimals } from '@/hooks/useAnimals'
 import { summariseFeeding } from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
@@ -12,19 +12,6 @@ import { EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
 import { loadState } from '@/lib/loadState'
 import { LoadError } from '@/components/ui/LoadError'
 import { formatAUD } from '@/lib/format'
-
-const CATEGORY_COLORS: Record<string, string> = {
-  feeder_stock: 'var(--color-tint)',
-  veterinary: 'var(--color-red)',
-  enclosure: 'var(--color-blue)',
-  acquisition: 'var(--color-orange)',
-  supplies: '#a87ac4',
-  misc: 'var(--color-label-2)',
-}
-
-const ANIMAL_CATEGORY_COLORS = [
-  'var(--color-tint)', 'var(--color-orange)', 'var(--color-blue)', 'var(--color-red)', '#a87ac4', '#5abeaa', '#be5a8f', 'var(--color-green)',
-]
 
 export function Stats() {
   const { data: animals, loading: animalsLoading, error: animalsError, refresh: refreshAnimals } = useAnimals()
@@ -133,7 +120,7 @@ export function Stats() {
   const overdueCount = feedingSummary.overdue
 
   return (
-    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-3xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav md:pb-8 max-w-3xl mx-auto w-full">
       <Header title="Collection Stats" />
 
       {/* Every figure here is derived from animals, feedings and expenses. A
@@ -148,7 +135,7 @@ export function Stats() {
       )}
 
       {/* Summary cards */}
-      <div className="grid grid-cols-2 gap-3 mb-6">
+      <div className="grid grid-cols-2 gap-2.5 mb-8">
         <StatCard label="Animals" value={animals.length} color="var(--color-tint)" />
         <StatCard
           label="Overdue"
@@ -164,21 +151,17 @@ export function Stats() {
       {/* YTD spend */}
       {ytdTotalCents > 0 && (
         <Section title={`YTD spend — ${formatAUD(ytdTotalCents)} AUD`}>
-          <div className="flex flex-col gap-2">
-            {expenseByCategory.map(({ cat, label, amount }, i) => (
+          <div className="flex flex-col gap-3.5">
+            {expenseByCategory.map(({ cat, label, amount }) => (
               <div key={cat}>
-                <div className="flex justify-between text-xs mb-1">
-                  <span style={{ color: 'var(--color-label-2)' }}>{label}</span>
-                  <span style={{ color: 'var(--color-label)' }}>{formatAUD(Math.round(amount * 100))}</span>
+                <div className="flex justify-between text-[15px] mb-1.5">
+                  <span className="text-label">{label}</span>
+                  <span className="text-label-2 tabular-nums">{formatAUD(Math.round(amount * 100))}</span>
                 </div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-separator)' }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${(amount / (ytdTotalCents / 100)) * 100}%`,
-                      backgroundColor: CATEGORY_COLORS[cat] ?? ANIMAL_CATEGORY_COLORS[i % ANIMAL_CATEGORY_COLORS.length],
-                    }}
-                  />
+                {/* One colour: the label already says which category, and red
+                    and amber are kept for things that need doing. */}
+                <div className="h-2 rounded-full overflow-hidden bg-fill">
+                  <div className="h-full rounded-full bg-tint" style={{ width: `${(amount / (ytdTotalCents / 100)) * 100}%` }} />
                 </div>
               </div>
             ))}
@@ -191,10 +174,10 @@ export function Stats() {
         <Section title="Monthly feedings">
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={monthlyFeedingData} barCategoryGap="30%">
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
               <YAxis hide allowDecimals={false} />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
                 labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
               />
               <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="var(--color-green)" radius={[0, 0, 0, 0]} />
@@ -210,17 +193,13 @@ export function Stats() {
           <ResponsiveContainer width="100%" height={Math.max(80, animalsByCategory.length * 36)}>
             <BarChart data={animalsByCategory} layout="vertical" margin={{ left: 0, right: 24 }}>
               <XAxis type="number" hide allowDecimals={false} />
-              <YAxis type="category" dataKey="cat" tick={{ fontSize: 12, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} width={90} />
+              <YAxis type="category" dataKey="cat" tick={{ fontSize: 13, fill: 'var(--color-label)' }} axisLine={false} tickLine={false} width={90} />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
                 labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
                 formatter={(v) => [v, 'Animals']}
               />
-              <Bar isAnimationActive={false} dataKey="count" radius={[0, 4, 4, 0]}>
-                {animalsByCategory.map((entry, i) => (
-                  <Cell key={entry.cat} fill={ANIMAL_CATEGORY_COLORS[i % ANIMAL_CATEGORY_COLORS.length]} />
-                ))}
-              </Bar>
+              <Bar isAnimationActive={false} dataKey="count" radius={[0, 6, 6, 0]} fill="var(--color-tint)" barSize={20} />
             </BarChart>
           </ResponsiveContainer>
         </Section>
@@ -229,19 +208,19 @@ export function Stats() {
       {/* Top feeding streaks */}
       {topStreaks.length > 0 && (
         <Section title="Top feeding streaks">
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-3.5">
             {topStreaks.map(({ name, streak }, i) => (
               <div key={name} className="flex items-center gap-3">
-                <span className="text-xs font-semibold w-4 text-right" style={{ color: 'var(--color-label-2)' }}>{i + 1}</span>
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs mb-1">
-                    <span style={{ color: 'var(--color-label)' }}>{name}</span>
-                    <span style={{ color: 'var(--color-tint)' }}>🔥 {streak}</span>
+                <span className="text-[15px] font-semibold w-4 text-right text-label-3 tabular-nums">{i + 1}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex justify-between gap-3 text-[15px] mb-1.5">
+                    <span className="text-label truncate">{name}</span>
+                    <span className="text-tint font-semibold tabular-nums">{streak}</span>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-separator)' }}>
+                  <div className="h-2 rounded-full overflow-hidden bg-fill">
                     <div
-                      className="h-full rounded-full"
-                      style={{ width: `${Math.min(100, (streak / (topStreaks[0]?.streak || 1)) * 100)}%`, backgroundColor: 'var(--color-tint)' }}
+                      className="h-full rounded-full bg-tint"
+                      style={{ width: `${Math.min(100, (streak / (topStreaks[0]?.streak || 1)) * 100)}%` }}
                     />
                   </div>
                 </div>
@@ -256,24 +235,23 @@ export function Stats() {
   )
 }
 
+/** A summary tile in the manner of Health: the label in grey, the figure large. */
 function StatCard({ label, value, color, note }: { label: string; value: number | string; color?: string; note?: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-      <p className="text-xs mb-1" style={{ color: 'var(--color-label-2)' }}>{label}</p>
-      <p className="text-2xl font-bold" style={{ color: color ?? 'var(--color-label)' }}>{value}</p>
-      {note && <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{note}</p>}
+    <div className="rounded-xl bg-surface px-3.5 py-3">
+      <p className="text-[13px] font-semibold text-label-2">{label}</p>
+      <p className="text-[28px] leading-[34px] font-bold tabular-nums mt-0.5" style={{ color: color ?? 'var(--color-label)' }}>{value}</p>
+      {note && <p className="text-[13px] text-label-2">{note}</p>}
     </div>
   )
 }
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="mb-5">
-      <p className="text-xs font-semibold tracking-wider mb-2" style={{ color: 'var(--color-label-2)' }}>{title.toUpperCase()}</p>
-      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-        {children}
-      </div>
-    </div>
+    <section className="mb-8">
+      <h2 className="text-[20px] leading-[25px] font-bold text-label px-1 mb-2.5">{title}</h2>
+      <div className="rounded-xl bg-surface p-4">{children}</div>
+    </section>
   )
 }
 
