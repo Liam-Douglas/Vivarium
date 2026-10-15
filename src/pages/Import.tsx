@@ -765,7 +765,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
           {importError ? (
             <div className="text-center">
               <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center text-white bg-red"><Icon name="x" size={28} strokeWidth={2.6} /></span>
-              <p className="text-lg font-semibold mb-2 text-label">Import failed</p>
+              <p className="text-[20px] font-semibold mb-2 text-label">Import failed</p>
               <p className="text-[15px] mb-6 px-4 text-red">{importError}</p>
               <Button variant="secondary" onClick={() => { setStep(3); setImportError(null) }}>Go back and try again</Button>
             </div>
@@ -784,7 +784,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
               <span className={`mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center text-white ${(result.skippedFeedings + result.skippedSheds) > 0 ? 'bg-orange' : 'bg-green'}`}>
                 <Icon name={(result.skippedFeedings + result.skippedSheds) > 0 ? 'alert' : 'check'} size={28} strokeWidth={2.4} />
               </span>
-              <p className="text-lg font-semibold mb-4 text-label">Import complete</p>
+              <p className="text-[20px] font-semibold mb-4 text-label">Import complete</p>
               <div className="rounded-xl p-4 mb-4 text-left bg-surface">
                 <div className="flex flex-col gap-2">
                   <div className="flex justify-between text-[15px]"><span className="text-label-2">Animals added</span><span className="text-label">{result.animals}</span></div>

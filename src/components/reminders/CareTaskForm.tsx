@@ -90,7 +90,7 @@ export function CareTaskForm({ task, animals, enclosures, onSaved, onCancel }: C
               type="button"
               onClick={() => setKind(k)}
               aria-pressed={kind === k}
-              className="text-xs px-2 py-1 rounded-lg transition-colors"
+              className="text-[13px] px-2 py-1 rounded-lg transition-colors"
               style={{
                 backgroundColor: kind === k ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'var(--color-separator)',
                 color: kind === k ? 'var(--color-tint)' : 'var(--color-label-2)',

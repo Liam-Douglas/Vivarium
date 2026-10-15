@@ -51,7 +51,7 @@ export function ForgotPassword() {
       <AuthShell>
         <div className="rounded-2xl p-8 text-center bg-surface">
           <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)', color: 'var(--color-tint)' }}><Icon name="mail" size={28} strokeWidth={1.8} /></span>
-          <h2 className="text-xl font-semibold mb-2 text-label">
+          <h2 className="text-[22px] font-semibold mb-2 text-label">
             Check your inbox
           </h2>
           <p className="text-[15px] mb-6 text-label-2">
@@ -71,7 +71,7 @@ export function ForgotPassword() {
   return (
     <AuthShell>
       <div className="rounded-2xl p-6 bg-surface">
-        <h2 className="text-xl font-semibold mb-2 text-label">
+        <h2 className="text-[22px] font-semibold mb-2 text-label">
           Reset your password
         </h2>
         <p className="text-[15px] mb-6 text-label-2">

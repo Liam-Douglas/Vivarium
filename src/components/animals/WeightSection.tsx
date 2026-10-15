@@ -73,7 +73,7 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
                   <stop offset="95%" stopColor="var(--color-tint)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis hide domain={['auto', 'auto']} />
               <Tooltip
                 contentStyle={CHART_TOOLTIP}
@@ -82,7 +82,7 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
               />
               <Area isAnimationActive={false} type="monotone" dataKey="weight" stroke="var(--color-tint)" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
               {target && (
-                <ReferenceLine y={target} stroke="var(--color-orange)" strokeDasharray="4 3" label={{ value: `Target ${formatWeight(target)}`, position: 'insideTopRight', fontSize: 10, fill: 'var(--color-orange)' }} />
+                <ReferenceLine y={target} stroke="var(--color-orange)" strokeDasharray="4 3" label={{ value: `Target ${formatWeight(target)}`, position: 'insideTopRight', fontSize: 11, fill: 'var(--color-orange)' }} />
               )}
             </AreaChart>
           </ResponsiveContainer>

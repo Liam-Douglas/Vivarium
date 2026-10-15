@@ -18,7 +18,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
   return (
     <Modal open={open} onClose={onClose} title={`All ${FREE_ANIMAL_LIMIT} places are taken`}>
       <div className="flex flex-col gap-4">
-        <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>
+        <p className="text-[15px] text-label-2">
           The free plan holds up to {FREE_ANIMAL_LIMIT} animals per household. Nothing you have recorded is affected.
         </p>
         <Option

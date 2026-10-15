@@ -55,7 +55,7 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
           <ResponsiveContainer width="100%" height={130}>
             <BarChart data={byType} layout="vertical" margin={{ left: 8, right: 16 }}>
               <XAxis type="number" hide />
-              <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} width={80} />
+              <YAxis type="category" dataKey="type" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} width={80} />
               <Tooltip
                 contentStyle={CHART_TOOLTIP}
                 labelStyle={CHART_TOOLTIP_LABEL}

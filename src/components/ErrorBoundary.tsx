@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component<Props, State> {
       return this.props.fallback ?? (
         <div className="flex-1 flex flex-col items-center justify-center px-4 text-center min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
           <Icon name="alert" size={48} strokeWidth={1.4} className="text-label-3 mb-3 mx-auto" />
-          <h2 className="text-lg font-semibold mb-2 text-label">
+          <h2 className="text-[20px] font-semibold mb-2 text-label">
             Something went wrong
           </h2>
           <p className="text-[15px] mb-6 text-label-2">

@@ -88,7 +88,7 @@ export function OnboardingHousehold() {
       <Shell>
         <div className="w-full max-w-sm text-center">
           <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)', color: 'var(--color-tint)' }}><Icon name="clock" size={28} strokeWidth={1.8} /></span>
-          <h2 className="text-xl font-semibold mb-2 text-label">
+          <h2 className="text-[22px] font-semibold mb-2 text-label">
             Waiting for approval
           </h2>
           <p className="text-[15px] mb-2 text-label-2">
@@ -115,7 +115,7 @@ export function OnboardingHousehold() {
       <Shell>
         <div className="w-full max-w-sm text-center">
           <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 14%, transparent)', color: 'var(--color-red)' }}><Icon name="alert" size={28} strokeWidth={1.8} /></span>
-          <h2 className="text-xl font-semibold mb-2 text-label">
+          <h2 className="text-[22px] font-semibold mb-2 text-label">
             Request declined
           </h2>
           <p className="text-[15px] mb-6 text-label-2">
@@ -139,7 +139,7 @@ export function OnboardingHousehold() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <BrandMark size="lg" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-label">
+          <h1 className="text-[28px] font-bold text-label">
             Set up your collection
           </h1>
           <p className="text-[15px] mt-2 text-label-2">
@@ -178,7 +178,7 @@ export function OnboardingHousehold() {
 
         {mode === 'create' && (
           <div className="rounded-2xl p-6 bg-surface">
-            <h2 className="text-lg font-semibold mb-4 text-label">
+            <h2 className="text-[20px] font-semibold mb-4 text-label">
               Name your collection
             </h2>
             <div className="flex flex-col gap-4">
@@ -202,7 +202,7 @@ export function OnboardingHousehold() {
 
         {mode === 'join' && (
           <div className="rounded-2xl p-6 bg-surface">
-            <h2 className="text-lg font-semibold mb-4 text-label">
+            <h2 className="text-[20px] font-semibold mb-4 text-label">
               Enter invite code
             </h2>
             <div className="flex flex-col gap-4">

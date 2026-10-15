@@ -48,9 +48,9 @@ function Label({ htmlFor, children }: { htmlFor: string; children: React.ReactNo
 function Messages({ hintId, errorId, hint, error }: { hintId: string; errorId: string; hint?: string; error?: string }) {
   return (
     <>
-      {hint && !error && <p id={hintId} className="text-xs" style={{ color: 'var(--color-label-2)' }}>{hint}</p>}
+      {hint && !error && <p id={hintId} className="text-[13px] text-label-2">{hint}</p>}
       {/* role="alert" so a validation failure is announced when it appears. */}
-      {error && <p id={errorId} role="alert" className="text-xs" style={{ color: 'var(--color-red)' }}>{error}</p>}
+      {error && <p id={errorId} role="alert" className="text-[13px] text-red">{error}</p>}
     </>
   )
 }

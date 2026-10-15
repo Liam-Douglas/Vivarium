@@ -429,7 +429,7 @@ export function FeedingLog() {
                           />
                         ))}
                         {dayLogs.length > 6 && (
-                          <span className="text-label-2" style={{ fontSize: 9, lineHeight: '6px' }}>+{dayLogs.length - 6}</span>
+                          <span className="text-label-2" style={{ fontSize: 11, lineHeight: '6px' }}>+{dayLogs.length - 6}</span>
                         )}
                       </div>
                     )}

@@ -110,8 +110,8 @@ export function BottomNav() {
                 }}
               >
                 <span className="flex-1 min-w-0">
-                  <span className="block text-[15px]" style={{ color: 'var(--color-label)' }}>{link.label}</span>
-                  <span className="block text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{link.detail}</span>
+                  <span className="block text-[15px] text-label">{link.label}</span>
+                  <span className="block text-[13px] mt-0.5 text-label-2">{link.detail}</span>
                 </span>
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--color-label-2)" strokeWidth={2} className="shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

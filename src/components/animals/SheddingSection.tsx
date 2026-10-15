@@ -70,7 +70,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
           </p>
           <ResponsiveContainer width="100%" height={130}>
             <BarChart data={chart} barCategoryGap="25%">
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
                 contentStyle={CHART_TOOLTIP}

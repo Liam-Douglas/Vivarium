@@ -846,7 +846,7 @@ export function Dashboard() {
           >
             <span
               aria-hidden="true"
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
+              className="text-[13px] font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
               style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-label)', border: '1px solid var(--color-separator)' }}
             >
               {action.label}
