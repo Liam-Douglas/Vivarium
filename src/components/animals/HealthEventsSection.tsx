@@ -36,31 +36,31 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
   return (
     <div className="flex flex-col gap-4">
       <div className="grid grid-cols-2 gap-3">
-        <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs" style={{ color: '#9f9684' }}>Total events</p>
-          <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>{events.length}</p>
+        <div className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Total events</p>
+          <p className="text-base font-semibold mt-0.5" style={{ color: 'var(--color-label)' }}>{events.length}</p>
         </div>
-        <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs" style={{ color: '#9f9684' }}>Total cost</p>
-          <p className="text-base font-semibold mt-0.5" style={{ color: total > 0 ? '#d4924a' : '#f0ece0' }}>
+        <div className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Total cost</p>
+          <p className="text-base font-semibold mt-0.5" style={{ color: total > 0 ? 'var(--color-orange)' : 'var(--color-label)' }}>
             {total > 0 ? `${formatAUD(total)}` : '—'}
           </p>
         </div>
       </div>
 
       {byType.length > 0 && (
-        <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>COST BY TYPE (AUD)</p>
+        <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+          <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>COST BY TYPE (AUD)</p>
           <ResponsiveContainer width="100%" height={130}>
             <BarChart data={byType} layout="vertical" margin={{ left: 8, right: 16 }}>
               <XAxis type="number" hide />
-              <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: '#a8a090' }} axisLine={false} tickLine={false} width={80} />
+              <YAxis type="category" dataKey="type" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} width={80} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
-                labelStyle={{ color: '#a8a090', fontSize: 12 }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }}
+                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
                 formatter={(v) => [formatAUD(Math.round(Number(v) * 100)), 'Cost']}
               />
-              <Bar isAnimationActive={false} dataKey="cost" fill="#d4924a" radius={[0, 4, 4, 0]} />
+              <Bar isAnimationActive={false} dataKey="cost" fill="var(--color-orange)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -68,17 +68,17 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
 
       <div className="flex flex-col gap-2">
         {events.map((event) => (
-          <div key={event.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div key={event.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
             <div className="flex items-start gap-2">
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{event.title}</p>
-                <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{event.event_type.replace(/_/g, ' ')}</p>
-                {event.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{event.notes}</p>}
+                <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{event.title}</p>
+                <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--color-label-2)' }}>{event.event_type.replace(/_/g, ' ')}</p>
+                {event.notes && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-label-2)' }}>{event.notes}</p>}
               </div>
               <div className="text-right shrink-0 mr-1">
-                <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(event.event_date), 'd MMM yyyy')}</p>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{format(new Date(event.event_date), 'd MMM yyyy')}</p>
                 {event.cost_cents != null && (
-                  <p className="text-xs mt-0.5" style={{ color: '#d4924a' }}>{formatAUD(event.cost_cents)}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-orange)' }}>{formatAUD(event.cost_cents)}</p>
                 )}
               </div>
               <RecordActions what="health event" onEdit={() => onEdit(event)} onDelete={() => onDelete(event)} />

@@ -167,7 +167,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
 
       {/* Prey type with search */}
       <div className="relative">
-        <label className="text-sm font-medium block mb-1.5" style={{ color: '#a8a090' }}>Prey type *</label>
+        <label className="text-sm font-medium block mb-1.5" style={{ color: 'var(--color-label-2)' }}>Prey type *</label>
         <input
           type="text"
           value={preyType || preySearch}
@@ -178,26 +178,26 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
           }}
           onFocus={() => setShowPreyList(true)}
           placeholder="Search prey types…"
-          className="w-full rounded-xl px-4 py-2.5 text-sm border border-white/10 focus:outline-none focus:border-leaf"
-          style={{ backgroundColor: 'var(--color-night-soil)', color: 'var(--color-parchment)' }}
+          className="w-full rounded-xl px-4 py-2.5 text-sm border border-separator focus:outline-none focus:border-tint"
+          style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-label)' }}
         />
         {showPreyList && (
           <div
             className="absolute z-20 w-full mt-1 rounded-xl overflow-auto shadow-xl"
-            style={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', maxHeight: 240 }}
+            style={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', maxHeight: 240 }}
           >
             {PREY_TYPES.map((cat) => {
               const items = cat.items.filter((i) => i.name.toLowerCase().includes(preySearch.toLowerCase()))
               if (items.length === 0) return null
               return (
                 <div key={cat.category}>
-                  <div className="px-3 py-1.5 text-xs font-semibold" style={{ color: '#9f9684' }}>{cat.category}</div>
+                  <div className="px-3 py-1.5 text-xs font-semibold" style={{ color: 'var(--color-label-2)' }}>{cat.category}</div>
                   {items.map((item) => (
                     <button
                       key={item.name}
                       type="button"
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-white/5"
-                      style={{ color: '#f0ece0' }}
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-fill"
+                      style={{ color: 'var(--color-label)' }}
                       onClick={() => {
                         setPreyType(item.name)
                         setPreySearch('')
@@ -214,8 +214,8 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
             {filteredPrey.length === 0 && preySearch && (
               <button
                 type="button"
-                className="w-full text-left px-4 py-2.5 text-sm hover:bg-white/5"
-                style={{ color: '#8fbe5a' }}
+                className="w-full text-left px-4 py-2.5 text-sm hover:bg-fill"
+                style={{ color: 'var(--color-tint)' }}
                 onClick={() => {
                   setPreyType(preySearch)
                   setPreySearch('')
@@ -231,7 +231,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
 
       {/* Prey weight recommendation */}
       {preyType && preyWeight && (
-        <p className="text-xs -mt-2" style={{ color: '#8fbe5a' }}>
+        <p className="text-xs -mt-2" style={{ color: 'var(--color-tint)' }}>
           {/* The two ends round together below about 12g, and "1–1g" reads as
               a mistake rather than as advice. */}
           Recommended prey: {preyWeight.minGrams === preyWeight.maxGrams
@@ -270,9 +270,9 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
           type="checkbox"
           checked={refused}
           onChange={(e) => setRefused(e.target.checked)}
-          className="w-4 h-4 accent-[#c45a5a]"
+          className="w-4 h-4 accent-red"
         />
-        <span className="text-sm" style={{ color: '#f0ece0' }}>Animal refused food</span>
+        <span className="text-sm" style={{ color: 'var(--color-label)' }}>Animal refused food</span>
       </label>
 
       <Textarea

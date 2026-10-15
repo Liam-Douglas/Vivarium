@@ -27,18 +27,18 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback ?? (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 text-center min-h-dvh" style={{ backgroundColor: '#1a1a18' }}>
+        <div className="flex-1 flex flex-col items-center justify-center px-4 text-center min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
           <div className="text-5xl mb-4">🦎</div>
-          <h2 className="text-lg font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
             Something went wrong
           </h2>
-          <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
             {this.state.error?.message ?? 'An unexpected error occurred.'}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: undefined })}
             className="px-5 py-2.5 rounded-xl text-sm font-medium"
-            style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}
+            style={{ backgroundColor: 'var(--color-tint)', color: 'var(--color-bg)' }}
           >
             Try again
           </button>

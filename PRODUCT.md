@@ -47,7 +47,7 @@ Built around the keeper's actual rhythm (feeding windows judged against each ani
 
 - Name: Vivarium.
 - Voice: calm, trustworthy and a little warm. Plain, factual sentences. Not playful, not gamey (the streak badge was deliberately cut from cards).
-- Identity: dark, leaf/olive palette and the existing icon set stay unless the user approves a change.
+- Identity (decided 15 October 2026, replacing the dark leaf/olive look): **iOS native, played straight.** Apple's own conventions (SF Pro, large titles, grouped inset lists, system colours, standard tab bar and sheets) executed at full fidelity, with nothing invented on top. The craft bar is **Things 3**. Appearance follows the phone's light/dark setting. The tint is system green. The name and app icon stay.
 - Copy that states facts is not changed without the user's say-so.
 
 ## Evidence on Hand
@@ -62,10 +62,11 @@ Built around the keeper's actual rhythm (feeding windows judged against each ani
 2. **Seconds at the enclosure.** The common logging paths must be reachable and finishable one-handed on a phone without scrolling.
 3. **Urgency is earned.** Amber and red mean an animal needs something; colour is not decoration.
 4. **Shared, not social.** Household activity is visible because it prevents double feeding, not to create engagement.
-5. **Quiet by default.** Restraint in motion, colour and copy; the collection is the content.
+5. **Native, and alive.** Motion is expressive and app-like (push transitions, springy sheets, list changes that animate, a satisfying check-off when a feeding is logged), always in Apple's idiom and never gamey; colour and copy stay restrained.
 
 ## Accessibility & Inclusion
 
 - Pinch-zoom stays enabled (WCAG 1.4.4); form controls are 16px on small screens so iOS does not zoom on focus.
-- Used in low light: dark-only theme is intentional, and text contrast must hold at WCAG AA against the dark surfaces.
+- Often used in low light: the app follows the phone's appearance, so dark mode is a first-class path; text contrast must hold at WCAG AA in both appearances (Apple's increased-contrast colour variants where the standard ones fall short).
+- Reduce Motion is honoured: travel and springs give way to fades.
 - Dialogs trap focus, close on Escape and restore focus; validation errors are announced.

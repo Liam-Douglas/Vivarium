@@ -91,7 +91,7 @@ export function BatchFeedForm({ animals, onSuccess, onCancel }: BatchFeedFormPro
 
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-sm" style={{ color: '#a8a090' }}>
+      <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>
         Logs the same meal for {animals.length} animal{animals.length !== 1 ? 's' : ''}
         {animals.length <= 4 && `: ${animals.map((a) => a.name).join(', ')}`}.
       </p>

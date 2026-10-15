@@ -208,7 +208,7 @@ export function AnimalDetail() {
   async function openQr() {
     const QRCode = await import('qrcode')
     const url = `${window.location.origin}/animals/${id}`
-    const dataUrl = await QRCode.toDataURL(url, { color: { dark: '#8fbe5a', light: '#1a1a18' }, width: 240 })
+    const dataUrl = await QRCode.toDataURL(url, { color: { dark: 'var(--color-tint)', light: 'var(--color-bg)' }, width: 240 })
     setQrDataUrl(dataUrl)
     setQrOpen(true)
   }
@@ -599,7 +599,7 @@ export function AnimalDetail() {
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
-        <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+        <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-tint)', borderTopColor: 'transparent' }} />
       </div>
     )
   }
@@ -614,7 +614,7 @@ export function AnimalDetail() {
     )
   }
 
-  if (!animal) return <div className="flex-1 flex items-center justify-center" style={{ color: '#a8a090' }}>Animal not found</div>
+  if (!animal) return <div className="flex-1 flex items-center justify-center" style={{ color: 'var(--color-label-2)' }}>Animal not found</div>
 
   const age = animal.date_of_birth
     ? (() => {
@@ -656,12 +656,12 @@ export function AnimalDetail() {
   type TEvent = { id: string; date: Date; type: string; icon: string; label: string; detail: string; color: string }
   const timelineEvents: TEvent[] = (() => {
     const events: TEvent[] = []
-    feedingLogs.forEach((l) => events.push({ id: `f-${l.id}`, date: new Date(l.fed_at), type: 'feeding', icon: l.refused ? '🚫' : '🍖', label: l.refused ? 'Refused food' : `Fed ${l.prey_type}${l.prey_size ? ` (${l.prey_size})` : ''} ×${l.quantity}`, detail: l.notes ?? '', color: l.refused ? '#c45a5a' : '#5a9e6a' }))
-    sheddingLogs.forEach((l) => events.push({ id: `s-${l.id}`, date: new Date(l.shed_at), type: 'shed', icon: '🐍', label: `Shed — ${l.complete ? 'complete' : 'incomplete'}`, detail: l.notes ?? '', color: l.complete ? '#8fbe5a' : '#d4924a' }))
-    weightLogs.forEach((l) => events.push({ id: `w-${l.id}`, date: new Date(l.logged_at), type: 'weight', icon: '⚖️', label: `Weighed: ${formatWeight(l.weight_grams)}`, detail: l.notes ?? '', color: '#5a8ebe' }))
-    healthEvents.forEach((l) => events.push({ id: `h-${l.id}`, date: new Date(l.event_date), type: 'health', icon: '🏥', label: l.title, detail: `${l.event_type.replace(/_/g, ' ')}${l.cost_cents ? ` · ${formatAUD(l.cost_cents)}` : ''}`, color: '#d4924a' }))
-    acquisitionRecords.forEach((l) => events.push({ id: `a-${l.id}`, date: new Date(l.acquired_at), type: 'acquisition', icon: '🏷️', label: 'Acquired', detail: l.source_name ?? l.source ?? '', color: '#8fbe5a' }))
-    exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: '🚪', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: '#dc7a7a' }))
+    feedingLogs.forEach((l) => events.push({ id: `f-${l.id}`, date: new Date(l.fed_at), type: 'feeding', icon: l.refused ? '🚫' : '🍖', label: l.refused ? 'Refused food' : `Fed ${l.prey_type}${l.prey_size ? ` (${l.prey_size})` : ''} ×${l.quantity}`, detail: l.notes ?? '', color: l.refused ? 'var(--color-red)' : 'var(--color-green)' }))
+    sheddingLogs.forEach((l) => events.push({ id: `s-${l.id}`, date: new Date(l.shed_at), type: 'shed', icon: '🐍', label: `Shed — ${l.complete ? 'complete' : 'incomplete'}`, detail: l.notes ?? '', color: l.complete ? 'var(--color-tint)' : 'var(--color-orange)' }))
+    weightLogs.forEach((l) => events.push({ id: `w-${l.id}`, date: new Date(l.logged_at), type: 'weight', icon: '⚖️', label: `Weighed: ${formatWeight(l.weight_grams)}`, detail: l.notes ?? '', color: 'var(--color-blue)' }))
+    healthEvents.forEach((l) => events.push({ id: `h-${l.id}`, date: new Date(l.event_date), type: 'health', icon: '🏥', label: l.title, detail: `${l.event_type.replace(/_/g, ' ')}${l.cost_cents ? ` · ${formatAUD(l.cost_cents)}` : ''}`, color: 'var(--color-orange)' }))
+    acquisitionRecords.forEach((l) => events.push({ id: `a-${l.id}`, date: new Date(l.acquired_at), type: 'acquisition', icon: '🏷️', label: 'Acquired', detail: l.source_name ?? l.source ?? '', color: 'var(--color-tint)' }))
+    exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: '🚪', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: 'var(--color-red)' }))
     breedingRecords.forEach((l) => events.push({ id: `b-${l.id}`, date: new Date(l.pairing_date), type: 'breeding', icon: '🥚', label: l.paired_with_name ? `Paired with ${l.paired_with_name}` : 'Pairing', detail: l.outcome ?? '', color: '#a87ac4' }))
     // Only hatches, not starts: a clutch going into the incubator is a state
     // that lasts weeks, and the timeline is a list of moments. The section
@@ -697,7 +697,7 @@ export function AnimalDetail() {
     return {
       taken,
       total: recent.length,
-      color: rate >= 0.8 ? '#8fbe5a' : rate >= 0.5 ? '#d4924a' : '#dc7a7a',
+      color: rate >= 0.8 ? 'var(--color-tint)' : rate >= 0.5 ? 'var(--color-orange)' : 'var(--color-red)',
       lastRefusedAt: refusal ? new Date(refusal.fed_at) : null,
     }
   })()
@@ -720,10 +720,10 @@ export function AnimalDetail() {
     : null
   const daysUntilFeed = nextFeedingDue ? differenceInDays(nextFeedingDue, new Date()) : null
   const nextFeedColor = (() => {
-    if (daysUntilFeed === null) return '#f0ece0'
-    if (daysUntilFeed < 0) return '#dc7a7a'
-    if (daysUntilFeed <= 1) return '#d4924a'
-    return '#8fbe5a'
+    if (daysUntilFeed === null) return 'var(--color-label)'
+    if (daysUntilFeed < 0) return 'var(--color-red)'
+    if (daysUntilFeed <= 1) return 'var(--color-orange)'
+    return 'var(--color-tint)'
   })()
 
   // Rendered twice at different breakpoints — as functions rather than inline
@@ -740,9 +740,9 @@ export function AnimalDetail() {
             ].map(({ label, icon, action }) => (
               <button key={label} onClick={action}
                 className="py-3 rounded-xl flex flex-col items-center gap-1.5 transition-colors active:scale-95"
-                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
                 <span className="text-xl">{icon}</span>
-                <span className="text-xs font-medium" style={{ color: '#a8a090' }}>{label}</span>
+                <span className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>{label}</span>
               </button>
             ))}
           </div>
@@ -755,8 +755,8 @@ export function AnimalDetail() {
     if (!animal) return null
     return (
           <div className={`grid grid-cols-2 gap-3 ${className}`}>
-            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#9f9684' }}>Last fed</p>
+            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Last fed</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: feedingStatusColor }}>
                 {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'd MMM') : '—'}
               </p>
@@ -766,8 +766,8 @@ export function AnimalDetail() {
                 </p>
               )}
             </div>
-            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#9f9684' }}>Next feeding</p>
+            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Next feeding</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: nextFeedColor }}>
                 {nextFeedingDue ? format(nextFeedingDue, 'd MMM') : '—'}
               </p>
@@ -780,15 +780,15 @@ export function AnimalDetail() {
                 </p>
               )}
               {!nextFeedingDue && animal.feeding_frequency_days && (
-                <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>every {animal.feeding_frequency_days}d</p>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>every {animal.feeding_frequency_days}d</p>
               )}
             </div>
-            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#9f9684' }}>Current weight</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
+            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Current weight</p>
+              <p className="text-base font-semibold mt-0.5" style={{ color: 'var(--color-label)' }}>
                 {shownWeight !== null ? formatWeight(shownWeight) : '—'}
                 {weightTrend !== null && (
-                  <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#dc7a7a' }}>
+                  <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? 'var(--color-tint)' : 'var(--color-red)' }}>
                     {formatWeight(weightTrend, { signed: true })}
                   </span>
                 )}
@@ -798,7 +798,7 @@ export function AnimalDetail() {
                   <polyline
                     points={weightSparkline}
                     fill="none"
-                    stroke={weightTrend !== null && weightTrend < 0 ? '#c45a5a' : '#8fbe5a'}
+                    stroke={weightTrend !== null && weightTrend < 0 ? 'var(--color-red)' : 'var(--color-tint)'}
                     strokeWidth="1.5"
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -807,24 +807,24 @@ export function AnimalDetail() {
                 </svg>
               )}
             </div>
-            <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-xs" style={{ color: '#9f9684' }}>Last shed</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
+            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Last shed</p>
+              <p className="text-base font-semibold mt-0.5" style={{ color: 'var(--color-label)' }}>
                 {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'd MMM') : '—'}
               </p>
               {shedPrediction && (
-                <p className="text-xs mt-0.5" style={{ color: isShedOverdue(shedPrediction) ? '#d4924a' : '#9f9684' }}>
+                <p className="text-xs mt-0.5" style={{ color: isShedOverdue(shedPrediction) ? 'var(--color-orange)' : 'var(--color-label-2)' }}>
                   Next ~{format(shedPrediction.due, 'd MMM')}
                 </p>
               )}
             </div>
             {feedResponse && (
-              <div className="rounded-xl p-3 col-span-2" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Takes food</p>
+              <div className="rounded-xl p-3 col-span-2" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Takes food</p>
                 <p className="text-base font-semibold mt-0.5" style={{ color: feedResponse.color }}>
                   {feedResponse.taken} of last {feedResponse.total}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
+                <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>
                   {feedResponse.lastRefusedAt
                     ? `Last refused ${format(feedResponse.lastRefusedAt, 'd MMM yyyy')}`
                     : 'No refusals on record'}
@@ -852,32 +852,32 @@ export function AnimalDetail() {
           read the history beside it; below, it is simply the top of the page. */}
       <aside className="lg:sticky lg:top-6">
       {/* Hero */}
-      <div className="relative h-52 sm:h-64 lg:h-60 lg:rounded-xl lg:overflow-hidden" style={{ backgroundColor: '#1a1a18' }}>
+      <div className="relative h-52 sm:h-64 lg:h-60 lg:rounded-xl lg:overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
         {animal.photo_url && photoUrls.get(animal.photo_url) ? (
           <img src={photoUrls.get(animal.photo_url)} alt={animal.name} className="w-full h-full object-cover" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">🦎</div>
         )}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, #1a1a18 100%)' }} />
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, var(--color-bg) 100%)' }} />
         <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="absolute top-4 left-4 w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: '#f0ece0' }}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--color-label)' }}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
         </button>
         <button type="button" onClick={() => setEditOpen(true)} aria-label="Edit animal" className="absolute top-4 right-4 w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: '#f0ece0' }}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--color-label)' }}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
         </button>
         <button type="button" onClick={openQr} aria-label="QR label" className="absolute top-4 right-16 pointer-coarse:right-[4.25rem] w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} title="QR label">
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: '#f0ece0' }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--color-label)' }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
         </button>
       </div>
 
       <div className="px-4 -mt-6 relative z-10">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{animal.name}</h1>
-          <p className="text-sm mt-1" style={{ color: '#a8a090' }}>
+          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-label)' }}>{animal.name}</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--color-label-2)' }}>
             {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex.charAt(0).toUpperCase() + animal.sex.slice(1)}` : ''}{age ? ` · ${age}` : ''}
           </p>
           {enclosure && (
-            <p className="text-xs mt-1.5 inline-flex items-center gap-1.5" style={{ color: '#9f9684' }}>
+            <p className="text-xs mt-1.5 inline-flex items-center gap-1.5" style={{ color: 'var(--color-label-2)' }}>
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="shrink-0">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -896,7 +896,7 @@ export function AnimalDetail() {
         <div className="flex gap-1 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
           {tabs.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)} aria-pressed={tab === t.id} className="px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
-              style={{ backgroundColor: tab === t.id ? 'rgba(143,190,90,0.15)' : 'transparent', color: tab === t.id ? '#8fbe5a' : '#9f9684' }}>
+              style={{ backgroundColor: tab === t.id ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent', color: tab === t.id ? 'var(--color-tint)' : 'var(--color-label-2)' }}>
               {t.label}
             </button>
           ))}
@@ -907,24 +907,24 @@ export function AnimalDetail() {
           <div className="flex flex-col gap-4 pb-nav md:pb-8">
             {/* Quarantine banner */}
             {animal.quarantine_started_at && !animal.quarantine_ended_at && (
-              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.3)' }}>
+              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-orange) 30%, transparent)' }}>
                 <span className="text-lg">🔬</span>
                 <div>
-                  <p className="text-sm font-medium" style={{ color: '#d4924a' }}>In quarantine</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Since {format(new Date(animal.quarantine_started_at), 'd MMM yyyy')}</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-orange)' }}>In quarantine</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>Since {format(new Date(animal.quarantine_started_at), 'd MMM yyyy')}</p>
                 </div>
-                <button onClick={() => setEditOpen(true)} className="ml-auto text-xs px-2 py-1 rounded-lg" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a' }}>End</button>
+                <button onClick={() => setEditOpen(true)} className="ml-auto text-xs px-2 py-1 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 15%, transparent)', color: 'var(--color-orange)' }}>End</button>
               </div>
             )}
 
             {/* For sale banner */}
             {animal.is_for_sale && (
-              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'rgba(143,190,90,0.08)', border: '1px solid rgba(143,190,90,0.25)' }}>
+              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' }}>
                 <span className="text-lg">🏷️</span>
                 <div>
-                  <p className="text-sm font-medium" style={{ color: '#8fbe5a' }}>Listed for sale</p>
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-tint)' }}>Listed for sale</p>
                   {animal.asking_price_cents != null && (
-                    <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Asking {formatAUD(animal.asking_price_cents)} AUD</p>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>Asking {formatAUD(animal.asking_price_cents)} AUD</p>
                   )}
                 </div>
               </div>
@@ -936,18 +936,18 @@ export function AnimalDetail() {
             {renderVitals('lg:hidden')}
             {/* Recent feedings */}
             {feedingLogs.length > 0 && (
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                  <p className="text-xs font-medium" style={{ color: '#a8a090' }}>RECENT FEEDINGS</p>
-                  <button onClick={() => setTab('feeding')} className="text-xs" style={{ color: '#8fbe5a' }}>See all</button>
+              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid var(--color-separator)' }}>
+                  <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>RECENT FEEDINGS</p>
+                  <button onClick={() => setTab('feeding')} className="text-xs" style={{ color: 'var(--color-tint)' }}>See all</button>
                 </div>
                 {feedingLogs.slice(0, 3).map((log) => (
-                  <div key={log.id} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : '#5a9e6a' }} />
-                    <p className="flex-1 text-sm" style={{ color: log.refused ? '#a8a090' : '#f0ece0' }}>
+                  <div key={log.id} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-separator)' }}>
+                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: log.refused ? 'var(--color-red)' : 'var(--color-green)' }} />
+                    <p className="flex-1 text-sm" style={{ color: log.refused ? 'var(--color-label-2)' : 'var(--color-label)' }}>
                       {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                     </p>
-                    <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'd MMM')}</p>
+                    <p className="text-xs shrink-0" style={{ color: 'var(--color-label-2)' }}>{format(new Date(log.fed_at), 'd MMM')}</p>
                   </div>
                 ))}
               </div>
@@ -955,17 +955,17 @@ export function AnimalDetail() {
 
             {/* Mini weight chart */}
             {chartData.length > 1 && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
                 <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-medium" style={{ color: '#a8a090' }}>WEIGHT TREND</p>
-                  <button onClick={() => setTab('vitals')} className="text-xs" style={{ color: '#8fbe5a' }}>See full</button>
+                  <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>WEIGHT TREND</p>
+                  <button onClick={() => setTab('vitals')} className="text-xs" style={{ color: 'var(--color-tint)' }}>See full</button>
                 </div>
                 <ResponsiveContainer width="100%" height={100}>
                   <LineChart data={chartData}>
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
+                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
                     <YAxis hide domain={['auto', 'auto']} />
-                    <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} />
-                    <Line isAnimationActive={false} type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} dot={false} />
+                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
+                    <Line isAnimationActive={false} type="monotone" dataKey="weight" stroke="var(--color-tint)" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -973,32 +973,32 @@ export function AnimalDetail() {
 
             {/* Financials */}
             {(financials.acqCost > 0 || financials.salePrice > 0 || financials.vetCost > 0) && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>FINANCIALS</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>FINANCIALS</p>
                 <div className="flex flex-col gap-1.5">
                   {financials.acqCost > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span style={{ color: '#a8a090' }}>Acquisition</span>
-                      <span style={{ color: '#f0ece0' }}>−{formatAUD(financials.acqCost)}</span>
+                      <span style={{ color: 'var(--color-label-2)' }}>Acquisition</span>
+                      <span style={{ color: 'var(--color-label)' }}>−{formatAUD(financials.acqCost)}</span>
                     </div>
                   )}
                   {financials.vetCost > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span style={{ color: '#a8a090' }}>Vet / health</span>
-                      <span style={{ color: '#f0ece0' }}>−{formatAUD(financials.vetCost)}</span>
+                      <span style={{ color: 'var(--color-label-2)' }}>Vet / health</span>
+                      <span style={{ color: 'var(--color-label)' }}>−{formatAUD(financials.vetCost)}</span>
                     </div>
                   )}
                   {financials.salePrice > 0 && (
                     <div className="flex justify-between text-sm">
-                      <span style={{ color: '#a8a090' }}>Sale price</span>
-                      <span style={{ color: '#8fbe5a' }}>+{formatAUD(financials.salePrice)}</span>
+                      <span style={{ color: 'var(--color-label-2)' }}>Sale price</span>
+                      <span style={{ color: 'var(--color-tint)' }}>+{formatAUD(financials.salePrice)}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm pt-1.5 mt-0.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div className="flex justify-between text-sm pt-1.5 mt-0.5" style={{ borderTop: '1px solid var(--color-separator)' }}>
                     {/* "Net", signed: it is a gain when a sale outweighs the costs.
                         A cost is not a warning, so it is not red. */}
-                    <span className="font-medium" style={{ color: '#f0ece0' }}>Net</span>
-                    <span className="font-semibold tabular-nums" style={{ color: financials.net > 0 ? '#8fbe5a' : '#f0ece0' }}>
+                    <span className="font-medium" style={{ color: 'var(--color-label)' }}>Net</span>
+                    <span className="font-semibold tabular-nums" style={{ color: financials.net > 0 ? 'var(--color-tint)' : 'var(--color-label)' }}>
                       {formatAUD(financials.net, { signed: true })}
                     </span>
                   </div>
@@ -1007,19 +1007,19 @@ export function AnimalDetail() {
             )}
 
             {animal.notes && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>NOTES</p>
-                <p className="text-sm" style={{ color: '#f0ece0', whiteSpace: 'pre-wrap' }}>{animal.notes}</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>NOTES</p>
+                <p className="text-sm" style={{ color: 'var(--color-label)', whiteSpace: 'pre-wrap' }}>{animal.notes}</p>
               </div>
             )}
 
             {/* Tags */}
             {(animal.tags ?? []).length > 0 && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>TAGS</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>TAGS</p>
                 <div className="flex flex-wrap gap-2">
                   {(animal.tags ?? []).map((t) => (
-                    <span key={t} className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}>
+                    <span key={t} className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 12%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' }}>
                       #{t}
                     </span>
                   ))}
@@ -1029,13 +1029,13 @@ export function AnimalDetail() {
 
             {/* Custom fields */}
             {Object.keys(animal.custom_fields ?? {}).length > 0 && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>CUSTOM FIELDS</p>
+              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>CUSTOM FIELDS</p>
                 <div className="flex flex-col gap-2">
                   {Object.entries(animal.custom_fields).map(([key, value]) => (
                     <div key={key} className="flex justify-between text-sm">
-                      <span style={{ color: '#a8a090' }}>{key}</span>
-                      <span style={{ color: '#f0ece0' }}>{value}</span>
+                      <span style={{ color: 'var(--color-label-2)' }}>{key}</span>
+                      <span style={{ color: 'var(--color-label)' }}>{value}</span>
                     </div>
                   ))}
                 </div>
@@ -1043,22 +1043,22 @@ export function AnimalDetail() {
             )}
 
             {/* Photo gallery */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-                <p className="text-xs font-medium" style={{ color: '#a8a090' }}>PHOTOS{animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}</p>
-                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? '#9f9684' : '#8fbe5a' }} disabled={photoUploading}>
+            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid var(--color-separator)' }}>
+                <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>PHOTOS{animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}</p>
+                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? 'var(--color-label-2)' : 'var(--color-tint)' }} disabled={photoUploading}>
                   {photoUploading ? 'Uploading…' : '+ Add'}
                 </button>
                 <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddPhoto(f); e.target.value = '' }} />
               </div>
               {animalPhotos.length === 0 ? (
-                <p className="px-4 py-3 text-xs" style={{ color: '#9f9684' }}>No additional photos yet. Tap "+ Add" to upload.</p>
+                <p className="px-4 py-3 text-xs" style={{ color: 'var(--color-label-2)' }}>No additional photos yet. Tap "+ Add" to upload.</p>
               ) : (
                 <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {animalPhotos.map((photo) => (
                     <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
                       <img src={photoUrls.get(photo.url)} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photoUrls.get(photo.url) ?? null)} />
-                      <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: '#f0ece0' }}>×</button>
+                      <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: 'var(--color-label)' }}>×</button>
                     </div>
                   ))}
                 </div>
@@ -1106,7 +1106,7 @@ export function AnimalDetail() {
               function cellBg(date: Date) {
                 if (date > now) return 'transparent'
                 const entry = activityMap.get(format(date, 'yyyy-MM-dd'))
-                if (!entry) return 'rgba(255,255,255,0.06)'
+                if (!entry) return 'var(--color-separator)'
                 const t = Math.min(entry.count / Math.max(maxCount * 0.5, 3), 1)
                 const rgb = TYPE_RGB[entry.dominant] ?? '143,190,90'
                 return `rgba(${rgb},${(0.25 + t * 0.75).toFixed(2)})`
@@ -1116,11 +1116,11 @@ export function AnimalDetail() {
               const dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', '']
 
               return (
-                <div className="rounded-xl p-4 mb-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                <div className="rounded-xl p-4 mb-5" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
                   {/* Header with event count */}
                   <div className="flex items-baseline justify-between mb-3">
-                    <p className="text-xs font-medium" style={{ color: '#a8a090' }}>ACTIVITY</p>
-                    <p className="text-xs" style={{ color: '#9f9684' }}>
+                    <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>ACTIVITY</p>
+                    <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>
                       {yearTotal} event{yearTotal !== 1 ? 's' : ''} in the past year
                     </p>
                   </div>
@@ -1130,7 +1130,7 @@ export function AnimalDetail() {
                     <div style={{ display: 'flex', flexDirection: 'column', paddingTop: 18, gap: 2, flexShrink: 0 }}>
                       {dayLabels.map((label, i) => (
                         <div key={i} style={{ height: 11, display: 'flex', alignItems: 'center' }}>
-                          <span style={{ fontSize: 9, color: '#9f9684', lineHeight: 1, whiteSpace: 'nowrap' }}>{label}</span>
+                          <span style={{ fontSize: 9, color: 'var(--color-label-2)', lineHeight: 1, whiteSpace: 'nowrap' }}>{label}</span>
                         </div>
                       ))}
                     </div>
@@ -1144,7 +1144,7 @@ export function AnimalDetail() {
                             return (
                               <div key={wi} style={{ width: 11, position: 'relative', flexShrink: 0 }}>
                                 {showLabel && (
-                                  <span style={{ position: 'absolute', left: 0, top: 0, fontSize: 9, color: '#9f9684', whiteSpace: 'nowrap', lineHeight: '14px' }}>
+                                  <span style={{ position: 'absolute', left: 0, top: 0, fontSize: 9, color: 'var(--color-label-2)', whiteSpace: 'nowrap', lineHeight: '14px' }}>
                                     {format(week[0], 'MMM')}
                                   </span>
                                 )}
@@ -1176,14 +1176,14 @@ export function AnimalDetail() {
                   {/* Legend */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10, flexWrap: 'wrap' }}>
                     {[
-                      { label: 'Feeding', color: 'rgba(143,190,90,0.85)' },
-                      { label: 'Shedding', color: 'rgba(212,146,74,0.85)' },
+                      { label: 'Feeding', color: 'color-mix(in srgb, var(--color-tint) 85%, transparent)' },
+                      { label: 'Shedding', color: 'color-mix(in srgb, var(--color-orange) 85%, transparent)' },
                       { label: 'Weight', color: 'rgba(90,158,220,0.85)' },
-                      { label: 'Health', color: 'rgba(196,90,90,0.85)' },
+                      { label: 'Health', color: 'color-mix(in srgb, var(--color-red) 85%, transparent)' },
                     ].map(({ label, color }) => (
                       <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                         <div style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: color }} />
-                        <span style={{ fontSize: 10, color: '#9f9684' }}>{label}</span>
+                        <span style={{ fontSize: 10, color: 'var(--color-label-2)' }}>{label}</span>
                       </div>
                     ))}
                   </div>
@@ -1205,9 +1205,9 @@ export function AnimalDetail() {
                   onClick={() => { setTimelineFilter(id); setTimelineShowAll(false) }}
                   className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors"
                   style={{
-                    backgroundColor: timelineFilter === id ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.05)',
-                    color: timelineFilter === id ? '#8fbe5a' : '#9f9684',
-                    border: `1px solid ${timelineFilter === id ? 'rgba(143,190,90,0.3)' : 'transparent'}`,
+                    backgroundColor: timelineFilter === id ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'var(--color-fill)',
+                    color: timelineFilter === id ? 'var(--color-tint)' : 'var(--color-label-2)',
+                    border: `1px solid ${timelineFilter === id ? 'color-mix(in srgb, var(--color-tint) 30%, transparent)' : 'transparent'}`,
                   }}
                 >
                   {label}
@@ -1238,22 +1238,22 @@ export function AnimalDetail() {
                   {visibleGroups.map((group) => (
                     <div key={group.month} className="mb-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <p className="text-xs font-semibold tracking-wider" style={{ color: '#9f9684' }}>{group.month.toUpperCase()}</p>
-                        <div className="flex-1 h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
-                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'rgba(255,255,255,0.05)', color: '#9f9684' }}>{group.events.length}</span>
+                        <p className="text-xs font-semibold tracking-wider" style={{ color: 'var(--color-label-2)' }}>{group.month.toUpperCase()}</p>
+                        <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
+                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'var(--color-fill)', color: 'var(--color-label-2)' }}>{group.events.length}</span>
                       </div>
                       <div className="flex flex-col">
                         {group.events.map((ev, i) => (
-                          <div key={ev.id} className="flex gap-3 pb-3" style={{ borderLeft: i < group.events.length - 1 ? '2px solid rgba(255,255,255,0.06)' : '2px solid transparent', marginLeft: 11 }}>
-                            <div className="flex-shrink-0 -ml-3.5 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: '#1a1a18', border: `2px solid ${ev.color}` }}>
+                          <div key={ev.id} className="flex gap-3 pb-3" style={{ borderLeft: i < group.events.length - 1 ? '2px solid var(--color-separator)' : '2px solid transparent', marginLeft: 11 }}>
+                            <div className="flex-shrink-0 -ml-3.5 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)', border: `2px solid ${ev.color}` }}>
                               <span style={{ fontSize: 11 }}>{ev.icon}</span>
                             </div>
                             <div className="flex-1 min-w-0 -mt-0.5">
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.label}</p>
-                                <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(ev.date, 'd MMM')}</p>
+                                <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{ev.label}</p>
+                                <p className="text-xs shrink-0" style={{ color: 'var(--color-label-2)' }}>{format(ev.date, 'd MMM')}</p>
                               </div>
-                              {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: '#9f9684' }}>{ev.detail}</p>}
+                              {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: 'var(--color-label-2)' }}>{ev.detail}</p>}
                             </div>
                           </div>
                         ))}
@@ -1264,7 +1264,7 @@ export function AnimalDetail() {
                     <button
                       onClick={() => setTimelineShowAll(true)}
                       className="w-full py-3 rounded-xl text-sm"
-                      style={{ backgroundColor: '#242420', color: '#a8a090', border: '1px solid rgba(255,255,255,0.06)' }}
+                      style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-label-2)', border: '1px solid var(--color-separator)' }}
                     >
                       Load {groups.length - 3} older month{groups.length - 3 !== 1 ? 's' : ''}
                     </button>
@@ -1293,55 +1293,55 @@ export function AnimalDetail() {
                     <div className="grid grid-cols-3 gap-3">
                       {[
                         { label: 'Total', value: total },
-                        { label: 'Refused', value: refused, color: refused > 0 ? '#dc7a7a' : undefined },
-                        { label: 'Success rate', value: `${rate}%`, color: rate >= 80 ? '#8fbe5a' : rate >= 50 ? '#d4924a' : '#dc7a7a' },
+                        { label: 'Refused', value: refused, color: refused > 0 ? 'var(--color-red)' : undefined },
+                        { label: 'Success rate', value: `${rate}%`, color: rate >= 80 ? 'var(--color-tint)' : rate >= 50 ? 'var(--color-orange)' : 'var(--color-red)' },
                       ].map((s) => (
-                        <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{s.label}</p>
-                          <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? '#f0ece0' }}>{s.value}</p>
+                        <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{s.label}</p>
+                          <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? 'var(--color-label)' }}>{s.value}</p>
                         </div>
                       ))}
                     </div>
                   )
                 })()}
                 {feedingMonthlyData.length > 1 && (
-                  <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>FEEDINGS PER MONTH</p>
+                  <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                    <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>FEEDINGS PER MONTH</p>
                     <ResponsiveContainer width="100%" height={140}>
                       <BarChart data={feedingMonthlyData} barCategoryGap="30%">
-                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
                         <YAxis hide allowDecimals={false} />
-                        <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} />
-                        <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="#5a9e6a" radius={[0, 0, 0, 0]} />
-                        <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="#c45a5a" radius={[4, 4, 0, 0]} />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
+                        <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="var(--color-green)" radius={[0, 0, 0, 0]} />
+                        <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="var(--color-red)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 )}
                 <div className="flex flex-col gap-2">
                   {feedingLogs.map((log) => (
-                    <div key={log.id} className="rounded-xl p-3 flex items-center gap-3 lg:gap-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : '#5a9e6a' }} />
+                    <div key={log.id} className="rounded-xl p-3 flex items-center gap-3 lg:gap-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                      <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? 'var(--color-red)' : 'var(--color-green)' }} />
                       {/* Every field below is stored on the row; a phone can show
                           two of them, so above 1024 they get their own columns
                           instead of being composed into one line. */}
                       <div className="flex-1 min-w-0 lg:flex lg:items-center lg:gap-4">
-                        <p className="text-sm font-medium truncate lg:w-36 lg:shrink-0" style={{ color: log.refused ? '#a8a090' : '#f0ece0' }}>
+                        <p className="text-sm font-medium truncate lg:w-36 lg:shrink-0" style={{ color: log.refused ? 'var(--color-label-2)' : 'var(--color-label)' }}>
                           {log.refused && !log.prey_type ? 'Refused' : log.prey_type}
                           <span className="lg:hidden">
                             {log.prey_size ? ` (${log.prey_size})` : ''} ×{log.quantity}{log.refused ? ' · refused' : ''}
                           </span>
                         </p>
-                        <p className="hidden lg:block lg:w-24 lg:shrink-0 text-sm truncate" style={{ color: '#a8a090' }}>{log.prey_size || '—'}</p>
-                        <p className="hidden lg:block lg:w-10 lg:shrink-0 text-sm tabular-nums" style={{ color: '#a8a090' }}>×{log.quantity}</p>
-                        <p className="hidden lg:block lg:w-20 lg:shrink-0 text-sm" style={{ color: log.refused ? '#dc7a7a' : '#5a9e6a' }}>
+                        <p className="hidden lg:block lg:w-24 lg:shrink-0 text-sm truncate" style={{ color: 'var(--color-label-2)' }}>{log.prey_size || '—'}</p>
+                        <p className="hidden lg:block lg:w-10 lg:shrink-0 text-sm tabular-nums" style={{ color: 'var(--color-label-2)' }}>×{log.quantity}</p>
+                        <p className="hidden lg:block lg:w-20 lg:shrink-0 text-sm" style={{ color: log.refused ? 'var(--color-red)' : 'var(--color-green)' }}>
                           {log.refused ? 'Refused' : 'Taken'}
                         </p>
                         {log.notes
-                          ? <p className="text-xs truncate lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#9f9684' }}>{log.notes}</p>
-                          : <p className="hidden lg:block lg:flex-1 lg:min-w-0 text-sm" style={{ color: '#9f9684' }}>—</p>}
+                          ? <p className="text-xs truncate lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: 'var(--color-label-2)' }}>{log.notes}</p>
+                          : <p className="hidden lg:block lg:flex-1 lg:min-w-0 text-sm" style={{ color: 'var(--color-label-2)' }}>—</p>}
                       </div>
-                      <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'd MMM')}</p>
+                      <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: 'var(--color-label-2)' }}>{format(new Date(log.fed_at), 'd MMM')}</p>
                       <RecordActions what="feeding" onEdit={() => setEditingFeed(log)} onDelete={() => handleDeleteFeed(log)} />
                     </div>
                   ))}
@@ -1354,11 +1354,11 @@ export function AnimalDetail() {
         {/* Vitals */}
         {tab === 'vitals' && (
           <div className="pb-nav md:pb-8">
-            <div className="flex p-1 gap-1 rounded-xl mb-4" style={{ backgroundColor: '#242420' }}>
+            <div className="flex p-1 gap-1 rounded-xl mb-4" style={{ backgroundColor: 'var(--color-surface)' }}>
               {(['weight', 'shedding'] as const).map((t) => (
                 <button key={t} onClick={() => setVitalsSubTab(t)} aria-pressed={vitalsSubTab === t}
                   className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-                  style={{ backgroundColor: vitalsSubTab === t ? 'rgba(143,190,90,0.15)' : 'transparent', color: vitalsSubTab === t ? '#8fbe5a' : '#9f9684' }}>
+                  style={{ backgroundColor: vitalsSubTab === t ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent', color: vitalsSubTab === t ? 'var(--color-tint)' : 'var(--color-label-2)' }}>
                   {t === 'weight' ? '⚖️ Weight' : '🐍 Shedding'}
                 </button>
               ))}
@@ -1394,25 +1394,25 @@ export function AnimalDetail() {
             {/* Medications */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>💊 Medications</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>💊 Medications</p>
                 <Button size="sm" onClick={openAddMed}>Add</Button>
               </div>
               {medicationSchedules.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No medication schedules yet.</p>
+                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No medication schedules yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {medicationSchedules.map((med) => {
                     const lastDose = medLastDoses[med.id]
                     return (
-                      <div key={med.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: `1px solid ${med.is_active ? 'rgba(143,190,90,0.2)' : 'rgba(255,255,255,0.06)'}` }}>
+                      <div key={med.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: `1px solid ${med.is_active ? 'color-mix(in srgb, var(--color-tint) 20%, transparent)' : 'var(--color-separator)'}` }}>
                         <div className="flex items-start gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
-                              <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{med.name}</p>
-                              {!med.is_active && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'rgba(255,255,255,0.06)', color: '#9f9684' }}>Archived</span>}
+                              <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{med.name}</p>
+                              {!med.is_active && <span className="text-xs px-1.5 py-0.5 rounded" style={{ backgroundColor: 'var(--color-separator)', color: 'var(--color-label-2)' }}>Archived</span>}
                             </div>
-                            {med.dosage && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{med.dosage}</p>}
-                            <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
+                            {med.dosage && <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{med.dosage}</p>}
+                            <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>
                               {lastDose ? `Last: ${format(new Date(lastDose), 'd MMM')}` : 'No doses logged'}
                               {med.frequency_days ? ` · every ${med.frequency_days}d` : ''}
                               {med.end_date ? ` · ends ${format(new Date(med.end_date), 'd MMM')}` : ''}
@@ -1420,7 +1420,7 @@ export function AnimalDetail() {
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {med.is_active && (
-                              <button onClick={() => { setLogDoseSchedule(med); setLogDoseNotes(''); setLogDoseOpen(true) }} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>
+                              <button onClick={() => { setLogDoseSchedule(med); setLogDoseNotes(''); setLogDoseOpen(true) }} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 10%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 20%, transparent)' }}>
                                 Log dose
                               </button>
                             )}
@@ -1434,7 +1434,7 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
 
             {/* Health events */}
             <div>
@@ -1456,24 +1456,24 @@ export function AnimalDetail() {
             {/* Acquisition */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>🏷️ Acquisition</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>🏷️ Acquisition</p>
                 <Button size="sm" onClick={openAddAcquisition}>Add</Button>
               </div>
               {acquisitionRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No acquisition records yet.</p>
+                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No acquisition records yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {acquisitionRecords.map((r) => (
-                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{r.source_name ?? r.source ?? 'Unknown source'}</p>
-                          {r.source && <p className="text-xs mt-0.5 capitalize" style={{ color: '#a8a090' }}>{r.source.replace('_', ' ')}</p>}
-                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
+                          <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{r.source_name ?? r.source ?? 'Unknown source'}</p>
+                          {r.source && <p className="text-xs mt-0.5 capitalize" style={{ color: 'var(--color-label-2)' }}>{r.source.replace('_', ' ')}</p>}
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-label-2)' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.acquired_at), 'd MMM yyyy')}</p>
-                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>{formatAUD(r.price_cents)}</p>}
+                          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{format(new Date(r.acquired_at), 'd MMM yyyy')}</p>
+                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: 'var(--color-tint)' }}>{formatAUD(r.price_cents)}</p>}
                         </div>
                         <RecordActions what="acquisition record" onEdit={() => openEditAcquisition(r)} onDelete={() => handleDeleteAcquisition(r)} />
                       </div>
@@ -1483,28 +1483,28 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
 
             {/* Exit */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>🚪 Exit</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>🚪 Exit</p>
                 <Button size="sm" onClick={openAddExit}>Add</Button>
               </div>
               {exitRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No exit records yet.</p>
+                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No exit records yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {exitRecords.map((r) => (
-                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium capitalize" style={{ color: '#f0ece0' }}>{r.reason.replace('_', ' ')}</p>
-                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
+                          <p className="text-sm font-medium capitalize" style={{ color: 'var(--color-label)' }}>{r.reason.replace('_', ' ')}</p>
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-label-2)' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.exited_at), 'd MMM yyyy')}</p>
-                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>{formatAUD(r.price_cents)}</p>}
+                          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{format(new Date(r.exited_at), 'd MMM yyyy')}</p>
+                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: 'var(--color-tint)' }}>{formatAUD(r.price_cents)}</p>}
                         </div>
                         <RecordActions what="exit record" onEdit={() => openEditExit(r)} onDelete={() => handleDeleteExit(r)} />
                       </div>
@@ -1514,35 +1514,35 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
 
             {/* Breeding */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>🥚 Breeding</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>🥚 Breeding</p>
                 <Button size="sm" onClick={openAddBreeding}>Add</Button>
               </div>
               {breedingRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: '#9f9684' }}>No breeding records yet.</p>
+                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No breeding records yet.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {breedingRecords.map((r) => (
-                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+                          <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>
                             {r.paired_with_name ? `Paired with ${r.paired_with_name}` : 'Pairing'}
                           </p>
                           <div className="flex flex-wrap gap-2 mt-1">
                             {r.outcome && <Badge status={r.outcome === 'fertile' ? 'green' : r.outcome === 'infertile' ? 'red' : 'muted'}>{r.outcome}</Badge>}
-                            {r.clutch_size != null && <span className="text-xs" style={{ color: '#a8a090' }}>{r.clutch_size} eggs</span>}
-                            {r.eggs_fertile != null && <span className="text-xs" style={{ color: '#8fbe5a' }}>{r.eggs_fertile} fertile</span>}
+                            {r.clutch_size != null && <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{r.clutch_size} eggs</span>}
+                            {r.eggs_fertile != null && <span className="text-xs" style={{ color: 'var(--color-tint)' }}>{r.eggs_fertile} fertile</span>}
                           </div>
-                          {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Hatch: {format(new Date(r.hatch_date), 'd MMM yyyy')}</p>}
-                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
+                          {r.hatch_date && <p className="text-xs mt-1" style={{ color: 'var(--color-label-2)' }}>Hatch: {format(new Date(r.hatch_date), 'd MMM yyyy')}</p>}
+                          {r.notes && <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-label-2)' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.pairing_date), 'd MMM yyyy')}</p>
+                          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{format(new Date(r.pairing_date), 'd MMM yyyy')}</p>
                         </div>
                         <RecordActions what="breeding record" onEdit={() => openEditBreeding(r)} onDelete={() => handleDeleteBreeding(r)} />
                       </div>
@@ -1552,7 +1552,7 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }} />
+            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
 
             <IncubationSection
               incubations={incubations}
@@ -1660,7 +1660,7 @@ export function AnimalDetail() {
       {/* Photo lightbox */}
       <Modal open={!!lightboxPhoto} onClose={() => setLightboxPhoto(null)} title="">
         {lightboxPhoto && (
-          <img src={lightboxPhoto} alt="" className="w-full rounded-xl max-h-[65vh] object-contain" style={{ backgroundColor: '#1a1a18' }} />
+          <img src={lightboxPhoto} alt="" className="w-full rounded-xl max-h-[65vh] object-contain" style={{ backgroundColor: 'var(--color-bg)' }} />
         )}
       </Modal>
 
@@ -1677,8 +1677,8 @@ export function AnimalDetail() {
           <Textarea label="Notes" value={medNotes} onChange={(e) => setMedNotes(e.target.value)} rows={2} placeholder="Instructions, side effects…" />
           {editingMed && (
             <label className="flex items-center gap-3 cursor-pointer">
-              <input type="checkbox" checked={!editingMed.is_active} onChange={(e) => { updateMedicationSchedule(editingMed.id, { is_active: !e.target.checked }).then(refreshMedications) }} className="w-4 h-4 accent-[#c45a5a]" />
-              <span className="text-sm" style={{ color: '#a8a090' }}>Archive this medication</span>
+              <input type="checkbox" checked={!editingMed.is_active} onChange={(e) => { updateMedicationSchedule(editingMed.id, { is_active: !e.target.checked }).then(refreshMedications) }} className="w-4 h-4 accent-red" />
+              <span className="text-sm" style={{ color: 'var(--color-label-2)' }}>Archive this medication</span>
             </label>
           )}
           <div className="flex gap-2">
@@ -1692,7 +1692,7 @@ export function AnimalDetail() {
       <Modal open={logDoseOpen} onClose={() => setLogDoseOpen(false)} title={`Log dose — ${logDoseSchedule?.name ?? ''}`}>
         <div className="flex flex-col gap-4">
           {logDoseSchedule?.dosage && (
-            <p className="text-sm rounded-xl px-3 py-2" style={{ backgroundColor: 'rgba(143,190,90,0.08)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>
+            <p className="text-sm rounded-xl px-3 py-2" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 8%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 20%, transparent)' }}>
               Dose: {logDoseSchedule.dosage}
             </p>
           )}
@@ -1707,7 +1707,7 @@ export function AnimalDetail() {
       {/* Edit animal modal */}
       <Modal open={editOpen} onClose={() => setEditOpen(false)} title="Edit animal">
         <AnimalForm animal={animal} onSuccess={(updated) => { setEditOpen(false); if (updated) setAnimal((prev) => prev ? { ...prev, ...updated } : prev) }} onCancel={() => setEditOpen(false)} />
-        <div className="mt-4 pt-4" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--color-separator)' }}>
           <Button variant="danger" fullWidth size="sm" onClick={() => { setEditOpen(false); handleDeactivate() }}>Remove from collection</Button>
         </div>
       </Modal>
@@ -1724,10 +1724,10 @@ export function AnimalDetail() {
             <img src={qrDataUrl} alt="QR code" className="rounded-xl" style={{ width: 240, height: 240 }} />
           )}
           <div className="text-center">
-            <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{animal?.name}</p>
-            <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>{animal?.species}{animal?.morph ? ` · ${animal.morph}` : ''}</p>
+            <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{animal?.name}</p>
+            <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{animal?.species}{animal?.morph ? ` · ${animal.morph}` : ''}</p>
           </div>
-          <p className="text-xs text-center" style={{ color: '#9f9684' }}>Print or screenshot this QR code to label an enclosure. Scanning it will open the animal's profile.</p>
+          <p className="text-xs text-center" style={{ color: 'var(--color-label-2)' }}>Print or screenshot this QR code to label an enclosure. Scanning it will open the animal's profile.</p>
           <Button variant="secondary" fullWidth onClick={() => {
             const a = document.createElement('a')
             a.href = qrDataUrl
@@ -1774,8 +1774,8 @@ export function AnimalDetail() {
         <div className="flex flex-col gap-4">
           <Input label="Date" type="date" value={shedDate} onChange={(e) => setShedDate(e.target.value)} />
           <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="w-4 h-4 accent-[#8fbe5a]" />
-            <span className="text-sm" style={{ color: '#f0ece0' }}>Complete shed</span>
+            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="w-4 h-4 accent-tint" />
+            <span className="text-sm" style={{ color: 'var(--color-label)' }}>Complete shed</span>
           </label>
           <Textarea label="Notes" value={shedNotes} onChange={(e) => setShedNotes(e.target.value)} rows={2} />
           <div className="flex gap-2">
@@ -1800,8 +1800,8 @@ export function AnimalDetail() {
           <Textarea label="Notes" value={healthNotes} onChange={(e) => setHealthNotes(e.target.value)} rows={2} />
           {!editingHealth && healthCost && Number(healthCost) > 0 && (
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={healthAddToExpenses} onChange={(e) => setHealthAddToExpenses(e.target.checked)} className="accent-[#8fbe5a]" />
-              <span className="text-sm" style={{ color: '#a8a090' }}>Also add to expenses</span>
+              <input type="checkbox" checked={healthAddToExpenses} onChange={(e) => setHealthAddToExpenses(e.target.checked)} className="accent-tint" />
+              <span className="text-sm" style={{ color: 'var(--color-label-2)' }}>Also add to expenses</span>
             </label>
           )}
           <div className="flex gap-2">

@@ -163,7 +163,7 @@ export function FeedingLog() {
       />
 
       {/* Tab switcher */}
-      <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
         {(['log', 'calendar'] as const).map((t) => (
           <button
             key={t}
@@ -171,9 +171,9 @@ export function FeedingLog() {
             aria-pressed={tab === t}
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: tab === t ? 'rgba(143,190,90,0.15)' : 'transparent',
-              color: tab === t ? '#8fbe5a' : '#9f9684',
-              border: tab === t ? '1px solid rgba(143,190,90,0.25)' : '1px solid transparent',
+              backgroundColor: tab === t ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent',
+              color: tab === t ? 'var(--color-tint)' : 'var(--color-label-2)',
+              border: tab === t ? '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' : '1px solid transparent',
             }}
           >
             {t === 'log' ? 'Log' : 'Calendar'}
@@ -190,14 +190,14 @@ export function FeedingLog() {
               <div className="flex gap-2">
               {/* Outcome — refusals are the reason to filter this list at all,
                   so they get a control you can hit rather than a menu item. */}
-              <div className="flex gap-1 p-1 rounded-xl flex-1" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex gap-1 p-1 rounded-xl flex-1" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
                 {([
                   ['all', 'All'],
                   ['fed', 'Fed'],
                   ['refused', 'Refused'],
                 ] as const).map(([value, label]) => {
                   const active = outcome === value
-                  const accent = value === 'refused' ? '#dc7a7a' : '#8fbe5a'
+                  const accent = value === 'refused' ? 'var(--color-red)' : 'var(--color-tint)'
                   return (
                     <button
                       key={value}
@@ -206,9 +206,9 @@ export function FeedingLog() {
                       onClick={() => setOutcome(value)}
                       className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
                       style={{
-                        backgroundColor: active ? `${accent}26` : 'transparent',
-                        color: active ? accent : '#9f9684',
-                        border: active ? `1px solid ${accent}40` : '1px solid transparent',
+                        backgroundColor: active ? `color-mix(in srgb, ${accent} 15%, transparent)` : 'transparent',
+                        color: active ? accent : 'var(--color-label-2)',
+                        border: active ? `1px solid color-mix(in srgb, ${accent} 25%, transparent)` : '1px solid transparent',
                       }}
                     >
                       {label}
@@ -223,16 +223,16 @@ export function FeedingLog() {
                 aria-expanded={filtersOpen}
                 className="px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 shrink-0"
                 style={{
-                  backgroundColor: '#242420',
-                  border: '1px solid rgba(255,255,255,0.06)',
-                  color: secondaryActive ? '#8fbe5a' : '#9f9684',
+                  backgroundColor: 'var(--color-surface)',
+                  border: '1px solid var(--color-separator)',
+                  color: secondaryActive ? 'var(--color-tint)' : 'var(--color-label-2)',
                 }}
               >
                 Filters
                 {/* A filter narrowing the list from behind a closed panel is
                     hidden state; the dot is what stops it being a trap. */}
                 {secondaryActive && (
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#8fbe5a' }} />
+                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--color-tint)' }} />
                 )}
               </button>
               </div>
@@ -244,7 +244,7 @@ export function FeedingLog() {
                 onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
                 aria-label="Filter by animal"
                 className="w-full rounded-xl px-4 py-2.5 text-sm"
-                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#9f9684' }}
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: selectedAnimalId ? 'var(--color-label)' : 'var(--color-label-2)' }}
               >
                 <option value="">All animals</option>
                 {animals.map((a) => (
@@ -258,7 +258,7 @@ export function FeedingLog() {
                   onChange={(e) => setPeriodDays(Number(e.target.value))}
                   aria-label="Filter by period"
                   className="rounded-xl px-3 py-2.5 text-sm"
-                  style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: periodDays ? '#f0ece0' : '#9f9684' }}
+                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: periodDays ? 'var(--color-label)' : 'var(--color-label-2)' }}
                 >
                   <option value={0}>All time</option>
                   <option value={30}>Last 30 days</option>
@@ -272,7 +272,7 @@ export function FeedingLog() {
                   aria-label="Filter by prey type"
                   disabled={preyOptions.length < 2}
                   className="rounded-xl px-3 py-2.5 text-sm disabled:opacity-40"
-                  style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: preyType ? '#f0ece0' : '#9f9684' }}
+                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: preyType ? 'var(--color-label)' : 'var(--color-label-2)' }}
                 >
                   <option value="">All prey</option>
                   {preyOptions.map((p) => <option key={p} value={p}>{p}</option>)}
@@ -283,14 +283,14 @@ export function FeedingLog() {
 
               {filtersActive && (
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-xs" style={{ color: '#9f9684' }}>
+                  <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>
                     {logs.length} of {allLogs.length} feedings
                   </span>
                   <button
                     type="button"
                     onClick={clearFilters}
                     className="text-xs underline"
-                    style={{ color: '#8fbe5a' }}
+                    style={{ color: 'var(--color-tint)' }}
                   >
                     Clear filters
                   </button>
@@ -305,7 +305,7 @@ export function FeedingLog() {
 
           {state === 'loading' ? (
             <div className="flex justify-center py-12">
-              <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+              <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-tint)', borderTopColor: 'transparent' }} />
             </div>
           ) : state === 'error' ? (
             <LoadError subject="feedings" message={error} onRetry={refresh} />
@@ -330,9 +330,9 @@ export function FeedingLog() {
               {logsByDate.map((group) => (
                 <section key={group.key}>
                   <div className="flex items-baseline justify-between mb-2 px-1">
-                    <h2 className="text-sm font-medium" style={{ color: '#f0ece0' }}>{group.label}</h2>
+                    <h2 className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{group.label}</h2>
                     {group.relative && (
-                      <span className="text-xs" style={{ color: '#9f9684' }}>{group.relative}</span>
+                      <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{group.relative}</span>
                     )}
                   </div>
 
@@ -357,38 +357,38 @@ export function FeedingLog() {
                           aria-label={`Edit feeding: ${name ?? detail}`}
                           className="rounded-xl p-3.5 flex items-center gap-3 w-full text-left transition-colors hover:brightness-110"
                           style={{
-                            backgroundColor: log.refused ? 'rgba(196,90,90,0.08)' : '#242420',
+                            backgroundColor: log.refused ? 'color-mix(in srgb, var(--color-red) 8%, transparent)' : 'var(--color-surface)',
                             border: log.refused
-                              ? '1px solid rgba(196,90,90,0.3)'
-                              : '1px solid rgba(255,255,255,0.06)',
+                              ? '1px solid color-mix(in srgb, var(--color-red) 30%, transparent)'
+                              : '1px solid var(--color-separator)',
                             // The left edge carries the animal's calendar colour,
                             // so the two tabs read as the same data.
-                            borderLeft: `3px solid ${log.refused ? '#c45a5a' : animalColor(log.animal_id)}`,
+                            borderLeft: `3px solid ${log.refused ? 'var(--color-red)' : animalColor(log.animal_id)}`,
                           }}
                         >
                           <div className="flex-1 min-w-0">
                             <div className="flex items-baseline gap-2 flex-wrap">
-                              <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+                              <span className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>
                                 {name ?? detail}
                               </span>
                               {log.refused && (
                                 <span
                                   className="text-xs font-medium px-1.5 py-0.5 rounded"
-                                  style={{ color: '#e08a8a', backgroundColor: 'rgba(196,90,90,0.16)' }}
+                                  style={{ color: 'var(--color-red)', backgroundColor: 'color-mix(in srgb, var(--color-red) 16%, transparent)' }}
                                 >
                                   Refused
                                 </span>
                               )}
                             </div>
                             {name && (
-                              <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{detail}</p>
+                              <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{detail}</p>
                             )}
                             {log.notes && (
-                              <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{log.notes}</p>
+                              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-label-2)' }}>{log.notes}</p>
                             )}
                           </div>
                           {hasTime && (
-                            <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>
+                            <p className="text-xs shrink-0" style={{ color: 'var(--color-label-2)' }}>
                               {format(fedAt, 'h:mm a')}
                             </p>
                           )}
@@ -408,36 +408,36 @@ export function FeedingLog() {
         <>
           {/* Month nav */}
           <div className="flex items-center justify-between mb-4">
-            <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/5" style={{ color: '#a8a090' }}>
+            <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-fill active:bg-fill" style={{ color: 'var(--color-label-2)' }}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
-            <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{format(monthStart, 'MMMM yyyy')}</span>
-            <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/5" style={{ color: '#a8a090' }}>
+            <span className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{format(monthStart, 'MMMM yyyy')}</span>
+            <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-fill active:bg-fill" style={{ color: 'var(--color-label-2)' }}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>
 
           {/* Monthly summary */}
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>MONTH SUMMARY</p>
+          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+            <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>MONTH SUMMARY</p>
             <div className="grid grid-cols-3 gap-3 text-center">
               <div>
-                <p className="text-lg font-bold" style={{ color: '#8fbe5a', fontFamily: 'Playfair Display, serif' }}>
+                <p className="text-lg font-bold" style={{ color: 'var(--color-tint)' }}>
                   {logsInMonth.filter((l) => !l.refused).length}
                 </p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Feedings</p>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Feedings</p>
               </div>
               <div>
-                <p className="text-lg font-bold" style={{ color: '#dc7a7a', fontFamily: 'Playfair Display, serif' }}>
+                <p className="text-lg font-bold" style={{ color: 'var(--color-red)' }}>
                   {logsInMonth.filter((l) => l.refused).length}
                 </p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Refused</p>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Refused</p>
               </div>
               <div>
-                <p className="text-lg font-bold" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>
+                <p className="text-lg font-bold" style={{ color: 'var(--color-label)' }}>
                   {new Set(logsInMonth.filter((l) => !l.refused).map((l) => format(new Date(l.fed_at), 'yyyy-MM-dd'))).size}
                 </p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Active days</p>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Active days</p>
               </div>
             </div>
           </div>
@@ -445,7 +445,7 @@ export function FeedingLog() {
           {/* Day headers */}
           <div className="grid grid-cols-7 mb-1">
             {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-              <div key={d} className="text-center text-xs py-1" style={{ color: '#9f9684' }}>{d}</div>
+              <div key={d} className="text-center text-xs py-1" style={{ color: 'var(--color-label-2)' }}>{d}</div>
             ))}
           </div>
 
@@ -464,11 +464,11 @@ export function FeedingLog() {
                   onClick={() => setSelectedDay(isSelected ? null : day)}
                   className="rounded-lg p-1 flex flex-col items-center gap-0.5 min-h-[52px] transition-colors"
                   style={{
-                    backgroundColor: isSelected ? 'rgba(143,190,90,0.15)' : isToday ? 'rgba(255,255,255,0.04)' : 'transparent',
-                    border: isSelected ? '1px solid rgba(143,190,90,0.3)' : isToday ? '1px solid rgba(255,255,255,0.1)' : '1px solid transparent',
+                    backgroundColor: isSelected ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : isToday ? 'var(--color-separator)' : 'transparent',
+                    border: isSelected ? '1px solid color-mix(in srgb, var(--color-tint) 30%, transparent)' : isToday ? '1px solid var(--color-separator)' : '1px solid transparent',
                   }}
                 >
-                  <span className="text-xs" style={{ color: isSelected ? '#8fbe5a' : isToday ? '#f0ece0' : '#a8a090' }}>
+                  <span className="text-xs" style={{ color: isSelected ? 'var(--color-tint)' : isToday ? 'var(--color-label)' : 'var(--color-label-2)' }}>
                     {format(day, 'd')}
                   </span>
                   {dayLogs.length > 0 && (
@@ -477,11 +477,11 @@ export function FeedingLog() {
                         <div
                           key={log.id}
                           className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: log.refused ? '#c45a5a' : (animalColor(log.animal_id)) }}
+                          style={{ backgroundColor: log.refused ? 'var(--color-red)' : (animalColor(log.animal_id)) }}
                         />
                       ))}
                       {dayLogs.length > 6 && (
-                        <span className="text-xs" style={{ color: '#9f9684', fontSize: 8 }}>+{dayLogs.length - 6}</span>
+                        <span className="text-xs" style={{ color: 'var(--color-label-2)', fontSize: 8 }}>+{dayLogs.length - 6}</span>
                       )}
                     </div>
                   )}
@@ -493,21 +493,21 @@ export function FeedingLog() {
           {/* Legend */}
           <div className="flex gap-4 mb-4 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#8fbe5a' }} />
-              <span className="text-xs" style={{ color: '#9f9684' }}>Fed</span>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-tint)' }} />
+              <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>Fed</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#c45a5a' }} />
-              <span className="text-xs" style={{ color: '#9f9684' }}>Refused</span>
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-red)' }} />
+              <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>Refused</span>
             </div>
             {animalsInMonth.slice(0, LEGEND_LIMIT).map((a) => (
               <div key={a.id} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: animalColor(a.id) }} />
-                <span className="text-xs" style={{ color: '#9f9684' }}>{a.name}</span>
+                <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{a.name}</span>
               </div>
             ))}
             {animalsInMonth.length > LEGEND_LIMIT && (
-              <span className="text-xs" style={{ color: '#9f9684' }}>
+              <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>
                 +{animalsInMonth.length - LEGEND_LIMIT} more
               </span>
             )}
@@ -515,24 +515,24 @@ export function FeedingLog() {
 
           {/* Selected day detail */}
           {selectedDay && (
-            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-sm font-medium mb-3" style={{ color: '#f0ece0' }}>{format(selectedDay, 'EEEE d MMMM')}</p>
+            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <p className="text-sm font-medium mb-3" style={{ color: 'var(--color-label)' }}>{format(selectedDay, 'EEEE d MMMM')}</p>
               {selectedDayLogs.length === 0 ? (
-                <p className="text-sm" style={{ color: '#9f9684' }}>No feedings on this day</p>
+                <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>No feedings on this day</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {selectedDayLogs.map((log) => {
                     const animal = animals.find((a) => a.id === log.animal_id)
                     return (
                       <div key={log.id} className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? '#c45a5a' : (animalColor(log.animal_id)) }} />
+                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? 'var(--color-red)' : (animalColor(log.animal_id)) }} />
                         <div className="flex-1">
-                          <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{animal?.name ?? 'Unknown'}</span>
-                          <span className="text-xs ml-2" style={{ color: '#9f9684' }}>
+                          <span className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{animal?.name ?? 'Unknown'}</span>
+                          <span className="text-xs ml-2" style={{ color: 'var(--color-label-2)' }}>
                             {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                           </span>
                         </div>
-                        <span className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'h:mm a')}</span>
+                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{format(new Date(log.fed_at), 'h:mm a')}</span>
                       </div>
                     )
                   })}
@@ -574,8 +574,8 @@ export function FeedingLog() {
             <button
               type="button"
               onClick={() => setConfirmDelete(editingLog)}
-              className="text-sm py-2 rounded-xl transition-colors hover:bg-white/5"
-              style={{ color: '#dc7a7a' }}
+              className="text-sm py-2 rounded-xl transition-colors hover:bg-fill"
+              style={{ color: 'var(--color-red)' }}
             >
               Delete this feeding
             </button>

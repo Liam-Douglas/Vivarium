@@ -92,9 +92,9 @@ export function CareTaskForm({ task, animals, enclosures, onSaved, onCancel }: C
               aria-pressed={kind === k}
               className="text-xs px-2 py-1 rounded-lg transition-colors"
               style={{
-                backgroundColor: kind === k ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.04)',
-                color: kind === k ? '#8fbe5a' : '#a8a090',
-                border: `1px solid ${kind === k ? 'rgba(143,190,90,0.25)' : 'transparent'}`,
+                backgroundColor: kind === k ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'var(--color-separator)',
+                color: kind === k ? 'var(--color-tint)' : 'var(--color-label-2)',
+                border: `1px solid ${kind === k ? 'color-mix(in srgb, var(--color-tint) 25%, transparent)' : 'transparent'}`,
               }}
             >
               {k}

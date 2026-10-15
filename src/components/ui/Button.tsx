@@ -18,29 +18,22 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  // Press feedback on the press itself (scale on :active), not on release;
-  // focus rings for keyboard focus only, so a tap never leaves one behind.
-  const base = 'inline-flex items-center justify-center gap-2 font-medium rounded-xl transition-[transform,background-color,border-color,color,opacity] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100 disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2'
+  // iOS buttons: filled (the one main action), gray, plain and destructive.
+  // They answer on the press itself by dimming, as UIKit's do, with a slight
+  // give; focus rings are for keyboard focus only.
+  const base = 'inline-flex items-center justify-center gap-2 font-semibold rounded-xl select-none transition-[transform,opacity,background-color] duration-150 ease-out active:opacity-70 active:scale-[0.98] motion-reduce:active:scale-100 disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tint focus-visible:ring-offset-2 focus-visible:ring-offset-bg'
 
   const variants = {
-    primary: 'text-night-soil focus-visible:ring-offset-night-soil focus-visible:ring-leaf',
-    secondary: 'border border-white/10 text-parchment hover:bg-white/5 active:bg-white/5 focus-visible:ring-offset-night-soil focus-visible:ring-leaf',
-    ghost: 'text-dry-grass hover:text-parchment hover:bg-white/5 active:bg-white/5 focus-visible:ring-offset-night-soil focus-visible:ring-leaf',
-    danger: 'text-parchment focus-visible:ring-offset-night-soil focus-visible:ring-clay-red',
+    primary: 'bg-tint text-on-tint',
+    secondary: 'bg-fill text-label',
+    ghost: 'text-tint hover:bg-fill',
+    danger: 'bg-destructive text-white',
   }
 
   const sizes = {
-    // 44px tall on touch screens (the iOS minimum); unchanged with a mouse.
-    sm: 'px-3 py-1.5 text-sm pointer-coarse:min-h-11',
-    md: 'px-4 py-2 text-sm pointer-coarse:min-h-11',
-    lg: 'px-6 py-3 text-base',
-  }
-
-  const variantStyles: Record<string, React.CSSProperties> = {
-    primary: { backgroundColor: 'var(--color-leaf)' },
-    secondary: { backgroundColor: 'transparent' },
-    ghost: { backgroundColor: 'transparent' },
-    danger: { backgroundColor: 'var(--color-clay-red-deep)' },
+    sm: 'px-3.5 py-1.5 text-[15px] min-h-8 pointer-coarse:min-h-11',
+    md: 'px-4 py-2 text-[15px] min-h-10 pointer-coarse:min-h-11',
+    lg: 'px-6 py-3 text-[17px] min-h-[50px] rounded-[14px]',
   }
 
   return (
@@ -48,7 +41,7 @@ export function Button({
       {...props}
       disabled={disabled || loading}
       className={`${base} ${variants[variant]} ${sizes[size]} ${fullWidth ? 'w-full' : ''} ${className}`}
-      style={{ ...variantStyles[variant], ...props.style }}
+      style={props.style}
     >
       {loading && (
         <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">

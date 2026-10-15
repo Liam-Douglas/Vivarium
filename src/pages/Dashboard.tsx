@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Link } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { useAnimals, type Animal } from '@/hooks/useAnimals'
 import type { MedicationSchedule } from '@/hooks/useMedicationSchedules'
@@ -35,6 +34,9 @@ import { getCareStatus, describeNextCare, CARE_URGENCY } from '@/lib/careStatus'
 import { LoadError } from '@/components/ui/LoadError'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
 import { FirstRun } from '@/components/dashboard/FirstRun'
+import { LargeTitle } from '@/components/ui/LargeTitle'
+import { ListSection, ListRow } from '@/components/ui/List'
+import { Icon, IconTile } from '@/components/ui/icons'
 import { useToast } from '@/components/ui/Toast'
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
 
@@ -76,15 +78,35 @@ function nameList(animals: { name: string }[], max = 3): string {
 }
 
 const FAB_ACTIONS = [
-  { key: 'animal',  label: 'Add animal',   icon: '🦎' },
-  { key: 'feeding', label: 'Log feeding',   icon: '🍖' },
-  { key: 'shed',    label: 'Log shed',      icon: '🐍' },
-  { key: 'weight',  label: 'Log weight',    icon: '⚖️' },
-  { key: 'expense', label: 'Add expense',   icon: '💸' },
+  { key: 'animal',  label: 'Add animal',  icon: 'animal' },
+  { key: 'feeding', label: 'Log feeding', icon: 'feed' },
+  { key: 'shed',    label: 'Log shed',    icon: 'shed' },
+  { key: 'weight',  label: 'Log weight',  icon: 'weight' },
+  { key: 'expense', label: 'Add expense', icon: 'expense' },
 ] as const
 
+const ACTIVITY_ICON = {
+  feeding: { icon: 'feed', color: 'var(--color-green)' },
+  shedding: { icon: 'shed', color: 'var(--color-orange)' },
+  weight: { icon: 'weight', color: 'var(--color-blue)' },
+} as const
+
+/** A row's leading circle: the animal's initial, ringed in its status colour. */
+function Avatar({ name, tone }: { name: string; tone: string }) {
+  const initial = Array.from(name.trim())[0]?.toUpperCase() ?? '?'
+  return (
+    <span
+      aria-hidden="true"
+      className="shrink-0 w-10 h-10 rounded-full bg-fill text-label-2 flex items-center justify-center text-[17px] font-semibold"
+      style={{ boxShadow: `inset 0 0 0 2px ${tone}` }}
+    >
+      {initial}
+    </span>
+  )
+}
+
 export function Dashboard() {
-  const { profile, user, canAddAnimal } = useAuth()
+  const { user, canAddAnimal } = useAuth()
   const { householdId, pendingRequests, currentUserRole, refresh: refreshHousehold } = useHousehold()
   const { data: animals, loading: animalsLoading, error: animalsError, refresh: refreshAnimals } = useAnimals()
   const { data: allLogs, error: logsError, refresh: refreshLogs } = useFeedingLogs()
@@ -314,13 +336,6 @@ export function Dashboard() {
     refreshMedLogs()
   }
 
-  const greeting = (() => {
-    const h = new Date().getHours()
-    if (h < 12) return 'Good morning'
-    if (h < 17) return 'Good afternoon'
-    return 'Good evening'
-  })()
-
   useEffect(() => {
     if (!logMenuOpen) return
     const onPointer = (e: MouseEvent) => {
@@ -448,7 +463,6 @@ export function Dashboard() {
     } finally { setSavingExpense(false) }
   }
 
-  const activityIcon = { feeding: '🍽️', shedding: '🐍', weight: '⚖️' }
 
   // Nothing on this page means anything without animals, so a failed first
   // load replaces it rather than rendering a dashboard of zeroes.
@@ -460,8 +474,14 @@ export function Dashboard() {
     )
   }
 
+  const tiles = [
+    { key: 'overdue', label: 'Overdue', count: feedingSummary.overdue, color: 'var(--color-red)' },
+    { key: 'due', label: 'Due soon', count: feedingSummary.dueSoon, color: 'var(--color-orange)' },
+  ]
+  const nothingDue = feedingSummary.overdue === 0 && feedingSummary.dueSoon === 0
+
   return (
-    <div className="flex-1 px-4 lg:px-8 py-6 pb-nav-fab md:pb-8 max-w-[1240px] mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav-fab md:pb-8 max-w-[1040px] mx-auto w-full">
       {/* A refresh failed over rows already on screen, or something other than
           the animals themselves did — say so without discarding the page. */}
       {(animalsState === 'stale' || secondaryError) && (
@@ -473,180 +493,129 @@ export function Dashboard() {
         />
       )}
 
-      {/* Header */}
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
-            {greeting}{profile?.full_name ? `, ${profile.full_name.split(' ')[0]}` : ''}
-          </h1>
-          <p className="text-sm mt-0.5" style={{ color: '#a8a090' }}>
-            {feedingSummary.overdue > 0 && (
-              <span style={{ color: '#dc7a7a', fontWeight: 500 }}>{feedingSummary.overdue} overdue</span>
-            )}
-            {feedingSummary.overdue > 0 && feedingSummary.dueSoon > 0 && ' · '}
-            {feedingSummary.dueSoon > 0 && `${feedingSummary.dueSoon} due soon`}
-            {firstRun && 'No animals yet'}
-            {!firstRun && feedingSummary.overdue === 0 && feedingSummary.dueSoon === 0 && 'Nothing due today'}
+      <LargeTitle
+        title="Today"
+        subtitle={firstRun ? 'No animals yet' : (
+          <>
+            {format(new Date(), 'EEEE d MMMM')}
+            {nothingDue && ' · Nothing due today'}
             {/* Never imply all-clear while animals are untracked. */}
             {feedingSummary.untracked > 0 && ` · ${feedingSummary.untracked} not tracked`}
-          </p>
-        </div>
-        {/* Desktop counterpart of the FAB. It used to offer only "Log feeding",
-            so logging a shed, weight or expense meant opening an animal first —
-            four of the five actions vanished above 768px. */}
-        {!firstRun && <div className="hidden md:block relative" ref={logMenuRef}>
-          <div className="flex items-stretch">
-            <button
-              onClick={() => openModal('feeding')}
-              className="inline-flex items-center gap-2 h-10 px-4 text-sm font-medium rounded-l-xl transition-opacity active:opacity-80"
-              style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}
-            >
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              Log feeding
-            </button>
-            <button
-              onClick={() => setLogMenuOpen((open) => !open)}
-              aria-label="More logging actions"
-              aria-expanded={logMenuOpen}
-              className="inline-flex items-center justify-center w-9 h-10 rounded-r-xl transition-opacity active:opacity-80"
-              style={{ backgroundColor: '#7fae4c', color: '#1a1a18', borderLeft: '1px solid rgba(26,26,24,0.18)' }}
-            >
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
-                style={{ transform: logMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.15s' }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-          </div>
-          {logMenuOpen && (
-            <div
-              className="absolute right-0 mt-2 w-52 rounded-xl p-1.5 z-30"
-              style={{ backgroundColor: '#2a2a26', border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 12px 28px rgba(0,0,0,0.45)' }}
-            >
-              {FAB_ACTIONS.filter((a) => a.key !== 'feeding').map((action) => (
-                <button
-                  key={action.key}
-                  onClick={() => { setLogMenuOpen(false); openModal(action.key as ActiveModal) }}
-                  className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-sm text-left transition-colors hover:bg-white/5"
-                  style={{ color: '#f0ece0' }}
-                >
-                  <span className="text-[15px]">{action.icon}</span>
-                  {action.label}
-                </button>
-              ))}
+          </>
+        )}
+        trailing={!firstRun && (
+          /* Desktop counterpart of the FAB: every logging action, not only
+             feeding, without opening an animal first. */
+          <div className="hidden md:block relative" ref={logMenuRef}>
+            <div className="flex items-stretch">
+              <button
+                onClick={() => openModal('feeding')}
+                className="inline-flex items-center gap-1.5 h-9 pl-3.5 pr-3 text-[15px] font-semibold rounded-l-[10px] bg-tint text-on-tint active:opacity-70 transition-opacity"
+              >
+                <Icon name="plus" size={16} strokeWidth={2.4} />
+                Log feeding
+              </button>
+              <button
+                onClick={() => setLogMenuOpen((open) => !open)}
+                aria-label="More logging actions"
+                aria-expanded={logMenuOpen}
+                className="inline-flex items-center justify-center w-8 h-9 rounded-r-[10px] bg-tint text-on-tint border-l border-black/15 active:opacity-70 transition-opacity"
+              >
+                <svg width="12" height="12" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}
+                  style={{ transform: logMenuOpen ? 'rotate(180deg)' : 'none', transition: 'transform 200ms var(--ease-out)' }}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
             </div>
-          )}
-        </div>}
-      </div>
+            {logMenuOpen && (
+              <div className="absolute right-0 mt-2 w-56 rounded-xl py-1 z-30 bg-surface-2 shadow-[0_12px_32px_rgba(0,0,0,0.18)] border-[0.5px] border-separator">
+                {FAB_ACTIONS.filter((a) => a.key !== 'feeding').map((action) => (
+                  <button
+                    key={action.key}
+                    onClick={() => { setLogMenuOpen(false); openModal(action.key as ActiveModal) }}
+                    className="w-full flex items-center justify-between gap-2.5 px-3.5 py-2 text-[15px] text-left text-label hover:bg-fill"
+                  >
+                    {action.label}
+                    <Icon name={action.icon} size={18} className="text-label-2" />
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      />
+
+      {/* Smart-list tiles, as in Reminders: what is late and what is next,
+          counted. Hidden on a quiet day, when the subtitle says so instead. */}
+      {!firstRun && !nothingDue && (
+        <div className="grid grid-cols-2 gap-2.5 mb-6 lg:mr-[384px]">
+          {tiles.map((t) => (
+            <a key={t.key} href="#feed-now" className="block rounded-xl bg-surface px-3.5 pt-2.5 pb-2 active:opacity-70 transition-opacity">
+              <p className="text-[15px] font-semibold" style={{ color: t.color }}>{t.label}</p>
+              <p className="text-[28px] leading-[34px] font-bold text-label tabular-nums">{t.count}</p>
+            </a>
+          ))}
+        </div>
+      )}
 
       {/* Pending join requests (owner only) */}
       {currentUserRole === 'owner' && pendingRequests.length > 0 && (
-        <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'rgba(143,190,90,0.08)', border: '1px solid rgba(143,190,90,0.2)' }}>
+        <ListSection prominent header="Join requests" className="mb-6">
           {pendingRequests.map((req) => {
             const p = req.profiles as { full_name: string | null } | null
             return (
-              <div key={req.id} className="flex items-center justify-between gap-3">
-                <p className="text-sm" style={{ color: '#f0ece0' }}>
-                  <strong>{p?.full_name ?? 'Someone'}</strong> wants to join your collection
-                </p>
-                <div className="flex gap-2 shrink-0">
+              <ListRow
+                key={req.id}
+                leading={<IconTile name="person" color="var(--color-blue)" />}
+              >
+                <p className="text-[17px] text-label break-words">{p?.full_name ?? 'Someone'}</p>
+                <p className="text-[13px] text-label-2">Wants to join your collection</p>
+                <div className="flex gap-2 mt-2">
                   <Button size="sm" onClick={() => handleApprove(req.id)} loading={approvingId === req.id}>Approve</Button>
                   <Button size="sm" variant="secondary" onClick={() => handleDeny(req.id)}>Deny</Button>
                 </div>
-              </div>
+              </ListRow>
             )
           })}
-        </div>
+        </ListSection>
       )}
 
       {/* Feeding strike warning */}
       {strikeAnimals.length > 0 && (
-        <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
-          <p className="text-sm font-medium mb-1" style={{ color: '#dc7a7a' }}>
-            Feeding strike detected
-          </p>
-          <p className="text-xs" style={{ color: '#a8a090' }}>
-            {strikeAnimals.map((a) => a.name).join(', ')} {strikeAnimals.length === 1 ? 'has' : 'have'} refused 3+ consecutive meals. Consider checking for health issues or environment problems.
-          </p>
-        </div>
+        <ListSection className="mb-6">
+          <ListRow leading={<IconTile name="alert" color="var(--color-red)" />}>
+            <p className="text-[17px] font-semibold text-red">Feeding strike detected</p>
+            <p className="text-[13px] text-label-2 mt-0.5">
+              {strikeAnimals.map((a) => a.name).join(', ')} {strikeAnimals.length === 1 ? 'has' : 'have'} refused 3+ consecutive meals. Consider checking for health issues or environment problems.
+            </p>
+          </ListRow>
+        </ListSection>
       )}
 
-      {/* Animals no feeding queue can reach — they would otherwise read as on schedule */}
-      {(unscheduledAnimals.length > 0 || neverFedAnimals.length > 0) && (
-        <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.2)' }}>
-          <div className="flex items-start justify-between gap-3">
-            <p className="text-sm font-medium" style={{ color: '#d4924a' }}>
-              {feedingSummary.untracked} animal{feedingSummary.untracked !== 1 ? 's' : ''} not tracked
-            </p>
-            <Link to="/animals" className="text-xs font-medium shrink-0 mt-0.5" style={{ color: '#d4924a' }}>
-              Review
-            </Link>
-          </div>
-          {unscheduledAnimals.length > 0 && (
-            <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
-              {nameList(unscheduledAnimals)} {unscheduledAnimals.length === 1 ? 'has' : 'have'} no
-              feeding schedule, so {unscheduledAnimals.length === 1 ? 'it' : 'they'} will never appear as due. Set a
-              feeding frequency to include {unscheduledAnimals.length === 1 ? 'it' : 'them'}.
-            </p>
-          )}
-          {neverFedAnimals.length > 0 && (
-            <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
-              {nameList(neverFedAnimals)} {neverFedAnimals.length === 1 ? 'has' : 'have'} a schedule
-              but no feeding logged yet, so there is nothing to count from.
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* Above 1024 the queue keeps the primary column and the two blocks you
-          read but rarely act on move into a rail. Below it they simply stack,
-          stock directly under the queue it affects. */}
-      {/* Above the two-column grid, so on desktop it leads the page rather
-          than sitting in the rail. */}
       {firstRun && (
         <div className="mb-6">
           <FirstRun onAddAnimal={() => openModal('animal')} />
         </div>
       )}
 
-      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-6 lg:items-start">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6 lg:items-start">
         <div className="min-w-0">
-      {/* Today — feedings and doses, ordered by when they fall due */}
+      {/* Feed now: feedings and doses, ordered by when they fall due */}
       {queue.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Today</h2>
-            <span
-              className="text-xs font-medium px-1.5 py-0.5 rounded-full"
-              style={feedingSummary.overdue > 0
-                ? { backgroundColor: 'rgba(196,90,90,0.18)', color: '#dc7a7a' }
-                : { backgroundColor: 'rgba(212,146,74,0.18)', color: '#d4924a' }}
+        <ListSection
+          prominent
+          className="mb-6 scroll-mt-16"
+          header={<span id="feed-now">Feed now</span>}
+          action={selectableIds.length > 1 && (
+            <button
+              onClick={() => { setSelectMode((on) => !on); setSelected(new Set()) }}
+              className="tap-target text-[15px] text-tint"
             >
-              {queue.length}
-            </span>
-            {selectableIds.length > 1 && (
-              <button
-                onClick={() => { setSelectMode((on) => !on); setSelected(new Set()) }}
-                className="tap-target ml-auto text-xs font-medium"
-                style={{ color: selectMode ? '#a8a090' : '#8fbe5a' }}
-              >
-                {selectMode ? 'Cancel' : 'Select'}
-              </button>
-            )}
-          </div>
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="hidden lg:flex items-center gap-3 px-4 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <span className="w-2.5 shrink-0" aria-hidden="true" />
-              <div className="flex-1 min-w-0 flex items-center gap-4">
-                <span className="w-52 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Animal</span>
-                <span className="w-32 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Status</span>
-                <span className="flex-1 min-w-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Detail</span>
-                <span className="w-28 shrink-0 text-[10px] font-semibold tracking-[0.08em] uppercase" style={{ color: '#9f9684' }}>Where</span>
-              </div>
-              <span className="shrink-0" style={{ width: 62 }} aria-hidden="true" />
-            </div>
-            {queue.map((item, i) => {
+              {selectMode ? 'Done' : 'Select'}
+            </button>
+          )}
+        >
+            {queue.map((item) => {
               const { animal, due } = item
               const daysLate = differenceInDays(new Date(), due)
               const daysUntil = differenceInDays(due, new Date())
@@ -666,11 +635,11 @@ export function Dashboard() {
                 ? (daysLate > 0 ? `${daysLate} day${daysLate !== 1 ? 's' : ''} late` : 'due today')
                 : item.status === 'overdue'
                   ? `${daysLate} day${daysLate !== 1 ? 's' : ''} overdue`
-                  : daysUntil === 0 ? 'due today'
-                  : daysUntil === 1 ? 'due tomorrow'
-                  : `due in ${daysUntil} days`
+                  : daysUntil === 0 ? 'Due today'
+                  : daysUntil === 1 ? 'Due tomorrow'
+                  : `Due in ${daysUntil} days`
 
-              const tone = item.kind === 'dose' ? '#5a8fbe' : FEEDING_STATUS_META[item.status].color
+              const tone = item.kind === 'dose' ? 'var(--color-blue)' : FEEDING_STATUS_META[item.status].color
               const selectable = item.kind === 'feeding'
               const isSelected = selected.has(animal.id)
               const leaving = item.kind === 'feeding' && leavingIds.has(animal.id)
@@ -678,62 +647,54 @@ export function Dashboard() {
               return (
                 <div
                   key={item.key}
-                  className="grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-opacity"
+                  // Fed: the button becomes a check (Things' check-off), then
+                  // the row folds away while the refresh removes it.
+                  className={`list-row list-row-leading grid transition-[grid-template-rows,opacity] duration-300 ease-out motion-reduce:transition-opacity ${leaving ? 'delay-[450ms]' : ''}`}
                   style={{ gridTemplateRows: leaving ? '0fr' : '1fr', opacity: leaving ? 0 : 1 }}
                   aria-hidden={leaving || undefined}
                 >
                 <div className="min-h-0 overflow-hidden">
-                <div
-                  className="flex items-center gap-3 px-4 py-2.5"
-                  style={{ borderBottom: i < queue.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
-                >
+                <div className="flex items-center gap-3 px-4 py-2.5 min-h-[60px]">
                   {selectMode ? (
                     <input
                       type="checkbox"
                       checked={isSelected}
                       disabled={!selectable}
                       onChange={() => toggleSelected(animal.id)}
-                      className="w-4 h-4 shrink-0 accent-[#8fbe5a]"
+                      className="w-[22px] h-[22px] shrink-0 accent-tint rounded-full"
                       style={{ opacity: selectable ? 1 : 0.25 }}
                       aria-label={`Select ${animal.name}`}
                     />
                   ) : (
-                    <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: tone }} />
+                    <Avatar name={animal.name} tone={tone} />
                   )}
-                  <div className="flex-1 min-w-0 lg:flex lg:items-center lg:gap-4">
-                    <div className="min-w-0 lg:w-52 lg:shrink-0">
-                      {/* The name gives way, never the lateness: a long name used
-                          to truncate "386 days overdue" off the row entirely. */}
-                      <p className="text-sm font-medium flex min-w-0" style={{ color: '#f0ece0' }}>
-                        <span className="truncate">{animal.name}</span>
-                        <span className="font-normal lg:hidden shrink-0 whitespace-nowrap" style={{ color: tone }}>&nbsp;· {when}</span>
-                      </p>
-                      <p className="hidden lg:block text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>
-                        {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}
-                      </p>
-                    </div>
-                    <p className="hidden lg:block lg:w-32 lg:shrink-0 text-sm truncate" style={{ color: tone }}>{when}</p>
-                    <p className="text-xs mt-0.5 truncate lg:mt-0 lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#9f9684' }}>
-                      {detail}
-                      <span className="lg:hidden">{where ? ` · ${where}` : ''}</span>
+                  <div className="flex-1 min-w-0">
+                    {/* The name gives way, never the lateness. */}
+                    <p className="text-[17px] text-label truncate">{animal.name}</p>
+                    <p className="text-[13px] flex min-w-0 mt-0.5">
+                      <span className="font-semibold shrink-0 whitespace-nowrap" style={{ color: tone }}>{when}</span>
+                      <span className="text-label-2 truncate">&nbsp;· {detail}{where ? ` · ${where}` : ''}</span>
                     </p>
-                    <p className="hidden lg:block lg:w-28 lg:shrink-0 text-sm truncate" style={{ color: '#9f9684' }}>{where ?? '—'}</p>
                   </div>
                   {!selectMode && (
                     item.kind === 'dose' ? (
                       <button
                         onClick={() => handleLogDose(item)}
                         disabled={loggingDoseId === item.schedule.id}
-                        className="text-sm font-medium px-3 rounded-lg shrink-0 transition-transform duration-150 ease-out active:scale-[0.96] motion-reduce:active:scale-100 disabled:opacity-50"
-                        style={{ height: 44, minWidth: 62, backgroundColor: 'rgba(90,143,190,0.15)', color: '#5a8fbe', border: '1px solid rgba(90,143,190,0.25)' }}
+                        className="tap-target shrink-0 h-[30px] min-w-[60px] px-4 rounded-full text-[15px] font-semibold active:opacity-60 transition-opacity disabled:opacity-40"
+                        style={{ backgroundColor: 'color-mix(in srgb, var(--color-blue) 14%, transparent)', color: 'var(--color-blue)' }}
                       >
                         Log
                       </button>
+                    ) : leaving ? (
+                      <span className="check-pop shrink-0 w-[30px] h-[30px] rounded-full bg-tint text-on-tint flex items-center justify-center mr-[15px]" aria-hidden="true">
+                        <Icon name="check" size={16} strokeWidth={3} />
+                      </span>
                     ) : (
                       <button
                         onClick={() => { setQuickFeedAnimalId(animal.id); setActiveModal('feeding') }}
-                        className="text-sm font-medium px-3 rounded-lg shrink-0 transition-transform duration-150 ease-out active:scale-[0.96] motion-reduce:active:scale-100"
-                        style={{ height: 44, minWidth: 62, backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
+                        className="tap-target shrink-0 h-[30px] min-w-[60px] px-4 rounded-full text-[15px] font-semibold active:opacity-60 transition-opacity"
+                        style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)', color: 'var(--color-tint)' }}
                       >
                         Feed
                       </button>
@@ -749,137 +710,116 @@ export function Dashboard() {
               <button
                 onClick={() => setActiveModal('batch')}
                 disabled={selected.size === 0}
-                className="w-full flex items-center justify-center h-12 text-sm font-medium disabled:opacity-40"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.04)', backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a' }}
+                className="list-row relative w-full flex items-center justify-center min-h-11 text-[17px] font-semibold text-tint disabled:text-label-3"
               >
                 Log {selected.size} feeding{selected.size !== 1 ? 's' : ''}
               </button>
             ) : (
-              /* The collection count lives here now rather than in the header —
-                 a link to act on, not a figure to admire. */
-              <Link
-                to="/animals"
-                className="flex items-center justify-center h-11 text-sm"
-                style={{ borderTop: '1px solid rgba(255,255,255,0.04)', color: '#a8a090' }}
-              >
-                View all {animals.length} animal{animals.length !== 1 ? 's' : ''} &rarr;
-              </Link>
+              <ListRow to="/animals">
+                <span className="text-[17px] text-tint">All {animals.length} animal{animals.length !== 1 ? 's' : ''}</span>
+              </ListRow>
             )}
-          </div>
-        </div>
+        </ListSection>
       )}
 
-      {/* Worth a look — only when the queue is empty, because these are things
-          to notice rather than things to do, and they should never compete with
-          a feeding that is overdue. The "not tracked" block above stays visible
-          either way: that one is a gap in the records, not a state of an
-          animal. */}
+      {/* Animals no feeding queue can reach: they would otherwise read as on schedule */}
+      {(unscheduledAnimals.length > 0 || neverFedAnimals.length > 0) && (
+        <ListSection prominent header="Not tracked" className="mb-6">
+          <ListRow to="/animals" leading={<IconTile name="question" color="var(--color-orange)" />}>
+            <p className="text-[17px] text-label">
+              {feedingSummary.untracked} animal{feedingSummary.untracked !== 1 ? 's' : ''} not tracked
+            </p>
+            {unscheduledAnimals.length > 0 && (
+              <p className="text-[13px] text-label-2 mt-0.5">
+                {nameList(unscheduledAnimals)} {unscheduledAnimals.length === 1 ? 'has' : 'have'} no
+                feeding schedule, so {unscheduledAnimals.length === 1 ? 'it' : 'they'} will never appear as due. Set a
+                feeding frequency to include {unscheduledAnimals.length === 1 ? 'it' : 'them'}.
+              </p>
+            )}
+            {neverFedAnimals.length > 0 && (
+              <p className="text-[13px] text-label-2 mt-0.5">
+                {nameList(neverFedAnimals)} {neverFedAnimals.length === 1 ? 'has' : 'have'} a schedule
+                but no feeding logged yet, so there is nothing to count from.
+              </p>
+            )}
+          </ListRow>
+        </ListSection>
+      )}
+
+      {/* Worth a look: only when the queue is empty, because these are things
+          to notice rather than things to do. */}
       {queue.length === 0 && worthALook.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <h2 className="text-base font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
-              Worth a look
-            </h2>
-          </div>
-          <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-            {worthALook.map((item, i) => (
-              <Link
-                key={item.key}
-                to={`/animals/${item.animalId}`}
-                className="flex items-center gap-3 px-4 py-3 transition-opacity active:opacity-70"
-                style={i > 0 ? { borderTop: '1px solid rgba(255,255,255,0.04)' } : undefined}
-              >
-                <span
-                  className="shrink-0 rounded-full"
-                  style={{ width: 8, height: 8, backgroundColor: WORTH_A_LOOK_COLOR[item.kind] }}
-                />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{item.animalName}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{item.detail}</p>
-                </div>
-                <span className="text-xs shrink-0" style={{ color: '#a8a090' }}>&rarr;</span>
-              </Link>
-            ))}
-          </div>
-        </div>
+        <ListSection prominent header="Worth a look" className="mb-6">
+          {worthALook.map((item) => (
+            <ListRow
+              key={item.key}
+              to={`/animals/${item.animalId}`}
+              leading={<span className="flex w-[30px] justify-center"><span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: WORTH_A_LOOK_COLOR[item.kind] }} /></span>}
+            >
+              <p className="text-[17px] text-label truncate">{item.animalName}</p>
+              <p className="text-[13px] text-label-2">{item.detail}</p>
+            </ListRow>
+          ))}
+        </ListSection>
       )}
         </div>
         <div className="min-w-0">
-      {/* Care due — cleaning, weighing and the rest, which nothing surfaced before */}
+      {/* Care due: cleaning, weighing and the rest */}
       {careDue.length > 0 && (
-        <Link
-          to="/reminders"
-          className="block mb-6 rounded-xl p-4"
-          style={{ backgroundColor: 'rgba(143,190,90,0.07)', border: '1px solid rgba(143,190,90,0.22)' }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium" style={{ color: '#8fbe5a' }}>
-              {careDue.length} care task{careDue.length !== 1 ? 's' : ''} due
-            </p>
-            <span className="text-xs shrink-0" style={{ color: '#8fbe5a' }}>Reminders &rarr;</span>
-          </div>
-          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
-            {careDue.slice(0, 3).map((t) => `${t.name} — ${describeNextCare(t).toLowerCase()}`).join(' · ')}
-            {careDue.length > 3 && ` · and ${careDue.length - 3} more`}
-          </p>
-        </Link>
+        <ListSection prominent header={`${careDue.length} care task${careDue.length !== 1 ? 's' : ''} due`} className="mb-6">
+          {careDue.slice(0, 4).map((t) => (
+            <ListRow key={t.id} to="/reminders" leading={<IconTile name="bell" color="var(--color-blue)" />}>
+              <p className="text-[17px] text-label truncate">{t.name}</p>
+              <p className="text-[13px] text-label-2">{describeNextCare(t)}</p>
+            </ListRow>
+          ))}
+          {careDue.length > 4 && (
+            <ListRow to="/reminders"><span className="text-[17px] text-tint">{careDue.length - 4} more</span></ListRow>
+          )}
+        </ListSection>
       )}
 
-      {/* Feeder stock — needed before you start feeding, not after */}
+      {/* Feeder stock: needed before you start feeding, not after */}
       {lowStock.length > 0 && (
-        <Link
-          to="/expenses"
-          className="block mb-6 rounded-xl p-4"
-          style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.25)' }}
-        >
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-sm font-medium" style={{ color: '#d4924a' }}>Feeder stock is running low</p>
-            <span className="text-xs shrink-0" style={{ color: '#d4924a' }}>Stock &rarr;</span>
-          </div>
-          <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
-            {lowStock.slice(0, 3).map(({ item, projection }) => (
-              projection.daysRemaining === null
-                ? `${item.name} — ${item.currentStock} left`
-                : `${item.name} — ${projection.daysRemaining}d left`
-            )).join(' · ')}
-            {lowStock.length > 3 && ` · and ${lowStock.length - 3} more`}
-          </p>
-        </Link>
+        <ListSection prominent header="Feeder stock is running low" className="mb-6">
+          {lowStock.slice(0, 4).map(({ item, projection }) => (
+            <ListRow key={item.id} to="/feeders" leading={<IconTile name="box" color="var(--color-orange)" />}>
+              <p className="text-[17px] text-label truncate">
+                {projection.daysRemaining === null
+                  ? `${item.name} — ${item.currentStock} left`
+                  : `${item.name} — ${projection.daysRemaining}d left`}
+              </p>
+            </ListRow>
+          ))}
+          {lowStock.length > 4 && (
+            <ListRow to="/feeders"><span className="text-[17px] text-tint">{lowStock.length - 4} more</span></ListRow>
+          )}
+        </ListSection>
       )}
+
       {/* Recent activity */}
-      {!firstRun && <div>
-        <h2 className="text-base font-semibold mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Recent activity</h2>
-        {activityLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
-          </div>
-        ) : activity.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-            <div className="text-4xl mb-3 opacity-60">📋</div>
-            <p className="text-sm" style={{ color: '#a8a090' }}>No activity yet</p>
-          </div>
-        ) : (
-          <div className="flex flex-col">
-            {activity.map((item, i) => (
-              <div
-                key={item.id}
-                className="flex items-start gap-3 py-3"
-                style={{ borderBottom: i < activity.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
-              >
-                <span className="text-lg leading-none mt-0.5">{activityIcon[item.type]}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm" style={{ color: '#f0ece0' }}>
-                    <strong>{item.animalName}</strong> — {item.detail}
-                  </p>
-                  <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
-                    by {item.loggedBy} · {format(new Date(item.timestamp), 'd MMM, h:mm a')}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>}
+      {!firstRun && (
+        <ListSection prominent header="Recent activity" className="mb-6">
+          {activityLoading ? (
+            <div className="flex justify-center py-6">
+              <div className="w-5 h-5 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-label-3)', borderTopColor: 'transparent' }} />
+            </div>
+          ) : activity.length === 0 ? (
+            <ListRow><p className="text-[15px] text-label-2 py-1">No activity yet. Feedings, weights and sheds logged by anyone in your household appear here.</p></ListRow>
+          ) : (
+            activity.map((item) => (
+              <ListRow key={item.id} leading={<IconTile name={ACTIVITY_ICON[item.type].icon} color={ACTIVITY_ICON[item.type].color} />}>
+                <p className="text-[15px] text-label">
+                  <span className="font-semibold">{item.animalName}</span> · {item.detail}
+                </p>
+                <p className="text-[13px] text-label-2 mt-0.5">
+                  {item.loggedBy} · {format(new Date(item.timestamp), 'd MMM, h:mm a')}
+                </p>
+              </ListRow>
+            ))
+          )}
+        </ListSection>
+      )}
         </div>
       </div>
 
@@ -907,7 +847,7 @@ export function Dashboard() {
             <span
               aria-hidden="true"
               className="text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
-              style={{ backgroundColor: '#2a2a26', color: '#f0ece0', border: '1px solid rgba(255,255,255,0.08)' }}
+              style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-label)', border: '1px solid var(--color-separator)' }}
             >
               {action.label}
             </span>
@@ -915,10 +855,10 @@ export function Dashboard() {
               type="button"
               aria-label={action.label}
               onClick={() => openModal(action.key as ActiveModal)}
-              className="w-11 h-11 rounded-full flex items-center justify-center text-lg shadow-lg transition-transform duration-150 ease-out active:scale-95 motion-reduce:active:scale-100"
-              style={{ backgroundColor: '#2a2a26', border: '1px solid rgba(255,255,255,0.1)' }}
+              className="w-11 h-11 rounded-full flex items-center justify-center text-tint shadow-lg transition-transform duration-150 ease-out active:scale-95 motion-reduce:active:scale-100"
+              style={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)' }}
             >
-              {action.icon}
+              <Icon name={action.icon} size={20} />
             </button>
           </div>
         ))}
@@ -930,7 +870,7 @@ export function Dashboard() {
           aria-expanded={fabOpen}
           onClick={() => setFabOpen((o) => !o)}
           className="relative z-10 pointer-events-auto w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform duration-150 ease-out active:scale-95 motion-reduce:active:scale-100"
-          style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}
+          style={{ backgroundColor: 'var(--color-tint)', color: 'var(--color-on-tint)' }}
         >
           <svg
             width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
@@ -968,8 +908,8 @@ export function Dashboard() {
           </Select>
           <Input label="Date" type="date" value={shedDate} onChange={(e) => setShedDate(e.target.value)} />
           <label className="flex items-center gap-3 cursor-pointer">
-            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="w-4 h-4 accent-[#8fbe5a]" />
-            <span className="text-sm" style={{ color: '#f0ece0' }}>Complete shed</span>
+            <input type="checkbox" checked={shedComplete} onChange={(e) => setShedComplete(e.target.checked)} className="w-4 h-4 accent-tint" />
+            <span className="text-sm" style={{ color: 'var(--color-label)' }}>Complete shed</span>
           </label>
           <Textarea label="Notes" value={shedNotes} onChange={(e) => setShedNotes(e.target.value)} rows={2} />
           <div className="flex gap-2">

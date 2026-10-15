@@ -14,16 +14,16 @@ import { LoadError } from '@/components/ui/LoadError'
 import { formatAUD } from '@/lib/format'
 
 const CATEGORY_COLORS: Record<string, string> = {
-  feeder_stock: '#8fbe5a',
-  veterinary: '#c45a5a',
-  enclosure: '#5a8ebe',
-  acquisition: '#d4924a',
+  feeder_stock: 'var(--color-tint)',
+  veterinary: 'var(--color-red)',
+  enclosure: 'var(--color-blue)',
+  acquisition: 'var(--color-orange)',
   supplies: '#a87ac4',
-  misc: '#9f9684',
+  misc: 'var(--color-label-2)',
 }
 
 const ANIMAL_CATEGORY_COLORS = [
-  '#8fbe5a', '#d4924a', '#5a8ebe', '#c45a5a', '#a87ac4', '#5abeaa', '#be5a8f', '#6a8e5a',
+  'var(--color-tint)', 'var(--color-orange)', 'var(--color-blue)', 'var(--color-red)', '#a87ac4', '#5abeaa', '#be5a8f', 'var(--color-green)',
 ]
 
 export function Stats() {
@@ -149,16 +149,16 @@ export function Stats() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 mb-6">
-        <StatCard label="Animals" value={animals.length} color="#8fbe5a" />
+        <StatCard label="Animals" value={animals.length} color="var(--color-tint)" />
         <StatCard
           label="Overdue"
           value={overdueCount}
           // Zero overdue only earns green when every animal is actually tracked.
-          color={overdueCount > 0 ? '#dc7a7a' : feedingSummary.untracked > 0 ? '#d4924a' : '#5a9e6a'}
+          color={overdueCount > 0 ? 'var(--color-red)' : feedingSummary.untracked > 0 ? 'var(--color-orange)' : 'var(--color-green)'}
           note={feedingSummary.untracked > 0 ? `${feedingSummary.untracked} not tracked` : undefined}
         />
-        <StatCard label="YTD feedings" value={feedingStats.fed} color="#8fbe5a" />
-        <StatCard label="Compliance" value={`${feedingStats.rate}%`} color={feedingStats.rate >= 80 ? '#8fbe5a' : feedingStats.rate >= 60 ? '#d4924a' : '#dc7a7a'} />
+        <StatCard label="YTD feedings" value={feedingStats.fed} color="var(--color-tint)" />
+        <StatCard label="Compliance" value={`${feedingStats.rate}%`} color={feedingStats.rate >= 80 ? 'var(--color-tint)' : feedingStats.rate >= 60 ? 'var(--color-orange)' : 'var(--color-red)'} />
       </div>
 
       {/* YTD spend */}
@@ -168,10 +168,10 @@ export function Stats() {
             {expenseByCategory.map(({ cat, label, amount }, i) => (
               <div key={cat}>
                 <div className="flex justify-between text-xs mb-1">
-                  <span style={{ color: '#a8a090' }}>{label}</span>
-                  <span style={{ color: '#f0ece0' }}>{formatAUD(Math.round(amount * 100))}</span>
+                  <span style={{ color: 'var(--color-label-2)' }}>{label}</span>
+                  <span style={{ color: 'var(--color-label)' }}>{formatAUD(Math.round(amount * 100))}</span>
                 </div>
-                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-separator)' }}>
                   <div
                     className="h-full rounded-full"
                     style={{
@@ -191,14 +191,14 @@ export function Stats() {
         <Section title="Monthly feedings">
           <ResponsiveContainer width="100%" height={150}>
             <BarChart data={monthlyFeedingData} barCategoryGap="30%">
-              <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
               <YAxis hide allowDecimals={false} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
-                labelStyle={{ color: '#a8a090', fontSize: 12 }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }}
+                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
               />
-              <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="#5a9e6a" radius={[0, 0, 0, 0]} />
-              <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="#c45a5a" radius={[4, 4, 0, 0]} />
+              <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="var(--color-green)" radius={[0, 0, 0, 0]} />
+              <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="var(--color-red)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Section>
@@ -210,10 +210,10 @@ export function Stats() {
           <ResponsiveContainer width="100%" height={Math.max(80, animalsByCategory.length * 36)}>
             <BarChart data={animalsByCategory} layout="vertical" margin={{ left: 0, right: 24 }}>
               <XAxis type="number" hide allowDecimals={false} />
-              <YAxis type="category" dataKey="cat" tick={{ fontSize: 12, fill: '#a8a090' }} axisLine={false} tickLine={false} width={90} />
+              <YAxis type="category" dataKey="cat" tick={{ fontSize: 12, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} width={90} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
-                labelStyle={{ color: '#a8a090', fontSize: 12 }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }}
+                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
                 formatter={(v) => [v, 'Animals']}
               />
               <Bar isAnimationActive={false} dataKey="count" radius={[0, 4, 4, 0]}>
@@ -232,16 +232,16 @@ export function Stats() {
           <div className="flex flex-col gap-2">
             {topStreaks.map(({ name, streak }, i) => (
               <div key={name} className="flex items-center gap-3">
-                <span className="text-xs font-semibold w-4 text-right" style={{ color: '#9f9684' }}>{i + 1}</span>
+                <span className="text-xs font-semibold w-4 text-right" style={{ color: 'var(--color-label-2)' }}>{i + 1}</span>
                 <div className="flex-1">
                   <div className="flex justify-between text-xs mb-1">
-                    <span style={{ color: '#f0ece0' }}>{name}</span>
-                    <span style={{ color: '#8fbe5a' }}>🔥 {streak}</span>
+                    <span style={{ color: 'var(--color-label)' }}>{name}</span>
+                    <span style={{ color: 'var(--color-tint)' }}>🔥 {streak}</span>
                   </div>
-                  <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
+                  <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-separator)' }}>
                     <div
                       className="h-full rounded-full"
-                      style={{ width: `${Math.min(100, (streak / (topStreaks[0]?.streak || 1)) * 100)}%`, backgroundColor: '#8fbe5a' }}
+                      style={{ width: `${Math.min(100, (streak / (topStreaks[0]?.streak || 1)) * 100)}%`, backgroundColor: 'var(--color-tint)' }}
                     />
                   </div>
                 </div>
@@ -258,10 +258,10 @@ export function Stats() {
 
 function StatCard({ label, value, color, note }: { label: string; value: number | string; color?: string; note?: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <p className="text-xs mb-1" style={{ color: '#9f9684' }}>{label}</p>
-      <p className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: color ?? '#f0ece0' }}>{value}</p>
-      {note && <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>{note}</p>}
+    <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+      <p className="text-xs mb-1" style={{ color: 'var(--color-label-2)' }}>{label}</p>
+      <p className="text-2xl font-bold" style={{ color: color ?? 'var(--color-label)' }}>{value}</p>
+      {note && <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{note}</p>}
     </div>
   )
 }
@@ -269,8 +269,8 @@ function StatCard({ label, value, color, note }: { label: string; value: number 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-5">
-      <p className="text-xs font-semibold tracking-wider mb-2" style={{ color: '#9f9684' }}>{title.toUpperCase()}</p>
-      <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <p className="text-xs font-semibold tracking-wider mb-2" style={{ color: 'var(--color-label-2)' }}>{title.toUpperCase()}</p>
+      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
         {children}
       </div>
     </div>

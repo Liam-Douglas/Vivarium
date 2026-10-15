@@ -1,11 +1,11 @@
 export function Privacy() {
-  const headingStyle = { color: '#f0ece0' }
-  const bodyStyle = { color: '#a8a090' }
-  const mutedStyle = { color: '#9f9684' }
+  const headingStyle = { color: 'var(--color-label)' }
+  const bodyStyle = { color: 'var(--color-label-2)' }
+  const mutedStyle = { color: 'var(--color-label-2)' }
 
   return (
     <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
-      <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Privacy Policy</h1>
+      <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-label)' }}>Privacy Policy</h1>
       <p className="text-xs mb-6" style={mutedStyle}>Last updated: April 2025</p>
 
       <div className="flex flex-col gap-4">
@@ -33,7 +33,7 @@ export function Privacy() {
 
         <Section title="Data storage" headingStyle={headingStyle} bodyStyle={bodyStyle}>
           Your data is stored in a PostgreSQL database hosted by Supabase. Data is encrypted at rest and in transit. Supabase infrastructure is hosted on AWS. For details, see{' '}
-          <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: '#8fbe5a' }}>Supabase's privacy policy</a>.
+          <a href="https://supabase.com/privacy" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--color-tint)' }}>Supabase's privacy policy</a>.
         </Section>
 
         <Section title="Household sharing" headingStyle={headingStyle} bodyStyle={bodyStyle}>
@@ -46,7 +46,7 @@ export function Privacy() {
 
         <Section title="Your rights" headingStyle={headingStyle} bodyStyle={bodyStyle}>
           You have the right to access, correct, or delete your personal data at any time. You can update your display name directly in Settings. For other requests, contact us at{' '}
-          <a href="mailto:privacy@vivarium.app" style={{ color: '#8fbe5a' }}>privacy@vivarium.app</a>.
+          <a href="mailto:privacy@vivarium.app" style={{ color: 'var(--color-tint)' }}>privacy@vivarium.app</a>.
         </Section>
 
         <Section title="Changes to this policy" headingStyle={headingStyle} bodyStyle={bodyStyle}>
@@ -69,7 +69,7 @@ function Section({
   bodyStyle: React.CSSProperties
 }) {
   return (
-    <div className="rounded-xl p-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
       <h2 className="text-sm font-semibold mb-3" style={headingStyle}>{title}</h2>
       <div className="text-sm leading-relaxed" style={bodyStyle}>{children}</div>
     </div>

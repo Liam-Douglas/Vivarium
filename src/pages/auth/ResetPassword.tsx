@@ -100,9 +100,9 @@ export function ResetPassword() {
   if (phase === 'verifying') {
     return (
       <AuthShell>
-        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
           <BrandMark pulse className="mx-auto mb-4" />
-          <p className="text-sm" style={{ color: '#a8a090' }}>Checking your reset link…</p>
+          <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>Checking your reset link…</p>
         </div>
       </AuthShell>
     )
@@ -111,15 +111,15 @@ export function ResetPassword() {
   if (phase === 'invalid') {
     return (
       <AuthShell>
-        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
           <div className="text-4xl mb-4">🔗</div>
-          <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
             This link didn't work
           </h2>
-          <p className="text-sm mb-2" style={{ color: '#a8a090' }}>
+          <p className="text-sm mb-2" style={{ color: 'var(--color-label-2)' }}>
             {linkError ?? 'The link has expired, has already been used, or was opened in a different browser from the one that requested it.'}
           </p>
-          <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
             Request a new one and open it in this browser.
           </p>
           <Link to="/auth/forgot-password">
@@ -132,16 +132,16 @@ export function ResetPassword() {
 
   return (
     <AuthShell>
-      <div className="rounded-2xl p-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+      <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+        <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
           Choose a new password
         </h2>
-        <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+        <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
           You'll be signed in on this device once it's saved.
         </p>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}>
             {error}
           </div>
         )}

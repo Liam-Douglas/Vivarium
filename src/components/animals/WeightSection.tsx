@@ -62,43 +62,43 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
   return (
     <div className="flex flex-col gap-4">
       {series.length > 1 && (
-        <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs font-medium mb-3" style={{ color: '#a8a090' }}>GROWTH CHART</p>
+        <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+          <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>GROWTH CHART</p>
           <ResponsiveContainer width="100%" height={160}>
             <AreaChart data={series}>
               <defs>
                 <linearGradient id="weightGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#8fbe5a" stopOpacity={0.25} />
-                  <stop offset="95%" stopColor="#8fbe5a" stopOpacity={0} />
+                  <stop offset="5%" stopColor="var(--color-tint)" stopOpacity={0.25} />
+                  <stop offset="95%" stopColor="var(--color-tint)" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis hide domain={['auto', 'auto']} />
               <Tooltip
-                contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
-                labelStyle={{ color: '#a8a090', fontSize: 12 }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }}
+                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
                 formatter={(v) => [formatWeight(Number(v)), 'Weight']}
               />
-              <Area isAnimationActive={false} type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
+              <Area isAnimationActive={false} type="monotone" dataKey="weight" stroke="var(--color-tint)" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
               {target && (
-                <ReferenceLine y={target} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${formatWeight(target)}`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
+                <ReferenceLine y={target} stroke="var(--color-orange)" strokeDasharray="4 3" label={{ value: `Target ${formatWeight(target)}`, position: 'insideTopRight', fontSize: 10, fill: 'var(--color-orange)' }} />
               )}
             </AreaChart>
           </ResponsiveContainer>
 
-          <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-separator)' }}>
             <input
               type="number" inputMode="decimal" min={1} value={targetInput}
               onChange={(e) => setTargetInput(e.target.value)}
               placeholder={target ? `Target: ${target}g` : 'Set target weight (g)'}
               className="flex-1 rounded-lg px-3 py-1.5 text-sm"
-              style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
+              style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-separator)', color: 'var(--color-label)' }}
             />
-            <button onClick={saveTarget} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>Set</button>
+            <button onClick={saveTarget} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 15%, transparent)', color: 'var(--color-orange)', border: '1px solid color-mix(in srgb, var(--color-orange) 20%, transparent)' }}>Set</button>
             {target && (
               <button
                 onClick={() => { removeStored(targetWeightKey(animalId)); setTarget(null) }}
-                className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#9f9684' }}
+                className="px-3 py-1.5 rounded-lg text-xs" style={{ color: 'var(--color-label-2)' }}
               >
                 Clear
               </button>
@@ -108,20 +108,20 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
           {/* Across the whole history, not the charted window — the chart and
               these figures would otherwise be two claims under one heading. */}
           {summary && (
-            <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-separator)' }}>
               <div className="text-center">
-                <p className="text-xs" style={{ color: '#9f9684' }}>Start</p>
-                <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{formatWeight(summary.start)}</p>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Start</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>{formatWeight(summary.start)}</p>
               </div>
               <div className="text-center">
-                <p className="text-xs" style={{ color: '#9f9684' }}>Total gain</p>
-                <p className="text-sm font-semibold" style={{ color: summary.gain >= 0 ? '#8fbe5a' : '#dc7a7a' }}>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Total gain</p>
+                <p className="text-sm font-semibold" style={{ color: summary.gain >= 0 ? 'var(--color-tint)' : 'var(--color-red)' }}>
                   {formatWeight(summary.gain, { signed: true })}
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-xs" style={{ color: '#9f9684' }}>Latest</p>
-                <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{formatWeight(summary.latest)}</p>
+                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Latest</p>
+                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>{formatWeight(summary.latest)}</p>
               </div>
             </div>
           )}
@@ -130,12 +130,12 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
 
       <div className="flex flex-col gap-2">
         {logs.map((log) => (
-          <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
             <div className="flex-1">
-              <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{formatWeight(log.weight_grams)}</p>
-              {log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}
+              <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>{formatWeight(log.weight_grams)}</p>
+              {log.notes && <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{log.notes}</p>}
             </div>
-            <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>
+            <p className="text-xs shrink-0 mr-1" style={{ color: 'var(--color-label-2)' }}>
               {format(new Date(log.logged_at), 'd MMM yyyy')}
             </p>
             <RecordActions what="weight" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />

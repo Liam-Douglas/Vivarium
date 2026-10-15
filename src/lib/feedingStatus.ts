@@ -22,11 +22,11 @@ export interface FeedingSchedule {
 }
 
 export const FEEDING_STATUS_META: Record<FeedingStatus, { color: string; label: string }> = {
-  overdue: { color: '#dc7a7a', label: 'Overdue' },
-  'due-soon': { color: '#d4924a', label: 'Due soon' },
-  'on-schedule': { color: '#5a9e6a', label: 'Fed recently' },
-  'never-fed': { color: '#9f9684', label: 'Never fed' },
-  'no-schedule': { color: '#9f9684', label: 'No schedule' },
+  overdue: { color: 'var(--color-red)', label: 'Overdue' },
+  'due-soon': { color: 'var(--color-orange)', label: 'Due soon' },
+  'on-schedule': { color: 'var(--color-green)', label: 'Fed recently' },
+  'never-fed': { color: 'var(--color-label-2)', label: 'Never fed' },
+  'no-schedule': { color: 'var(--color-label-2)', label: 'No schedule' },
 }
 
 export function getFeedingStatus(animal: FeedingSchedule, now: Date = new Date()): FeedingStatus {

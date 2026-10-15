@@ -402,7 +402,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
       <Header title="Settings" />
 
       {/* Tab switcher */}
-      <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
         {(['settings', 'import'] as const).map((tab) => (
           <button
             key={tab}
@@ -410,9 +410,9 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
             aria-pressed={activeTab === tab}
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
-              backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
-              color: activeTab === tab ? '#8fbe5a' : '#9f9684',
-              border: activeTab === tab ? '1px solid rgba(143,190,90,0.25)' : '1px solid transparent',
+              backgroundColor: activeTab === tab ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent',
+              color: activeTab === tab ? 'var(--color-tint)' : 'var(--color-label-2)',
+              border: activeTab === tab ? '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' : '1px solid transparent',
             }}
           >
             {tab === 'settings' ? 'Settings' : 'Import & Export'}
@@ -436,7 +436,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
           <div className="flex items-center gap-2">
             <Button size="sm" onClick={handleSaveName} loading={savingName}>Save</Button>
           </div>
-          <p className="text-xs" style={{ color: '#9f9684' }}>{user?.email}</p>
+          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{user?.email}</p>
         </div>
       </Section>
 
@@ -445,8 +445,8 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
         {householdId ? (
           <div className="flex flex-col gap-4">
             <div>
-              <p className="text-sm font-medium mb-0.5" style={{ color: '#f0ece0' }}>{householdName}</p>
-              <p className="text-xs" style={{ color: '#9f9684' }}>
+              <p className="text-sm font-medium mb-0.5" style={{ color: 'var(--color-label)' }}>{householdName}</p>
+              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>
                 Your role: {currentUserRole === 'owner' ? 'Owner' : 'Member'}
               </p>
             </div>
@@ -454,11 +454,11 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
             {/* Invite code */}
             {inviteCode && (
               <div>
-                <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>INVITE CODE</p>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>INVITE CODE</p>
                 <div className="flex items-center gap-2">
                   <code
                     className="flex-1 px-4 py-2 rounded-xl text-sm font-mono tracking-widest"
-                    style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#8fbe5a' }}
+                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-separator)', color: 'var(--color-tint)' }}
                   >
                     {inviteCode}
                   </code>
@@ -466,19 +466,19 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                     {copied ? '✓ Copied' : 'Copy'}
                   </Button>
                 </div>
-                <p className="text-xs mt-1.5" style={{ color: '#9f9684' }}>Share this code so your partner can join</p>
+                <p className="text-xs mt-1.5" style={{ color: 'var(--color-label-2)' }}>Share this code so your partner can join</p>
               </div>
             )}
 
             {/* Pending requests */}
             {currentUserRole === 'owner' && pendingRequests.length > 0 && (
               <div>
-                <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>PENDING REQUESTS</p>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>PENDING REQUESTS</p>
                 {pendingRequests.map((req) => {
                   const p = req.profiles as { full_name: string | null } | null
                   return (
-                    <div key={req.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <p className="flex-1 min-w-[8rem] text-sm break-words" style={{ color: '#f0ece0' }}>{p?.full_name ?? 'Unknown'}</p>
+                    <div key={req.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid var(--color-separator)' }}>
+                      <p className="flex-1 min-w-[8rem] text-sm break-words" style={{ color: 'var(--color-label)' }}>{p?.full_name ?? 'Unknown'}</p>
                       <div className="flex gap-2 shrink-0 ml-auto">
                         <Button size="sm" onClick={() => handleApprove(req.id)}>Approve</Button>
                         <Button size="sm" variant="secondary" onClick={() => handleDeny(req.id)}>Deny</Button>
@@ -491,7 +491,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
 
             {/* Members */}
             <div>
-              <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>MEMBERS</p>
+              <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>MEMBERS</p>
               {members.filter((m) => m.status === 'active').map((m) => {
                 const p = m.profiles as { full_name: string | null } | null
                 const isSelf = m.user_id === user?.id
@@ -499,9 +499,9 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                 return (
                   // Wraps rather than squeezing: a long name used to crush the two
                   // role buttons, which were 24px tall and side by side.
-                  <div key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid var(--color-separator)' }}>
                     <div className="flex-1 min-w-[8rem]">
-                      <p className="text-sm break-words" style={{ color: '#f0ece0' }}>{name}{isSelf ? ' (you)' : ''}</p>
+                      <p className="text-sm break-words" style={{ color: 'var(--color-label)' }}>{name}{isSelf ? ' (you)' : ''}</p>
                     </div>
                     {currentUserRole === 'owner' && !isSelf ? (
                       <div className="flex items-center gap-2 shrink-0 ml-auto">
@@ -509,7 +509,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                           type="button"
                           onClick={() => handleToggleRole(m.id, m.role)}
                           className="text-sm px-3 py-1.5 pointer-coarse:min-h-11 rounded-xl transition-[transform,background-color] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100"
-                          style={{ backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}
+                          style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 12%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 20%, transparent)' }}
                         >
                           {m.role === 'owner' ? 'Demote' : 'Make owner'}
                         </button>
@@ -517,7 +517,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                           type="button"
                           onClick={() => handleRemoveMember(m.id, name)}
                           className="text-sm px-3 py-1.5 pointer-coarse:min-h-11 rounded-xl transition-[transform,background-color] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100"
-                          style={{ backgroundColor: 'rgba(196,90,90,0.12)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}
+                          style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 12%, transparent)', color: 'var(--color-red)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}
                         >
                           Remove
                         </button>
@@ -536,7 +536,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
           </div>
         ) : (
           <div>
-            <p className="text-sm mb-3" style={{ color: '#a8a090' }}>You're not part of a collection yet.</p>
+            <p className="text-sm mb-3" style={{ color: 'var(--color-label-2)' }}>You're not part of a collection yet.</p>
             <Button size="sm" onClick={() => navigate('/onboarding')}>Set up collection</Button>
           </div>
         )}
@@ -546,39 +546,39 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
       <Section title="Data">
         <div className="flex flex-col gap-3">
           <Button variant="secondary" size="sm" onClick={handleExport} loading={exporting}>Export collection</Button>
-          <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: 12 }}>
-            <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>DATA REPAIR</p>
-            <p className="text-xs mb-3" style={{ color: '#9f9684' }}>
+          <div style={{ borderTop: '1px solid var(--color-separator)', paddingTop: 12 }}>
+            <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-label-2)' }}>DATA REPAIR</p>
+            <p className="text-xs mb-3" style={{ color: 'var(--color-label-2)' }}>
               Detects feeding records pointing at an animal that no longer exists, and duplicate entries (same animal, same day, same type). Archived animals keep their history and are not a problem.
             </p>
             {scanResult && (
               <div className="flex flex-col gap-2 mb-3">
                 {/* Orphaned links */}
-                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.orphanedCount > 0 ? 'rgba(212,146,74,0.08)' : 'rgba(90,158,106,0.08)', border: `1px solid ${scanResult.orphanedCount > 0 ? 'rgba(212,146,74,0.2)' : 'rgba(90,158,106,0.2)'}` }}>
-                  <p className="text-xs font-medium mb-0.5" style={{ color: '#a8a090' }}>BROKEN LINKS</p>
+                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.orphanedCount > 0 ? 'color-mix(in srgb, var(--color-orange) 8%, transparent)' : 'color-mix(in srgb, var(--color-green) 8%, transparent)', border: `1px solid ${scanResult.orphanedCount > 0 ? 'color-mix(in srgb, var(--color-orange) 20%, transparent)' : 'color-mix(in srgb, var(--color-green) 20%, transparent)'}` }}>
+                  <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-label-2)' }}>BROKEN LINKS</p>
                   {scanResult.orphanedCount > 0 ? (
-                    <p className="text-sm" style={{ color: '#d4924a' }}>
+                    <p className="text-sm" style={{ color: 'var(--color-orange)' }}>
                       {scanResult.orphanedCount} feeding record{scanResult.orphanedCount !== 1 ? 's point' : ' points'} at an animal that no longer exists. They can't be re-linked automatically — the name went with the animal.
                     </p>
                   ) : (
-                    <p className="text-sm" style={{ color: '#5a9e6a' }}>All clear</p>
+                    <p className="text-sm" style={{ color: 'var(--color-green)' }}>All clear</p>
                   )}
                   {scanResult.onArchivedCount > 0 && (
-                    <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+                    <p className="text-xs mt-1.5" style={{ color: 'var(--color-label-2)' }}>
                       {scanResult.onArchivedCount} record{scanResult.onArchivedCount !== 1 ? 's belong' : ' belongs'} to archived animals. That's normal — their history stays with them.
                     </p>
                   )}
                 </div>
                 {/* Duplicates */}
-                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.dupExtra > 0 ? 'rgba(196,90,90,0.08)' : 'rgba(90,158,106,0.08)', border: `1px solid ${scanResult.dupExtra > 0 ? 'rgba(196,90,90,0.2)' : 'rgba(90,158,106,0.2)'}` }}>
-                  <p className="text-xs font-medium mb-0.5" style={{ color: '#a8a090' }}>DUPLICATES</p>
+                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.dupExtra > 0 ? 'color-mix(in srgb, var(--color-red) 8%, transparent)' : 'color-mix(in srgb, var(--color-green) 8%, transparent)', border: `1px solid ${scanResult.dupExtra > 0 ? 'color-mix(in srgb, var(--color-red) 20%, transparent)' : 'color-mix(in srgb, var(--color-green) 20%, transparent)'}` }}>
+                  <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-label-2)' }}>DUPLICATES</p>
                   {scanResult.dupExtra > 0 ? (
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm" style={{ color: '#dc7a7a' }}>{scanResult.dupExtra} extra record{scanResult.dupExtra !== 1 ? 's' : ''} across {scanResult.dupGroups} group{scanResult.dupGroups !== 1 ? 's' : ''}</p>
+                      <p className="text-sm" style={{ color: 'var(--color-red)' }}>{scanResult.dupExtra} extra record{scanResult.dupExtra !== 1 ? 's' : ''} across {scanResult.dupGroups} group{scanResult.dupGroups !== 1 ? 's' : ''}</p>
                       <Button size="sm" onClick={handleRemoveDups} loading={removingDups}>Remove</Button>
                     </div>
                   ) : (
-                    <p className="text-sm" style={{ color: '#5a9e6a' }}>No duplicates found</p>
+                    <p className="text-sm" style={{ color: 'var(--color-green)' }}>No duplicates found</p>
                   )}
                 </div>
               </div>
@@ -593,17 +593,17 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
 
       {/* Legal */}
       <Section title="Notifications">
-        <p className="text-sm mb-3" style={{ color: '#a8a090' }}>
+        <p className="text-sm mb-3" style={{ color: 'var(--color-label-2)' }}>
           A reminder when animals are overdue a feed, shown while the app is open.
         </p>
         {notifyPermission === 'unsupported' && (
-          <p className="text-sm" style={{ color: '#a8a090' }}>This browser doesn't support notifications.</p>
+          <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>This browser doesn't support notifications.</p>
         )}
         {notifyPermission === 'granted' && (
-          <p className="text-sm" style={{ color: '#5a9e6a' }}>Notifications are on.</p>
+          <p className="text-sm" style={{ color: 'var(--color-green)' }}>Notifications are on.</p>
         )}
         {notifyPermission === 'denied' && (
-          <p className="text-sm" style={{ color: '#a8a090' }}>
+          <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>
             Blocked for this site. Your browser's site settings are the only place that can undo it.
           </p>
         )}
@@ -616,8 +616,8 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
 
       <Section title="Legal">
         <div className="flex flex-col gap-2">
-          <Link to="/terms" className="text-sm" style={{ color: '#a8a090' }}>Terms of Service</Link>
-          <Link to="/privacy" className="text-sm" style={{ color: '#a8a090' }}>Privacy Policy</Link>
+          <Link to="/terms" className="text-sm" style={{ color: 'var(--color-label-2)' }}>Terms of Service</Link>
+          <Link to="/privacy" className="text-sm" style={{ color: 'var(--color-label-2)' }}>Privacy Policy</Link>
         </div>
       </Section>
 
@@ -625,22 +625,22 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
       <Section title="Vet Contacts">
         <div className="flex flex-col gap-3">
           {vetContacts.length === 0 ? (
-            <p className="text-sm" style={{ color: '#9f9684' }}>No vet contacts saved yet.</p>
+            <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>No vet contacts saved yet.</p>
           ) : (
             vetContacts.map((vet) => (
-              <div key={vet.id} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div key={vet.id} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid var(--color-separator)' }}>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{vet.name}</p>
-                  {vet.practice_name && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{vet.practice_name}</p>}
+                  <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{vet.name}</p>
+                  {vet.practice_name && <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{vet.practice_name}</p>}
                   <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
                     {vet.phone && (
-                      <a href={`tel:${vet.phone}`} className="text-xs" style={{ color: '#8fbe5a' }}>{vet.phone}</a>
+                      <a href={`tel:${vet.phone}`} className="text-xs" style={{ color: 'var(--color-tint)' }}>{vet.phone}</a>
                     )}
                     {vet.email && (
-                      <a href={`mailto:${vet.email}`} className="text-xs" style={{ color: '#8fbe5a' }}>{vet.email}</a>
+                      <a href={`mailto:${vet.email}`} className="text-xs" style={{ color: 'var(--color-tint)' }}>{vet.email}</a>
                     )}
                   </div>
-                  {vet.address && <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{vet.address}</p>}
+                  {vet.address && <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-label-2)' }}>{vet.address}</p>}
                 </div>
                 <RecordActions what="vet contact" onEdit={() => openEditVet(vet)} onDelete={() => handleDeleteVet(vet)} />
               </div>
@@ -689,8 +689,8 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
-      <p className="text-xs font-semibold tracking-wider mb-3" style={{ color: '#9f9684' }}>{title.toUpperCase()}</p>
-      <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+      <p className="text-xs font-semibold tracking-wider mb-3" style={{ color: 'var(--color-label-2)' }}>{title.toUpperCase()}</p>
+      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
         {children}
       </div>
     </div>

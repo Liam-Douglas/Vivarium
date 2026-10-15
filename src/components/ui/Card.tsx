@@ -11,8 +11,8 @@ export function Card({ children, elevated = false, className = '', style, ...pro
       {...props}
       className={`rounded-xl border ${className}`}
       style={{
-        backgroundColor: elevated ? 'var(--color-moss-stone)' : 'var(--color-bark)',
-        borderColor: 'var(--color-hairline)',
+        backgroundColor: elevated ? 'var(--color-surface-2)' : 'var(--color-surface)',
+        borderColor: 'var(--color-separator)',
         ...style,
       }}
     >

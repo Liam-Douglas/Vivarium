@@ -5,11 +5,11 @@ interface BadgeProps {
 }
 
 const colors = {
-  green: { bg: 'rgba(90,158,106,0.15)', text: 'var(--color-fern-green)', border: 'rgba(90,158,106,0.3)' },
-  amber: { bg: 'rgba(212,146,74,0.15)', text: 'var(--color-lamp-amber)', border: 'rgba(212,146,74,0.3)' },
-  red: { bg: 'rgba(196,90,90,0.15)', text: 'var(--color-clay-red-text)', border: 'rgba(196,90,90,0.3)' },
-  blue: { bg: 'rgba(90,143,190,0.15)', text: 'var(--color-pond-blue)', border: 'rgba(90,143,190,0.3)' },
-  muted: { bg: 'rgba(255,255,255,0.05)', text: 'var(--color-dry-grass)', border: 'rgba(255,255,255,0.08)' },
+  green: { bg: 'color-mix(in srgb, var(--color-green) 15%, transparent)', text: 'var(--color-green)', border: 'color-mix(in srgb, var(--color-green) 30%, transparent)' },
+  amber: { bg: 'color-mix(in srgb, var(--color-orange) 15%, transparent)', text: 'var(--color-orange)', border: 'color-mix(in srgb, var(--color-orange) 30%, transparent)' },
+  red: { bg: 'color-mix(in srgb, var(--color-red) 15%, transparent)', text: 'var(--color-red)', border: 'color-mix(in srgb, var(--color-red) 30%, transparent)' },
+  blue: { bg: 'color-mix(in srgb, var(--color-blue) 15%, transparent)', text: 'var(--color-blue)', border: 'color-mix(in srgb, var(--color-blue) 30%, transparent)' },
+  muted: { bg: 'var(--color-fill)', text: 'var(--color-label-2)', border: 'var(--color-separator)' },
 }
 
 export function Badge({ status, children, size = 'sm' }: BadgeProps) {

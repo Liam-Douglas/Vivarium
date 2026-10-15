@@ -33,10 +33,10 @@ export function AuthCallback() {
   }, [navigate])
 
   return (
-    <div className="min-h-dvh flex items-center justify-center" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="min-h-dvh flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
       <div className="flex flex-col items-center gap-4">
         <BrandMark pulse />
-        <p className="text-sm" style={{ color: '#9f9684' }}>Signing you in…</p>
+        <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>Signing you in…</p>
       </div>
     </div>
   )

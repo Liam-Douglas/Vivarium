@@ -48,15 +48,15 @@ export function ForgotPassword() {
   if (sent) {
     return (
       <AuthShell>
-        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
           <div className="text-4xl mb-4">📬</div>
-          <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
             Check your inbox
           </h2>
-          <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
-            If an account exists for <strong style={{ color: '#f0ece0' }}>{email}</strong>, we've sent a link to reset your password. It expires in one hour.
+          <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
+            If an account exists for <strong style={{ color: 'var(--color-label)' }}>{email}</strong>, we've sent a link to reset your password. It expires in one hour.
           </p>
-          <p className="text-xs mb-6" style={{ color: '#a8a090' }}>
+          <p className="text-xs mb-6" style={{ color: 'var(--color-label-2)' }}>
             Open the link in this browser — for security, a reset started here can only be completed here.
           </p>
           <Link to="/auth/signin">
@@ -69,16 +69,16 @@ export function ForgotPassword() {
 
   return (
     <AuthShell>
-      <div className="rounded-2xl p-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+      <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+        <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
           Reset your password
         </h2>
-        <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+        <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
           Enter the email you signed up with and we'll send you a link to set a new password.
         </p>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}>
             {error}
           </div>
         )}
@@ -112,9 +112,9 @@ export function ForgotPassword() {
         </form>
       </div>
 
-      <p className="text-center text-sm mt-4" style={{ color: '#a8a090' }}>
+      <p className="text-center text-sm mt-4" style={{ color: 'var(--color-label-2)' }}>
         Remembered it?{' '}
-        <Link to="/auth/signin" className="font-medium" style={{ color: '#8fbe5a' }}>
+        <Link to="/auth/signin" className="font-medium" style={{ color: 'var(--color-tint)' }}>
           Sign in
         </Link>
       </p>

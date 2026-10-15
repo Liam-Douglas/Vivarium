@@ -86,13 +86,13 @@ export function OnboardingHousehold() {
       <Shell>
         <div className="w-full max-w-sm text-center">
           <div className="text-4xl mb-4">⏳</div>
-          <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
             Waiting for approval
           </h2>
-          <p className="text-sm mb-2" style={{ color: '#a8a090' }}>
+          <p className="text-sm mb-2" style={{ color: 'var(--color-label-2)' }}>
             Your request to join the collection has been sent. The owner needs to approve it before you can see any of the animals.
           </p>
-          <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
             This page opens the collection by itself the moment they do — you can leave it open.
           </p>
           <div className="flex flex-col gap-2">
@@ -113,10 +113,10 @@ export function OnboardingHousehold() {
       <Shell>
         <div className="w-full max-w-sm text-center">
           <div className="text-4xl mb-4">🚫</div>
-          <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
             Request declined
           </h2>
-          <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+          <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
             The owner didn't approve your request to join. You can try a different invite code, or start a collection of your own.
           </p>
           <div className="flex flex-col gap-2">
@@ -137,16 +137,16 @@ export function OnboardingHousehold() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <BrandMark size="lg" className="mx-auto mb-4" />
-          <h1 className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <h1 className="text-2xl font-bold" style={{ color: 'var(--color-label)' }}>
             Set up your collection
           </h1>
-          <p className="text-sm mt-2" style={{ color: '#a8a090' }}>
+          <p className="text-sm mt-2" style={{ color: 'var(--color-label-2)' }}>
             Create a new collection or join one from a partner
           </p>
         </div>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}>
             {error}
           </div>
         )}
@@ -155,28 +155,28 @@ export function OnboardingHousehold() {
           <div className="flex flex-col gap-3">
             <button
               onClick={() => setMode('create')}
-              className="w-full rounded-2xl p-5 text-left transition-colors hover:border-[#8fbe5a]/50"
-              style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}
+              className="w-full rounded-2xl p-5 text-left transition-colors hover:border-tint/50"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}
             >
               <div className="text-2xl mb-2">🌿</div>
-              <div className="font-semibold mb-1" style={{ color: '#f0ece0' }}>Start a new collection</div>
-              <div className="text-sm" style={{ color: '#a8a090' }}>Create your own reptile collection and invite others</div>
+              <div className="font-semibold mb-1" style={{ color: 'var(--color-label)' }}>Start a new collection</div>
+              <div className="text-sm" style={{ color: 'var(--color-label-2)' }}>Create your own reptile collection and invite others</div>
             </button>
             <button
               onClick={() => setMode('join')}
-              className="w-full rounded-2xl p-5 text-left transition-colors hover:border-[#8fbe5a]/50"
-              style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}
+              className="w-full rounded-2xl p-5 text-left transition-colors hover:border-tint/50"
+              style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}
             >
               <div className="text-2xl mb-2">🤝</div>
-              <div className="font-semibold mb-1" style={{ color: '#f0ece0' }}>Join an existing collection</div>
-              <div className="text-sm" style={{ color: '#a8a090' }}>Enter an invite code from your partner</div>
+              <div className="font-semibold mb-1" style={{ color: 'var(--color-label)' }}>Join an existing collection</div>
+              <div className="text-sm" style={{ color: 'var(--color-label-2)' }}>Enter an invite code from your partner</div>
             </button>
           </div>
         )}
 
         {mode === 'create' && (
-          <div className="rounded-2xl p-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-label)' }}>
               Name your collection
             </h2>
             <div className="flex flex-col gap-4">
@@ -199,8 +199,8 @@ export function OnboardingHousehold() {
         )}
 
         {mode === 'join' && (
-          <div className="rounded-2xl p-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <h2 className="text-lg font-semibold mb-4" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+          <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+            <h2 className="text-lg font-semibold mb-4" style={{ color: 'var(--color-label)' }}>
               Enter invite code
             </h2>
             <div className="flex flex-col gap-4">
@@ -229,7 +229,7 @@ export function OnboardingHousehold() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: 'var(--color-bg)' }}>
       {children}
     </div>
   )

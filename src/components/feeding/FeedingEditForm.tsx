@@ -84,9 +84,9 @@ export function FeedingEditForm({ log, onSaved, onCancel }: FeedingEditFormProps
           type="checkbox"
           checked={refused}
           onChange={(e) => setRefused(e.target.checked)}
-          className="w-4 h-4 accent-[#c45a5a]"
+          className="w-4 h-4 accent-red"
         />
-        <span className="text-sm" style={{ color: '#f0ece0' }}>Animal refused food</span>
+        <span className="text-sm" style={{ color: 'var(--color-label)' }}>Animal refused food</span>
       </label>
 
       <Textarea label="Notes" value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} placeholder="Optional notes…" />

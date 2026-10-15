@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { MotionConfig } from 'motion/react'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -36,7 +37,7 @@ function RequireAuth() {
 
   if (loading) {
     return (
-      <div className="min-h-dvh flex items-center justify-center" style={{ backgroundColor: '#1a1a18' }}>
+      <div className="min-h-dvh flex items-center justify-center" >
         <BrandMark pulse />
       </div>
     )
@@ -71,7 +72,7 @@ function AppShell() {
   const showNav = !!householdId
 
   return (
-    <div className="flex min-h-dvh" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="flex min-h-dvh" >
       {showNav && <Sidebar />}
       {/* index.html sets viewport-fit=cover, which extends the page under the
           status bar and the notch. BottomNav has always compensated at the
@@ -126,6 +127,9 @@ function useSWUpdateReload() {
 export default function App() {
   useSWUpdateReload()
   return (
+    // Reduce Motion is honoured everywhere: springs and travel give way to
+    // fades for anyone who has asked their phone for less movement.
+    <MotionConfig reducedMotion="user">
     <BrowserRouter>
       <AuthProvider>
         <HouseholdProvider>
@@ -145,5 +149,6 @@ export default function App() {
         </HouseholdProvider>
       </AuthProvider>
     </BrowserRouter>
+    </MotionConfig>
   )
 }

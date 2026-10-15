@@ -22,7 +22,7 @@ export function BrandMark({ size = 'md', pulse = false, className = '' }: BrandM
     <div
       aria-hidden="true"
       className={`${sizes[size]} shrink-0 flex items-center justify-center font-bold leading-none ${pulse ? 'animate-pulse' : ''} ${className}`}
-      style={{ backgroundColor: 'var(--color-leaf)', color: 'var(--color-night-soil)', fontFamily: 'Playfair Display, Georgia, serif' }}
+      style={{ backgroundColor: 'var(--color-tint)', color: 'var(--color-on-tint)', fontFamily: 'Georgia, "Times New Roman", serif' }}
     >
       V
     </div>

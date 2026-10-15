@@ -4,7 +4,7 @@
 // colour learned last week pointed at a different animal this week.
 
 export const ANIMAL_COLORS = [
-  '#8fbe5a', '#d4924a', '#5a8ebe', '#c45a5a', '#a87ac4',
+  'var(--color-tint)', 'var(--color-orange)', 'var(--color-blue)', 'var(--color-red)', '#a87ac4',
   '#5abeaa', '#be5a8f', '#8e8e5a', '#5a8e8e', '#be8f5a',
 ] as const
 

@@ -18,7 +18,7 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
   return (
     <Modal open={open} onClose={onClose} title={`All ${FREE_ANIMAL_LIMIT} places are taken`}>
       <div className="flex flex-col gap-4">
-        <p className="text-sm" style={{ color: 'var(--color-dry-grass)' }}>
+        <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>
           The free plan holds up to {FREE_ANIMAL_LIMIT} animals per household. Nothing you have recorded is affected.
         </p>
         <Option
@@ -37,9 +37,9 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
 
 function Option({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-bark)', border: '1px solid var(--color-hairline)' }}>
-      <p className="text-sm font-medium" style={{ color: 'var(--color-parchment)' }}>{title}</p>
-      <p className="text-sm mt-1" style={{ color: 'var(--color-dry-grass)' }}>{body}</p>
+    <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+      <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{title}</p>
+      <p className="text-sm mt-1" style={{ color: 'var(--color-label-2)' }}>{body}</p>
     </div>
   )
 }

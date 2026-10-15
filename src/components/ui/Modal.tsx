@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { useDragToDismiss } from '@/hooks/useDragToDismiss'
-import { Button } from './Button'
 
 // Every logging action in this app happens in one of these, and until now the
 // dialog was a plain div: no role, so nothing announced it as a dialog; no
@@ -124,7 +123,7 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
         aria-hidden="true"
         data-open={isOpen || undefined}
         className="sheet-backdrop absolute inset-0"
-        style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+        style={{ backgroundColor: 'var(--color-scrim)' }}
         onClick={onClose}
       />
       <div
@@ -137,8 +136,7 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
         // clear of the home indicator. From 640px: a centred dialog.
         className="sheet-panel relative w-full rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col"
         style={{
-          backgroundColor: 'var(--color-moss-stone)',
-          border: '1px solid rgba(255,255,255,0.08)',
+          backgroundColor: 'var(--color-surface)',
           maxWidth,
           maxHeight: 'calc(100dvh - 1rem - env(safe-area-inset-top, 0px))',
         }}
@@ -146,21 +144,28 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
         {/* Grab area: the grabber and the title row drag the sheet down. */}
         <div className="shrink-0 touch-none sm:touch-auto" {...drag}>
           <div className="flex justify-center pt-2.5 sm:hidden" aria-hidden="true">
-            <span className="w-9 h-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }} />
+            <span className="w-9 h-1 rounded-full" style={{ backgroundColor: 'var(--color-fill-2)' }} />
           </div>
-          <div className="flex items-center justify-between px-6 pt-2 pb-3 sm:py-4 border-b" style={{ borderColor: 'var(--color-hairline)' }}>
-            <h2 id={titleId} className="text-lg font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: 'var(--color-parchment)' }}>
+          {/* An iOS 17 sheet header: a bold title and a round gray close
+              button, with no rule beneath. */}
+          <div className="flex items-center justify-between gap-3 px-5 pt-2 pb-1 sm:pt-5">
+            <h2 id={titleId} className="text-[20px] font-bold tracking-[0.01em] text-label">
               {open ? title : held.title}
             </h2>
-            <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="tap-target shrink-0 w-[30px] h-[30px] rounded-full bg-fill text-label-2 flex items-center justify-center active:opacity-60 transition-opacity"
+            >
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth={2.2} aria-hidden="true">
+                <path strokeLinecap="round" d="M2 2l8 8M10 2l-8 8" />
               </svg>
-            </Button>
+            </button>
           </div>
         </div>
         <div
-          className="p-6 overflow-y-auto overscroll-contain"
+          className="px-5 pt-4 pb-6 overflow-y-auto overscroll-contain"
           style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
         >
           {open ? children : held.children}

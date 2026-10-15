@@ -46,10 +46,10 @@ export interface WorthALookInput {
  * records rather than a problem with the animal.
  */
 export const WORTH_A_LOOK_COLOR: Record<WorthALookKind, string> = {
-  'shed-overdue': '#d4924a',
-  quarantine: '#8fbe5a',
-  'shed-soon': '#5a9e6a',
-  'stale-weight': '#9f9684',
+  'shed-overdue': 'var(--color-orange)',
+  quarantine: 'var(--color-tint)',
+  'shed-soon': 'var(--color-green)',
+  'stale-weight': 'var(--color-label-2)',
 }
 
 /** A shed this close is worth mentioning; further out it is just a calendar. */

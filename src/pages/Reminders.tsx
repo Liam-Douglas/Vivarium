@@ -26,8 +26,8 @@ import { CareTaskForm } from '@/components/reminders/CareTaskForm'
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <section className="mb-7">
-      <h2 className="text-xs font-semibold tracking-wider mb-1" style={{ color: '#9f9684' }}>{title.toUpperCase()}</h2>
-      {subtitle && <p className="text-xs mb-2.5" style={{ color: '#9f9684' }}>{subtitle}</p>}
+      <h2 className="text-xs font-semibold tracking-wider mb-1" style={{ color: 'var(--color-label-2)' }}>{title.toUpperCase()}</h2>
+      {subtitle && <p className="text-xs mb-2.5" style={{ color: 'var(--color-label-2)' }}>{subtitle}</p>}
       <div className={subtitle ? '' : 'mt-2.5'}>{children}</div>
     </section>
   )
@@ -73,10 +73,10 @@ function FeedingCadenceRow({ animal, onSaved }: { animal: Animal; onSaved: () =>
   return (
     <div
       className="rounded-xl p-3.5 flex items-center gap-3"
-      style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${meta.color}` }}
+      style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', borderLeft: `3px solid ${meta.color}` }}
     >
       <div className="flex-1 min-w-0">
-        <Link to={`/animals/${animal.id}`} className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+        <Link to={`/animals/${animal.id}`} className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>
           {animal.name}
         </Link>
         <p className="text-xs mt-0.5" style={{ color: meta.color }}>{describeNextFeeding(animal)}</p>
@@ -91,10 +91,10 @@ function FeedingCadenceRow({ animal, onSaved }: { animal: Animal; onSaved: () =>
           aria-label={`Feeding frequency in days for ${animal.name}`}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
-          className="w-16 rounded-lg px-2 py-1.5 text-sm text-right border border-white/10 focus:outline-none focus:border-leaf"
-          style={{ backgroundColor: 'var(--color-night-soil)', color: 'var(--color-parchment)' }}
+          className="w-16 rounded-lg px-2 py-1.5 text-sm text-right border border-separator focus:outline-none focus:border-tint"
+          style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-label)' }}
         />
-        <span className="text-xs" style={{ color: '#9f9684' }}>days</span>
+        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>days</span>
       </div>
     </div>
   )
@@ -202,7 +202,7 @@ export function Reminders() {
           <LoadError subject="your reminders" message={tasksError} onRetry={refreshTasks} />
         ) : tasksState === 'loading' ? (
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+            <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-tint)', borderTopColor: 'transparent' }} />
           </div>
         ) : tasks.length === 0 ? (
           <EmptyState
@@ -226,8 +226,8 @@ export function Reminders() {
                     key={task.id}
                     className="rounded-xl p-3.5 flex items-center gap-3"
                     style={{
-                      backgroundColor: '#242420',
-                      border: '1px solid rgba(255,255,255,0.06)',
+                      backgroundColor: 'var(--color-surface)',
+                      border: '1px solid var(--color-separator)',
                       borderLeft: `3px solid ${meta.color}`,
                       opacity: task.is_active ? 1 : 0.55,
                     }}
@@ -238,8 +238,8 @@ export function Reminders() {
                       className="flex-1 min-w-0 text-left"
                       aria-label={`Edit reminder: ${task.name}`}
                     >
-                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{task.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
+                      <p className="text-sm font-medium truncate" style={{ color: 'var(--color-label)' }}>{task.name}</p>
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>
                         {targetLabel(task)} · every {task.frequency_days} day{task.frequency_days === 1 ? '' : 's'}
                       </p>
                       <p className="text-xs mt-0.5" style={{ color: meta.color }}>{describeNextCare(task)}</p>
@@ -258,7 +258,7 @@ export function Reminders() {
                         type="button"
                         onClick={() => handleTogglePaused(task)}
                         className="text-xs underline"
-                        style={{ color: '#9f9684' }}
+                        style={{ color: 'var(--color-label-2)' }}
                       >
                         {task.is_active ? 'Pause' : 'Resume'}
                       </button>
@@ -279,7 +279,7 @@ export function Reminders() {
         {animalsState === 'error' ? (
           <LoadError subject="your animals" message={animalsError} onRetry={refreshAnimals} />
         ) : animals.length === 0 ? (
-          <p className="text-sm" style={{ color: '#9f9684' }}>No animals yet.</p>
+          <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>No animals yet.</p>
         ) : (
           <div className="flex flex-col gap-2">
             {sortedAnimals.map((animal) => (
@@ -301,16 +301,16 @@ export function Reminders() {
                 key={schedule.id}
                 to={`/animals/${schedule.animal_id}`}
                 className="rounded-xl p-3.5 flex items-center gap-3"
-                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{schedule.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
+                  <p className="text-sm font-medium truncate" style={{ color: 'var(--color-label)' }}>{schedule.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>
                     {animalName.get(schedule.animal_id) ?? 'Unknown animal'}
                     {schedule.frequency_days ? ` · every ${schedule.frequency_days} day${schedule.frequency_days === 1 ? '' : 's'}` : ''}
                   </p>
                 </div>
-                <span className="text-xs shrink-0" style={{ color: '#9f9684' }}>View →</span>
+                <span className="text-xs shrink-0" style={{ color: 'var(--color-label-2)' }}>View →</span>
               </Link>
             ))}
           </div>
@@ -334,8 +334,8 @@ export function Reminders() {
             <button
               type="button"
               onClick={() => setConfirmDelete(editingTask)}
-              className="text-sm py-2 rounded-xl transition-colors hover:bg-white/5"
-              style={{ color: '#dc7a7a' }}
+              className="text-sm py-2 rounded-xl transition-colors hover:bg-fill"
+              style={{ color: 'var(--color-red)' }}
             >
               Delete this reminder
             </button>

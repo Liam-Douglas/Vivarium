@@ -70,29 +70,29 @@ function ToastItem({ toast, onRemove }: { toast: ToastItem; onRemove: () => void
   const shown = visible && !leaving
 
   const colors = {
-    success: 'var(--color-fern-green)',
-    error: 'var(--color-clay-red)',
-    info: 'var(--color-leaf)',
+    success: 'var(--color-green)',
+    error: 'var(--color-red)',
+    info: 'var(--color-tint)',
   }
 
   return (
     <div
       role={toast.type === 'error' ? 'alert' : 'status'}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg transition-[opacity,transform] duration-300 ease-out ${shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full motion-reduce:translate-y-0'}`}
-      style={{ backgroundColor: 'var(--color-moss-stone)', border: `1px solid color-mix(in srgb, ${colors[toast.type]} 25%, transparent)` }}
+      style={{ backgroundColor: 'var(--color-surface-2)', border: `1px solid color-mix(in srgb, ${colors[toast.type]} 25%, transparent)` }}
     >
       <div aria-hidden="true" className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[toast.type] }} />
-      <p className="flex-1 text-sm" style={{ color: 'var(--color-parchment)' }}>{toast.message}</p>
+      <p className="flex-1 text-sm" style={{ color: 'var(--color-label)' }}>{toast.message}</p>
       {toast.action && (
         <button
           onClick={() => { toast.action!.onClick(); onDismiss() }}
           className="tap-target text-xs font-medium shrink-0"
-          style={{ color: 'var(--color-leaf)' }}
+          style={{ color: 'var(--color-tint)' }}
         >
           {toast.action.label}
         </button>
       )}
-      <button onClick={onDismiss} aria-label="Dismiss" className="tap-target" style={{ color: 'var(--color-sand)' }}>
+      <button onClick={onDismiss} aria-label="Dismiss" className="tap-target" style={{ color: 'var(--color-label-2)' }}>
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>
