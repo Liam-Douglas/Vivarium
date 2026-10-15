@@ -9,12 +9,8 @@ export function Card({ children, elevated = false, className = '', style, ...pro
   return (
     <div
       {...props}
-      className={`rounded-xl border ${className}`}
-      style={{
-        backgroundColor: elevated ? 'var(--color-surface-2)' : 'var(--color-surface)',
-        borderColor: 'var(--color-separator)',
-        ...style,
-      }}
+      className={`rounded-xl ${elevated ? 'bg-surface-2' : 'bg-surface'} ${className}`}
+      style={style}
     >
       {children}
     </div>

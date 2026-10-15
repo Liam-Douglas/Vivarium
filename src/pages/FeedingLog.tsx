@@ -19,6 +19,10 @@ import { getFeedingStatus } from '@/lib/feedingStatus'
 import { filterFeedings, preyTypesIn, type FeedingOutcome } from '@/lib/feedingFilters'
 import { loadState } from '@/lib/loadState'
 import { LoadError } from '@/components/ui/LoadError'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { ListSection, ListRow } from '@/components/ui/List'
+import { Icon } from '@/components/ui/icons'
+import { Badge } from '@/components/ui/Badge'
 
 /** Legend entries shown before collapsing the rest into a count. */
 const LEGEND_LIMIT = 6
@@ -146,152 +150,121 @@ export function FeedingLog() {
     setSelectedDay(null)
   }
 
+  const selectCls = 'w-full min-h-11 rounded-[10px] px-3.5 text-[17px] bg-fill border-0 outline-none focus-visible:ring-2 focus-visible:ring-tint disabled:opacity-40'
+
   return (
-    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-3xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav md:pb-8 max-w-3xl mx-auto w-full">
       <Header
         title="Feeding Log"
         action={tab === 'log' ? (
-          <div className="flex gap-2">
+          <>
             {dueAnimals.length > 0 && (
-              <Button size="sm" variant="secondary" onClick={() => setBatchOpen(true)}>
+              <button
+                type="button"
+                onClick={() => setBatchOpen(true)}
+                className="tap-target h-9 px-3.5 rounded-full text-[15px] font-semibold text-tint active:opacity-60 whitespace-nowrap"
+                style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)' }}
+              >
                 Feed {dueAnimals.length} due
-              </Button>
+              </button>
             )}
-            <Button size="sm" onClick={() => setAddOpen(true)}>Log feeding</Button>
-          </div>
+            <button
+              type="button"
+              onClick={() => setAddOpen(true)}
+              aria-label="Log feeding"
+              className="tap-target inline-flex items-center justify-center gap-1.5 w-9 h-9 sm:w-auto sm:px-3.5 rounded-full bg-tint text-on-tint text-[15px] font-semibold active:opacity-70 transition-opacity"
+            >
+              <Icon name="plus" size={18} strokeWidth={2.4} />
+              <span className="hidden sm:inline">Log feeding</span>
+            </button>
+          </>
         ) : null}
       />
 
-      {/* Tab switcher */}
-      <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-        {(['log', 'calendar'] as const).map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            aria-pressed={tab === t}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              backgroundColor: tab === t ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent',
-              color: tab === t ? 'var(--color-tint)' : 'var(--color-label-2)',
-              border: tab === t ? '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' : '1px solid transparent',
-            }}
-          >
-            {t === 'log' ? 'Log' : 'Calendar'}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        label="View"
+        className="mb-4 sm:max-w-xs"
+        value={tab}
+        onChange={setTab}
+        options={[{ value: 'log', label: 'Log' }, { value: 'calendar', label: 'Calendar' }]}
+      />
 
       {/* ── LOG TAB ── */}
       {tab === 'log' && (
         <>
           {/* Filters */}
           {animals.length > 0 && (
-            <div className="flex flex-col gap-2 mb-4">
-              <div className="flex gap-2">
-              {/* Outcome — refusals are the reason to filter this list at all,
-                  so they get a control you can hit rather than a menu item. */}
-              <div className="flex gap-1 p-1 rounded-xl flex-1" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                {([
-                  ['all', 'All'],
-                  ['fed', 'Fed'],
-                  ['refused', 'Refused'],
-                ] as const).map(([value, label]) => {
-                  const active = outcome === value
-                  const accent = value === 'refused' ? 'var(--color-red)' : 'var(--color-tint)'
-                  return (
-                    <button
-                      key={value}
-                      type="button"
-                      aria-pressed={active}
-                      onClick={() => setOutcome(value)}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                      style={{
-                        backgroundColor: active ? `color-mix(in srgb, ${accent} 15%, transparent)` : 'transparent',
-                        color: active ? accent : 'var(--color-label-2)',
-                        border: active ? `1px solid color-mix(in srgb, ${accent} 25%, transparent)` : '1px solid transparent',
-                      }}
-                    >
-                      {label}
-                    </button>
-                  )
-                })}
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setFiltersOpen((open) => !open)}
-                aria-expanded={filtersOpen}
-                className="px-3 rounded-xl text-xs font-medium flex items-center gap-1.5 shrink-0"
-                style={{
-                  backgroundColor: 'var(--color-surface)',
-                  border: '1px solid var(--color-separator)',
-                  color: secondaryActive ? 'var(--color-tint)' : 'var(--color-label-2)',
-                }}
-              >
-                Filters
-                {/* A filter narrowing the list from behind a closed panel is
-                    hidden state; the dot is what stops it being a trap. */}
-                {secondaryActive && (
-                  <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: 'var(--color-tint)' }} />
-                )}
-              </button>
+            <div className="flex flex-col gap-2.5 mb-5">
+              <div className="flex items-center gap-3">
+                {/* Outcome — refusals are the reason to filter this list at all,
+                    so they get a control you can hit rather than a menu item. */}
+                <SegmentedControl
+                  label="Outcome"
+                  className="flex-1"
+                  value={outcome}
+                  onChange={setOutcome}
+                  options={[{ value: 'all', label: 'All' }, { value: 'fed', label: 'Fed' }, { value: 'refused', label: 'Refused' }]}
+                />
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen((open) => !open)}
+                  aria-expanded={filtersOpen}
+                  className="tap-target shrink-0 inline-flex items-center gap-1.5 text-[17px] text-tint active:opacity-60"
+                >
+                  Filters
+                  {/* A filter narrowing the list from behind a closed panel is
+                      hidden state; the dot is what stops it being a trap. */}
+                  {secondaryActive && <span className="w-2 h-2 rounded-full bg-tint" aria-label="(active)" />}
+                </button>
               </div>
 
               {filtersOpen && (
-              <>
-              <select
-                value={selectedAnimalId ?? ''}
-                onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
-                aria-label="Filter by animal"
-                className="w-full rounded-xl px-4 py-2.5 text-sm"
-                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: selectedAnimalId ? 'var(--color-label)' : 'var(--color-label-2)' }}
-              >
-                <option value="">All animals</option>
-                {animals.map((a) => (
-                  <option key={a.id} value={a.id}>{a.name}</option>
-                ))}
-              </select>
+                <>
+                  <select
+                    value={selectedAnimalId ?? ''}
+                    onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
+                    aria-label="Filter by animal"
+                    className={`${selectCls} ${selectedAnimalId ? 'text-label' : 'text-label-2'}`}
+                  >
+                    <option value="">All animals</option>
+                    {animals.map((a) => (
+                      <option key={a.id} value={a.id}>{a.name}</option>
+                    ))}
+                  </select>
 
-              <div className="grid grid-cols-2 gap-2">
-                <select
-                  value={periodDays}
-                  onChange={(e) => setPeriodDays(Number(e.target.value))}
-                  aria-label="Filter by period"
-                  className="rounded-xl px-3 py-2.5 text-sm"
-                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: periodDays ? 'var(--color-label)' : 'var(--color-label-2)' }}
-                >
-                  <option value={0}>All time</option>
-                  <option value={30}>Last 30 days</option>
-                  <option value={90}>Last 90 days</option>
-                  <option value={365}>Last year</option>
-                </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={periodDays}
+                      onChange={(e) => setPeriodDays(Number(e.target.value))}
+                      aria-label="Filter by period"
+                      className={`${selectCls} ${periodDays ? 'text-label' : 'text-label-2'}`}
+                    >
+                      <option value={0}>All time</option>
+                      <option value={30}>Last 30 days</option>
+                      <option value={90}>Last 90 days</option>
+                      <option value={365}>Last year</option>
+                    </select>
 
-                <select
-                  value={preyType}
-                  onChange={(e) => setPreyType(e.target.value)}
-                  aria-label="Filter by prey type"
-                  disabled={preyOptions.length < 2}
-                  className="rounded-xl px-3 py-2.5 text-sm disabled:opacity-40"
-                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: preyType ? 'var(--color-label)' : 'var(--color-label-2)' }}
-                >
-                  <option value="">All prey</option>
-                  {preyOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-                </select>
-              </div>
-              </>
+                    <select
+                      value={preyType}
+                      onChange={(e) => setPreyType(e.target.value)}
+                      aria-label="Filter by prey type"
+                      disabled={preyOptions.length < 2}
+                      className={`${selectCls} ${preyType ? 'text-label' : 'text-label-2'}`}
+                    >
+                      <option value="">All prey</option>
+                      {preyOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                    </select>
+                  </div>
+                </>
               )}
 
               {filtersActive && (
                 <div className="flex items-center justify-between px-1">
-                  <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>
+                  <span className="text-[13px] text-label-2">
                     {logs.length} of {allLogs.length} feedings
                   </span>
-                  <button
-                    type="button"
-                    onClick={clearFilters}
-                    className="text-xs underline"
-                    style={{ color: 'var(--color-tint)' }}
-                  >
+                  <button type="button" onClick={clearFilters} className="tap-target text-[15px] text-tint active:opacity-60">
                     Clear filters
                   </button>
                 </div>
@@ -322,81 +295,60 @@ export function FeedingLog() {
                 icon="feed"
                 title="No feedings logged yet"
                 description="Tap to log one"
-                action={<Button onClick={() => setAddOpen(true)}>Log first feeding</Button>}
+                action={<Button size="lg" onClick={() => setAddOpen(true)}>Log first feeding</Button>}
               />
             )
           ) : (
-            <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-6">
               {logsByDate.map((group) => (
-                <section key={group.key}>
-                  <div className="flex items-baseline justify-between mb-2 px-1">
-                    <h2 className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{group.label}</h2>
-                    {group.relative && (
-                      <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{group.relative}</span>
-                    )}
-                  </div>
+                <ListSection
+                  key={group.key}
+                  header={group.label}
+                  action={group.relative ? <span className="text-[13px] text-label-2">{group.relative}</span> : undefined}
+                >
+                  {group.entries.map((log) => {
+                    const a = log.animals as { name: string } | null
+                    const name = selectedAnimalId ? null : (a?.name ?? 'Unknown')
+                    const prey = `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''}`
+                    // What was offered still matters on a refusal, so the prey
+                    // stays on the row rather than being replaced by "Refused".
+                    const detail = log.refused ? prey : `${prey} ×${log.quantity}`
+                    const fedAt = new Date(log.fed_at)
+                    // Imported rows often carry a date with no time; "12:00 AM"
+                    // on every one of them reads as a bug rather than a fact.
+                    const hasTime = fedAt.getHours() !== 0 || fedAt.getMinutes() !== 0
 
-                  <div className="flex flex-col gap-2">
-                    {group.entries.map((log) => {
-                      const a = log.animals as { name: string } | null
-                      const name = selectedAnimalId ? null : (a?.name ?? 'Unknown')
-                      const prey = `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''}`
-                      // What was offered still matters on a refusal, so the prey
-                      // stays on the row rather than being replaced by "Refused".
-                      const detail = log.refused ? prey : `${prey} ×${log.quantity}`
-                      const fedAt = new Date(log.fed_at)
-                      // Imported rows often carry a date with no time; "12:00 AM"
-                      // on every one of them reads as a bug rather than a fact.
-                      const hasTime = fedAt.getHours() !== 0 || fedAt.getMinutes() !== 0
-
-                      return (
-                        <button
-                          key={log.id}
-                          type="button"
-                          onClick={() => setEditingLog(log)}
-                          aria-label={`Edit feeding: ${name ?? detail}`}
-                          className="rounded-xl p-3.5 flex items-center gap-3 w-full text-left transition-colors hover:brightness-110"
-                          style={{
-                            backgroundColor: log.refused ? 'color-mix(in srgb, var(--color-red) 8%, transparent)' : 'var(--color-surface)',
-                            border: log.refused
-                              ? '1px solid color-mix(in srgb, var(--color-red) 30%, transparent)'
-                              : '1px solid var(--color-separator)',
-                            // The left edge carries the animal's calendar colour,
-                            // so the two tabs read as the same data.
-                            borderLeft: `3px solid ${log.refused ? 'var(--color-red)' : animalColor(log.animal_id)}`,
-                          }}
-                        >
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-baseline gap-2 flex-wrap">
-                              <span className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>
-                                {name ?? detail}
-                              </span>
-                              {log.refused && (
-                                <span
-                                  className="text-xs font-medium px-1.5 py-0.5 rounded"
-                                  style={{ color: 'var(--color-red)', backgroundColor: 'color-mix(in srgb, var(--color-red) 16%, transparent)' }}
-                                >
-                                  Refused
-                                </span>
-                              )}
-                            </div>
-                            {name && (
-                              <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{detail}</p>
-                            )}
-                            {log.notes && (
-                              <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-label-2)' }}>{log.notes}</p>
-                            )}
+                    return (
+                      <button
+                        key={log.id}
+                        type="button"
+                        onClick={() => setEditingLog(log)}
+                        aria-label={`Edit feeding: ${name ?? detail}`}
+                        className="list-row list-row-leading relative flex items-center gap-3 px-4 py-2.5 min-h-11 w-full text-left active:bg-fill hover:bg-fill/50 transition-colors"
+                        style={{ '--sep-inset': '42px' } as React.CSSProperties}
+                      >
+                        {/* The animal's calendar colour, so the two tabs read as
+                            the same data; red when the meal was refused. */}
+                        <span
+                          aria-hidden="true"
+                          className="w-2.5 h-2.5 rounded-full shrink-0"
+                          style={{ backgroundColor: log.refused ? 'var(--color-red)' : animalColor(log.animal_id) }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-[17px] text-label">{name ?? detail}</span>
+                            {log.refused && <Badge status="red">Refused</Badge>}
                           </div>
-                          {hasTime && (
-                            <p className="text-xs shrink-0" style={{ color: 'var(--color-label-2)' }}>
-                              {format(fedAt, 'h:mm a')}
-                            </p>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </section>
+                          {name && <p className="text-[15px] text-label-2">{detail}</p>}
+                          {log.notes && <p className="text-[13px] text-label-2 truncate">{log.notes}</p>}
+                        </div>
+                        {hasTime && (
+                          <span className="text-[15px] shrink-0 text-label-2 tabular-nums">{format(fedAt, 'h:mm a')}</span>
+                        )}
+                      </button>
+                    )
+                  })}
+                </ListSection>
               ))}
             </div>
           )}
@@ -407,107 +359,104 @@ export function FeedingLog() {
       {tab === 'calendar' && (
         <>
           {/* Month nav */}
-          <div className="flex items-center justify-between mb-4">
-            <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-fill active:bg-fill" style={{ color: 'var(--color-label-2)' }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <span className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{format(monthStart, 'MMMM yyyy')}</span>
-            <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-fill active:bg-fill" style={{ color: 'var(--color-label-2)' }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </button>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[20px] font-bold text-label px-1">{format(monthStart, 'MMMM yyyy')}</span>
+            <div className="flex items-center">
+              <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="tap-target w-9 h-9 rounded-full flex items-center justify-center text-tint active:bg-fill">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="tap-target w-9 h-9 rounded-full flex items-center justify-center text-tint active:bg-fill">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
           </div>
 
           {/* Monthly summary */}
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-            <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>MONTH SUMMARY</p>
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div>
-                <p className="text-lg font-bold" style={{ color: 'var(--color-tint)' }}>
-                  {logsInMonth.filter((l) => !l.refused).length}
-                </p>
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Feedings</p>
+          <div className="grid grid-cols-3 gap-2.5 mb-5">
+            {[
+              { label: 'Feedings', value: logsInMonth.filter((l) => !l.refused).length, color: 'var(--color-tint)' },
+              { label: 'Refused', value: logsInMonth.filter((l) => l.refused).length, color: 'var(--color-red)' },
+              { label: 'Active days', value: new Set(logsInMonth.filter((l) => !l.refused).map((l) => format(new Date(l.fed_at), 'yyyy-MM-dd'))).size, color: 'var(--color-label)' },
+            ].map((t) => (
+              <div key={t.label} className="rounded-xl bg-surface px-3 py-2.5">
+                <p className="text-[13px] font-semibold text-label-2">{t.label}</p>
+                <p className="text-[22px] leading-7 font-bold tabular-nums" style={{ color: t.color }}>{t.value}</p>
               </div>
-              <div>
-                <p className="text-lg font-bold" style={{ color: 'var(--color-red)' }}>
-                  {logsInMonth.filter((l) => l.refused).length}
-                </p>
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Refused</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold" style={{ color: 'var(--color-label)' }}>
-                  {new Set(logsInMonth.filter((l) => !l.refused).map((l) => format(new Date(l.fed_at), 'yyyy-MM-dd'))).size}
-                </p>
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Active days</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Day headers */}
-          <div className="grid grid-cols-7 mb-1">
-            {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-              <div key={d} className="text-center text-xs py-1" style={{ color: 'var(--color-label-2)' }}>{d}</div>
             ))}
           </div>
 
-          {/* Calendar grid */}
-          <div className="grid grid-cols-7 gap-1 mb-4">
-            {Array.from({ length: startPad }).map((_, i) => <div key={`pad-${i}`} />)}
+          <div className="rounded-xl bg-surface px-2 pt-2 pb-1 mb-3">
+            {/* Day headers */}
+            <div className="grid grid-cols-7 mb-1">
+              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
+                <div key={d} className="text-center text-[13px] font-semibold py-1 text-label-3">{d}</div>
+              ))}
+            </div>
 
-            {days.map((day) => {
-              const key = format(day, 'yyyy-MM-dd')
-              const dayLogs = logsByDay.get(key) ?? []
-              const isToday = isSameDay(day, now)
-              const isSelected = selectedDay ? isSameDay(day, selectedDay) : false
-              return (
-                <button
-                  key={key}
-                  onClick={() => setSelectedDay(isSelected ? null : day)}
-                  className="rounded-lg p-1 flex flex-col items-center gap-0.5 min-h-[52px] transition-colors"
-                  style={{
-                    backgroundColor: isSelected ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : isToday ? 'var(--color-separator)' : 'transparent',
-                    border: isSelected ? '1px solid color-mix(in srgb, var(--color-tint) 30%, transparent)' : isToday ? '1px solid var(--color-separator)' : '1px solid transparent',
-                  }}
-                >
-                  <span className="text-xs" style={{ color: isSelected ? 'var(--color-tint)' : isToday ? 'var(--color-label)' : 'var(--color-label-2)' }}>
-                    {format(day, 'd')}
-                  </span>
-                  {dayLogs.length > 0 && (
-                    <div className="flex flex-wrap gap-0.5 justify-center px-0.5">
-                      {dayLogs.slice(0, 6).map((log) => (
-                        <div
-                          key={log.id}
-                          className="w-1.5 h-1.5 rounded-full"
-                          style={{ backgroundColor: log.refused ? 'var(--color-red)' : (animalColor(log.animal_id)) }}
-                        />
-                      ))}
-                      {dayLogs.length > 6 && (
-                        <span className="text-xs" style={{ color: 'var(--color-label-2)', fontSize: 8 }}>+{dayLogs.length - 6}</span>
-                      )}
-                    </div>
-                  )}
-                </button>
-              )
-            })}
+            {/* Calendar grid */}
+            <div className="grid grid-cols-7">
+              {Array.from({ length: startPad }).map((_, i) => <div key={`pad-${i}`} />)}
+
+              {days.map((day) => {
+                const key = format(day, 'yyyy-MM-dd')
+                const dayLogs = logsByDay.get(key) ?? []
+                const isToday = isSameDay(day, now)
+                const isSelected = selectedDay ? isSameDay(day, selectedDay) : false
+                return (
+                  <button
+                    key={key}
+                    onClick={() => setSelectedDay(isSelected ? null : day)}
+                    aria-pressed={isSelected}
+                    aria-label={format(day, 'd MMMM')}
+                    className="flex flex-col items-center gap-1 pt-1 min-h-[52px] rounded-lg active:bg-fill"
+                  >
+                    {/* As in Calendar: today in the tint, the selected day in a
+                        filled circle. */}
+                    <span
+                      className={`w-8 h-8 rounded-full flex items-center justify-center text-[17px] tabular-nums transition-colors duration-150 ${
+                        isSelected ? (isToday ? 'bg-tint text-on-tint font-semibold' : 'bg-label text-bg font-semibold') : isToday ? 'text-tint font-semibold' : 'text-label'
+                      }`}
+                    >
+                      {format(day, 'd')}
+                    </span>
+                    {dayLogs.length > 0 && (
+                      <div className="flex flex-wrap gap-0.5 justify-center px-0.5">
+                        {dayLogs.slice(0, 6).map((log) => (
+                          <div
+                            key={log.id}
+                            className="w-1.5 h-1.5 rounded-full"
+                            style={{ backgroundColor: log.refused ? 'var(--color-red)' : (animalColor(log.animal_id)) }}
+                          />
+                        ))}
+                        {dayLogs.length > 6 && (
+                          <span className="text-label-2" style={{ fontSize: 9, lineHeight: '6px' }}>+{dayLogs.length - 6}</span>
+                        )}
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
           </div>
 
           {/* Legend */}
-          <div className="flex gap-4 mb-4 flex-wrap">
+          <div className="flex gap-x-4 gap-y-1.5 mb-5 px-1 flex-wrap">
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-tint)' }} />
-              <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>Fed</span>
+              <div className="w-2 h-2 rounded-full bg-tint" />
+              <span className="text-[13px] text-label-2">Fed</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--color-red)' }} />
-              <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>Refused</span>
+              <div className="w-2 h-2 rounded-full bg-red" />
+              <span className="text-[13px] text-label-2">Refused</span>
             </div>
             {animalsInMonth.slice(0, LEGEND_LIMIT).map((a) => (
               <div key={a.id} className="flex items-center gap-1.5">
                 <div className="w-2 h-2 rounded-full" style={{ backgroundColor: animalColor(a.id) }} />
-                <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{a.name}</span>
+                <span className="text-[13px] text-label-2">{a.name}</span>
               </div>
             ))}
             {animalsInMonth.length > LEGEND_LIMIT && (
-              <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>
+              <span className="text-[13px] text-label-2">
                 +{animalsInMonth.length - LEGEND_LIMIT} more
               </span>
             )}
@@ -515,30 +464,28 @@ export function FeedingLog() {
 
           {/* Selected day detail */}
           {selectedDay && (
-            <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <p className="text-sm font-medium mb-3" style={{ color: 'var(--color-label)' }}>{format(selectedDay, 'EEEE d MMMM')}</p>
+            <ListSection header={format(selectedDay, 'EEEE d MMMM')} className="mb-4">
               {selectedDayLogs.length === 0 ? (
-                <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>No feedings on this day</p>
+                <p className="px-4 py-3 text-[15px] text-label-2">No feedings on this day</p>
               ) : (
-                <div className="flex flex-col gap-2">
-                  {selectedDayLogs.map((log) => {
-                    const animal = animals.find((a) => a.id === log.animal_id)
-                    return (
-                      <div key={log.id} className="flex items-center gap-3">
-                        <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? 'var(--color-red)' : (animalColor(log.animal_id)) }} />
-                        <div className="flex-1">
-                          <span className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{animal?.name ?? 'Unknown'}</span>
-                          <span className="text-xs ml-2" style={{ color: 'var(--color-label-2)' }}>
-                            {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
-                          </span>
-                        </div>
-                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{format(new Date(log.fed_at), 'h:mm a')}</span>
-                      </div>
-                    )
-                  })}
-                </div>
+                selectedDayLogs.map((log) => {
+                  const animal = animals.find((a) => a.id === log.animal_id)
+                  return (
+                    <ListRow
+                      key={log.id}
+                      separatorInset={42}
+                      leading={<span className="block w-2.5 h-2.5 rounded-full" style={{ backgroundColor: log.refused ? 'var(--color-red)' : (animalColor(log.animal_id)) }} />}
+                      trailing={<span className="text-[15px] text-label-2 tabular-nums">{format(new Date(log.fed_at), 'h:mm a')}</span>}
+                    >
+                      <p className="text-[17px] text-label truncate">{animal?.name ?? 'Unknown'}</p>
+                      <p className="text-[13px] text-label-2">
+                        {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
+                      </p>
+                    </ListRow>
+                  )
+                })
               )}
-            </div>
+            </ListSection>
           )}
 
         </>
@@ -574,8 +521,7 @@ export function FeedingLog() {
             <button
               type="button"
               onClick={() => setConfirmDelete(editingLog)}
-              className="text-sm py-2 rounded-xl transition-colors hover:bg-fill"
-              style={{ color: 'var(--color-red)' }}
+              className="min-h-11 rounded-[10px] text-[17px] text-red bg-fill active:bg-fill-2 transition-colors"
             >
               Delete this feeding
             </button>

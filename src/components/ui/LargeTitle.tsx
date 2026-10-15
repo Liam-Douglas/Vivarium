@@ -41,14 +41,21 @@ export function LargeTitle({ title, subtitle, trailing }: LargeTitleProps) {
         </div>
       </div>
 
-      <header className="flex items-end justify-between gap-3 pt-1 pb-4">
-        <div className="min-w-0">
+      {/* On a phone the bar buttons sit in their own row above the title, as
+          in a UINavigationBar, so a long title keeps the full width. From md
+          up there is room for both on one line. */}
+      <header className="flex flex-wrap md:flex-nowrap items-end justify-between gap-x-3 pt-1 pb-4">
+        <div className="min-w-0 flex-1">
           <h1 ref={ref} className="text-[34px] leading-[41px] font-bold tracking-[0.01em] text-label">
             {title}
           </h1>
           {subtitle && <p className="text-[15px] text-label-2 mt-0.5">{subtitle}</p>}
         </div>
-        {trailing && <div className="flex items-center gap-2 shrink-0 pb-1">{trailing}</div>}
+        {trailing && (
+          <div className="order-first md:order-none basis-full md:basis-auto flex items-center justify-end gap-2 shrink-0 md:pb-1 has-[>*:not(.hidden)]:mb-1 md:has-[>*:not(.hidden)]:mb-0">
+            {trailing}
+          </div>
+        )}
       </header>
     </>
   )
