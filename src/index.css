@@ -294,6 +294,17 @@ textarea:focus-visible {
 .switch:checked::before { transform: translateX(20px); }
 .switch:disabled { opacity: 0.4; cursor: default; }
 
+/* A popover or menu opening from its trigger: a short scale-and-fade from
+   the corner it hangs off (set transform-origin where it is used). Mount-only,
+   so a keyframe is enough; closing is instant, as iOS menus close. */
+@keyframes popover-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.popover-in {
+  animation: popover-in 160ms var(--ease-out) both;
+}
+
 /* The Things-style check-off: the tick lands with a small overshoot. */
 @keyframes check-pop {
   0% { transform: scale(0.5); opacity: 0; }
@@ -311,6 +322,9 @@ textarea:focus-visible {
   }
   .switch::before {
     transition-duration: 0ms;
+  }
+  .popover-in {
+    animation: fade-in 120ms ease both;
   }
   .sheet-panel,
   .sheet-panel[data-open] {

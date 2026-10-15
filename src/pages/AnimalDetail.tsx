@@ -44,6 +44,7 @@ import { EmptyState } from '@/components/ui/EmptyState'
 import { ListSection, ListRow } from '@/components/ui/List'
 import { Icon, IconTile, type IconName } from '@/components/ui/icons'
 import { motion } from 'motion/react'
+import { SPRING_SELECTION } from '@/lib/motion'
 import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { AnimalForm } from '@/components/animals/AnimalForm'
@@ -923,7 +924,7 @@ export function AnimalDetail() {
                 <motion.span
                   layoutId="profile-tab"
                   className="absolute inset-0 rounded-full bg-tint"
-                  transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
+                  transition={SPRING_SELECTION}
                 />
               )}
               <span className="relative">{t.label}</span>

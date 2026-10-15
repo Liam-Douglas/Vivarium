@@ -112,6 +112,9 @@ export function Reminders() {
   const [editingTask, setEditingTask] = useState<CareTask | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<CareTask | null>(null)
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null)
+  // A task just checked off keeps its tick for a moment after the save, so the
+  // check-off is seen even when the network answers at once.
+  const [justDoneId, setJustDoneId] = useState<string | null>(null)
 
   const animalName = useMemo(() => new Map(animals.map((a) => [a.id, a.name])), [animals])
   const enclosureName = useMemo(() => new Map(enclosures.map((e) => [e.id, e.name])), [enclosures])
@@ -151,6 +154,8 @@ export function Reminders() {
     setBusyTaskId(task.id)
     try {
       await markCareTaskDone({ household_id: householdId, task_id: task.id, user_id: user.id })
+      setJustDoneId(task.id)
+      window.setTimeout(() => setJustDoneId((id) => (id === task.id ? null : id)), 800)
       showToast(`${task.name} — done`, 'success')
       refreshTasks()
     } catch (e) {
@@ -248,7 +253,7 @@ export function Reminders() {
                         className="tap-target relative w-[26px] h-[26px] rounded-full shrink-0 flex items-center justify-center transition-transform duration-150 ease-out active:scale-90 motion-reduce:active:scale-100"
                         style={{ border: `2px solid ${meta.color}` }}
                       >
-                        {busy && (
+                        {(busy || justDoneId === task.id) && (
                           <span className="check-pop absolute inset-[-2px] rounded-full bg-tint text-on-tint flex items-center justify-center">
                             <Icon name="check" size={15} strokeWidth={3} />
                           </span>

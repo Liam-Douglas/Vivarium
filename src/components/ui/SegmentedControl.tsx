@@ -1,5 +1,6 @@
 import { useId } from 'react'
 import { motion } from 'motion/react'
+import { SPRING_SELECTION } from '@/lib/motion'
 
 interface SegmentedControlProps<T extends string> {
   options: readonly { value: T; label: string }[]
@@ -13,7 +14,7 @@ interface SegmentedControlProps<T extends string> {
 /**
  * The iOS segmented control: a gray track with the selected segment raised
  * on it. The raised piece slides to the new segment on a critically damped
- * spring rather than jumping, so the change reads as one control moving.
+ * spring rather than jumping, the same spring as every other selection, so the change reads as one control moving.
  */
 export function SegmentedControl<T extends string>({ options, value, onChange, label, className = '' }: SegmentedControlProps<T>) {
   const id = useId()
@@ -33,7 +34,7 @@ export function SegmentedControl<T extends string>({ options, value, onChange, l
               <motion.span
                 layoutId={`segment-${id}`}
                 className="absolute inset-0 rounded-[7px] bg-segment shadow-[0_3px_8px_rgba(0,0,0,0.12),0_3px_1px_rgba(0,0,0,0.04)]"
-                transition={{ type: 'spring', bounce: 0, duration: 0.3 }}
+                transition={SPRING_SELECTION}
               />
             )}
             <span className="relative">{o.label}</span>

@@ -528,7 +528,7 @@ export function Dashboard() {
               </button>
             </div>
             {logMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-xl py-1 z-30 bg-surface-2 shadow-[var(--shadow-popover)] border-[0.5px] border-separator">
+              <div className="popover-in origin-top-right absolute right-0 mt-2 w-56 rounded-xl py-1 z-30 bg-surface-2 shadow-[var(--shadow-popover)] border-[0.5px] border-separator">
                 {FAB_ACTIONS.filter((a) => a.key !== 'feeding').map((action) => (
                   <button
                     key={action.key}
