@@ -54,7 +54,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
             value: summary.averageIntervalDays != null ? `${summary.averageIntervalDays}d` : '—',
           },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+          <div key={stat.label} className="rounded-xl px-3 py-2.5 bg-surface">
             <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{stat.label}</p>
             <p className="text-base font-semibold mt-0.5" style={{ color: stat.color ?? 'var(--color-label)' }}>{stat.value}</p>
           </div>
@@ -62,7 +62,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
       </div>
 
       {chart.length > 1 && (
-        <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+        <div className="rounded-xl p-4 bg-surface">
           <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-label-2)' }}>SHED INTERVALS (days)</p>
           <p className="text-xs mb-3" style={{ color: 'var(--color-label-2)' }}>
             Days between consecutive sheds — green = complete, amber = incomplete
@@ -72,7 +72,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
                 labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
                 formatter={(v) => [`${v} days`, 'Interval']}
               />
@@ -86,9 +86,9 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="rounded-xl bg-surface overflow-hidden">
         {logs.map((log) => (
-          <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+          <div key={log.id} className="list-row px-4 py-3 flex items-center gap-3">
             <Badge status={log.complete ? 'green' : 'amber'}>
               {log.complete ? 'Complete' : 'Incomplete'}
             </Badge>

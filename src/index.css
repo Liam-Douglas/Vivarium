@@ -21,6 +21,7 @@
   --color-orange: #C93400;
   --color-green: #1E7A35;
   --color-blue: #0040DD;
+  --color-purple: #8944AB;
   --color-destructive: #D70015;   /* filled destructive button, white label */
   --color-scrim: rgba(0, 0, 0, 0.4);
   --color-segment: #FFFFFF;       /* the raised segment of a segmented control */
@@ -49,6 +50,7 @@
     --color-orange: #FF9F0A;
     --color-green: #30D158;
     --color-blue: #409CFF;
+    --color-purple: #BF5AF2;
     --color-scrim: rgba(0, 0, 0, 0.6);
     --color-segment: #636366;
     --color-bar: rgba(22, 22, 23, 0.8);

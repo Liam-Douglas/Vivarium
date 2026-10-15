@@ -4,7 +4,6 @@ import {
 } from '@/lib/incubationStatus'
 import type { IncubationState } from '@/lib/incubationStatus'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { RecordActions } from '@/components/ui/RecordActions'
 import type { Incubation } from '@/hooks/useIncubations'
 
@@ -41,16 +40,14 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>
-          🌡️ Incubation
-        </p>
-        <Button size="sm" onClick={onAdd}>Add</Button>
+        <h2 className="text-[20px] leading-[25px] font-bold text-label">Incubation</h2>
+        <button type="button" onClick={onAdd} className="tap-target text-[17px] text-tint active:opacity-60">Add</button>
       </div>
 
       {incubations.length === 0 ? (
         <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No incubations yet.</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="rounded-xl bg-surface overflow-hidden">
           {incubations.map((row) => {
             const state = incubationState(row, now)
             const badge = STATE_BADGE[state]
@@ -60,7 +57,7 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
             const rate = hatchRate(row)
 
             return (
-              <div key={row.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <div key={row.id} className="list-row px-4 py-3">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">

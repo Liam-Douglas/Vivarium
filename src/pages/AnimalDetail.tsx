@@ -40,6 +40,10 @@ import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { ListSection, ListRow } from '@/components/ui/List'
+import { Icon, IconTile, type IconName } from '@/components/ui/icons'
+import { motion } from 'motion/react'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { AnimalForm } from '@/components/animals/AnimalForm'
 import type { Animal } from '@/hooks/useAnimals'
@@ -68,6 +72,11 @@ import {
 } from '@/lib/queries'
 
 type Tab = 'overview' | 'timeline' | 'feeding' | 'vitals' | 'health' | 'records'
+
+/** A round bar button in glass, for use over a photo. */
+const TOOLTIP_STYLE = { backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }
+
+const GLASS_BUTTON = 'tap-target w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center text-white bg-black/30 backdrop-blur-md active:bg-black/50 transition-colors'
 
 export function AnimalDetail() {
   const { id } = useParams<{ id: string }>()
@@ -653,20 +662,20 @@ export function AnimalDetail() {
   const shedPrediction = predictNextShed(sheddingLogs)
 
   // ── Timeline events ───────────────────────────────────────────────────────
-  type TEvent = { id: string; date: Date; type: string; icon: string; label: string; detail: string; color: string }
+  type TEvent = { id: string; date: Date; type: string; icon: IconName; label: string; detail: string; color: string }
   const timelineEvents: TEvent[] = (() => {
     const events: TEvent[] = []
-    feedingLogs.forEach((l) => events.push({ id: `f-${l.id}`, date: new Date(l.fed_at), type: 'feeding', icon: l.refused ? '🚫' : '🍖', label: l.refused ? 'Refused food' : `Fed ${l.prey_type}${l.prey_size ? ` (${l.prey_size})` : ''} ×${l.quantity}`, detail: l.notes ?? '', color: l.refused ? 'var(--color-red)' : 'var(--color-green)' }))
-    sheddingLogs.forEach((l) => events.push({ id: `s-${l.id}`, date: new Date(l.shed_at), type: 'shed', icon: '🐍', label: `Shed — ${l.complete ? 'complete' : 'incomplete'}`, detail: l.notes ?? '', color: l.complete ? 'var(--color-tint)' : 'var(--color-orange)' }))
-    weightLogs.forEach((l) => events.push({ id: `w-${l.id}`, date: new Date(l.logged_at), type: 'weight', icon: '⚖️', label: `Weighed: ${formatWeight(l.weight_grams)}`, detail: l.notes ?? '', color: 'var(--color-blue)' }))
-    healthEvents.forEach((l) => events.push({ id: `h-${l.id}`, date: new Date(l.event_date), type: 'health', icon: '🏥', label: l.title, detail: `${l.event_type.replace(/_/g, ' ')}${l.cost_cents ? ` · ${formatAUD(l.cost_cents)}` : ''}`, color: 'var(--color-orange)' }))
-    acquisitionRecords.forEach((l) => events.push({ id: `a-${l.id}`, date: new Date(l.acquired_at), type: 'acquisition', icon: '🏷️', label: 'Acquired', detail: l.source_name ?? l.source ?? '', color: 'var(--color-tint)' }))
-    exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: '🚪', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: 'var(--color-red)' }))
-    breedingRecords.forEach((l) => events.push({ id: `b-${l.id}`, date: new Date(l.pairing_date), type: 'breeding', icon: '🥚', label: l.paired_with_name ? `Paired with ${l.paired_with_name}` : 'Pairing', detail: l.outcome ?? '', color: '#a87ac4' }))
+    feedingLogs.forEach((l) => events.push({ id: `f-${l.id}`, date: new Date(l.fed_at), type: 'feeding', icon: 'feed', label: l.refused ? 'Refused food' : `Fed ${l.prey_type}${l.prey_size ? ` (${l.prey_size})` : ''} ×${l.quantity}`, detail: l.notes ?? '', color: l.refused ? 'var(--color-red)' : 'var(--color-green)' }))
+    sheddingLogs.forEach((l) => events.push({ id: `s-${l.id}`, date: new Date(l.shed_at), type: 'shed', icon: 'shed', label: `Shed — ${l.complete ? 'complete' : 'incomplete'}`, detail: l.notes ?? '', color: l.complete ? 'var(--color-tint)' : 'var(--color-orange)' }))
+    weightLogs.forEach((l) => events.push({ id: `w-${l.id}`, date: new Date(l.logged_at), type: 'weight', icon: 'weight', label: `Weighed: ${formatWeight(l.weight_grams)}`, detail: l.notes ?? '', color: 'var(--color-blue)' }))
+    healthEvents.forEach((l) => events.push({ id: `h-${l.id}`, date: new Date(l.event_date), type: 'health', icon: 'heart', label: l.title, detail: `${l.event_type.replace(/_/g, ' ')}${l.cost_cents ? ` · ${formatAUD(l.cost_cents)}` : ''}`, color: 'var(--color-orange)' }))
+    acquisitionRecords.forEach((l) => events.push({ id: `a-${l.id}`, date: new Date(l.acquired_at), type: 'acquisition', icon: 'tag', label: 'Acquired', detail: l.source_name ?? l.source ?? '', color: 'var(--color-tint)' }))
+    exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: 'exit', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: 'var(--color-red)' }))
+    breedingRecords.forEach((l) => events.push({ id: `b-${l.id}`, date: new Date(l.pairing_date), type: 'breeding', icon: 'egg', label: l.paired_with_name ? `Paired with ${l.paired_with_name}` : 'Pairing', detail: l.outcome ?? '', color: 'var(--color-purple)' }))
     // Only hatches, not starts: a clutch going into the incubator is a state
     // that lasts weeks, and the timeline is a list of moments. The section
     // above is where a running incubation is visible.
-    incubations.filter((l) => l.actual_hatch_date).forEach((l) => events.push({ id: `i-${l.id}`, date: new Date(l.actual_hatch_date as string), type: 'breeding', icon: '🌡️', label: l.hatchlings != null ? `${l.hatchlings} hatched` : 'Clutch hatched', detail: l.outcome ?? '', color: '#a87ac4' }))
+    incubations.filter((l) => l.actual_hatch_date).forEach((l) => events.push({ id: `i-${l.id}`, date: new Date(l.actual_hatch_date as string), type: 'breeding', icon: 'egg', label: l.hatchlings != null ? `${l.hatchlings} hatched` : 'Clutch hatched', detail: l.outcome ?? '', color: 'var(--color-purple)' }))
     return events.sort((a, b) => b.date.getTime() - a.date.getTime())
   })()
 
@@ -733,20 +742,19 @@ export function AnimalDetail() {
     if (!animal) return null
     return (
           <div className={`grid grid-cols-3 gap-2 ${className}`}>
-            {[
-              { label: 'Feed', icon: '🍖', action: () => setFeedOpen(true) },
-              { label: 'Weigh', icon: '⚖️', action: openAddWeight },
-              { label: 'Shed', icon: '🐍', action: openAddShed },
-            ].map(({ label, icon, action }) => (
+            {/* As in Contacts: three tinted actions under the name. */}
+            {([
+              { label: 'Feed', icon: 'feed', action: () => setFeedOpen(true) },
+              { label: 'Weigh', icon: 'weight', action: openAddWeight },
+              { label: 'Shed', icon: 'shed', action: openAddShed },
+            ] as const).map(({ label, icon, action }) => (
               <button key={label} onClick={action}
-                className="py-3 rounded-xl flex flex-col items-center gap-1.5 transition-colors active:scale-95"
-                style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <span className="text-xl">{icon}</span>
-                <span className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>{label}</span>
+                className="h-[58px] rounded-xl bg-surface text-tint flex flex-col items-center justify-center gap-1 active:opacity-60 transition-opacity">
+                <Icon name={icon} size={22} strokeWidth={1.9} />
+                <span className="text-[12px] font-medium">{label}</span>
               </button>
             ))}
           </div>
-
     )
   }
 
@@ -754,10 +762,10 @@ export function AnimalDetail() {
     // TypeScript drops the outer narrowing inside a closure over state.
     if (!animal) return null
     return (
-          <div className={`grid grid-cols-2 gap-3 ${className}`}>
-            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Last fed</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: feedingStatusColor }}>
+          <div className={`grid grid-cols-2 gap-2.5 ${className}`}>
+            <div className="rounded-xl px-3.5 py-3 bg-surface">
+              <p className="text-[13px] font-semibold text-label-2">Last fed</p>
+              <p className="text-[22px] leading-7 font-bold tabular-nums mt-0.5" style={{ color: feedingStatusColor }}>
                 {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'd MMM') : '—'}
               </p>
               {daysSinceFed !== null && (
@@ -766,9 +774,9 @@ export function AnimalDetail() {
                 </p>
               )}
             </div>
-            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Next feeding</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: nextFeedColor }}>
+            <div className="rounded-xl px-3.5 py-3 bg-surface">
+              <p className="text-[13px] font-semibold text-label-2">Next feeding</p>
+              <p className="text-[22px] leading-7 font-bold tabular-nums mt-0.5" style={{ color: nextFeedColor }}>
                 {nextFeedingDue ? format(nextFeedingDue, 'd MMM') : '—'}
               </p>
               {daysUntilFeed !== null && (
@@ -783,9 +791,9 @@ export function AnimalDetail() {
                 <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>every {animal.feeding_frequency_days}d</p>
               )}
             </div>
-            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Current weight</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: 'var(--color-label)' }}>
+            <div className="rounded-xl px-3.5 py-3 bg-surface">
+              <p className="text-[13px] font-semibold text-label-2">Current weight</p>
+              <p className="text-[22px] leading-7 font-bold tabular-nums mt-0.5" style={{ color: 'var(--color-label)' }}>
                 {shownWeight !== null ? formatWeight(shownWeight) : '—'}
                 {weightTrend !== null && (
                   <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? 'var(--color-tint)' : 'var(--color-red)' }}>
@@ -807,9 +815,9 @@ export function AnimalDetail() {
                 </svg>
               )}
             </div>
-            <div className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Last shed</p>
-              <p className="text-base font-semibold mt-0.5" style={{ color: 'var(--color-label)' }}>
+            <div className="rounded-xl px-3.5 py-3 bg-surface">
+              <p className="text-[13px] font-semibold text-label-2">Last shed</p>
+              <p className="text-[22px] leading-7 font-bold tabular-nums mt-0.5" style={{ color: 'var(--color-label)' }}>
                 {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'd MMM') : '—'}
               </p>
               {shedPrediction && (
@@ -819,9 +827,9 @@ export function AnimalDetail() {
               )}
             </div>
             {feedResponse && (
-              <div className="rounded-xl p-3 col-span-2" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Takes food</p>
-                <p className="text-base font-semibold mt-0.5" style={{ color: feedResponse.color }}>
+              <div className="rounded-xl px-3.5 py-3 col-span-2 bg-surface">
+                <p className="text-[13px] font-semibold text-label-2">Takes food</p>
+                <p className="text-[22px] leading-7 font-bold tabular-nums mt-0.5" style={{ color: feedResponse.color }}>
                   {feedResponse.taken} of last {feedResponse.total}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>
@@ -851,33 +859,43 @@ export function AnimalDetail() {
           it. Above 1024 this pins to the left so it stays on screen while you
           read the history beside it; below, it is simply the top of the page. */}
       <aside className="lg:sticky lg:top-6">
-      {/* Hero */}
-      <div className="relative h-52 sm:h-64 lg:h-60 lg:rounded-xl lg:overflow-hidden" style={{ backgroundColor: 'var(--color-bg)' }}>
+      {/* Hero: the photo full bleed, with the bar buttons floating on it in
+          glass, as over a photo in Photos. */}
+      <div className="relative h-56 sm:h-64 lg:h-60 lg:rounded-xl lg:overflow-hidden bg-fill">
         {animal.photo_url && photoUrls.get(animal.photo_url) ? (
           <img src={photoUrls.get(animal.photo_url)} alt={animal.name} className="w-full h-full object-cover" />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-6xl opacity-20">🦎</div>
+          <div aria-hidden="true" className="w-full h-full flex items-center justify-center text-[96px] font-semibold text-label-3">
+            {Array.from(animal.name.trim())[0]?.toUpperCase() ?? '?'}
+          </div>
         )}
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 40%, var(--color-bg) 100%)' }} />
-        <button type="button" onClick={() => navigate(-1)} aria-label="Back" className="absolute top-4 left-4 w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--color-label)' }}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-        </button>
-        <button type="button" onClick={() => setEditOpen(true)} aria-label="Edit animal" className="absolute top-4 right-4 w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--color-label)' }}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-        </button>
-        <button type="button" onClick={openQr} aria-label="QR label" className="absolute top-4 right-16 pointer-coarse:right-[4.25rem] w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }} title="QR label">
-          <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: 'var(--color-label)' }}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
-        </button>
+        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 55%, var(--color-bg) 100%)' }} />
+        <div
+          className="absolute inset-x-0 top-0 flex items-center justify-between px-4 pt-3"
+          style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top, 0px))' }}
+        >
+          <button type="button" onClick={() => navigate(-1)} aria-label="Back" className={GLASS_BUTTON}>
+            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <div className="flex gap-2.5">
+            <button type="button" onClick={openQr} aria-label="QR label" title="QR label" className={GLASS_BUTTON}>
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>
+            </button>
+            <button type="button" onClick={() => setEditOpen(true)} aria-label="Edit animal" className={GLASS_BUTTON}>
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+            </button>
+          </div>
+        </div>
       </div>
 
-      <div className="px-4 -mt-6 relative z-10">
+      <div className="px-4 lg:px-0 -mt-8 lg:mt-4 relative z-10">
         <div className="mb-4">
-          <h1 className="text-3xl font-bold" style={{ color: 'var(--color-label)' }}>{animal.name}</h1>
-          <p className="text-sm mt-1" style={{ color: 'var(--color-label-2)' }}>
+          <h1 className="text-[34px] leading-[41px] font-bold text-label break-words">{animal.name}</h1>
+          <p className="text-[15px] mt-0.5 text-label-2">
             {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}{animal.sex ? ` · ${animal.sex.charAt(0).toUpperCase() + animal.sex.slice(1)}` : ''}{age ? ` · ${age}` : ''}
           </p>
           {enclosure && (
-            <p className="text-xs mt-1.5 inline-flex items-center gap-1.5" style={{ color: 'var(--color-label-2)' }}>
+            <p className="text-[13px] mt-1 inline-flex items-center gap-1.5 text-label-2">
               <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} className="shrink-0">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
@@ -892,178 +910,189 @@ export function AnimalDetail() {
       </aside>
 
       <div className="px-4 lg:px-0 relative z-10">
-        {/* Tabs */}
-        <div className="flex gap-1 mb-4 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+        {/* Six sections are too many for a segmented control, so they scroll
+            as capsules; the selection slides between them. */}
+        <div className="flex gap-1.5 mb-5 overflow-x-auto -mx-4 px-4 lg:mx-0 lg:px-0 py-0.5" style={{ scrollbarWidth: 'none' }}>
           {tabs.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)} aria-pressed={tab === t.id} className="px-3 py-1.5 pointer-coarse:min-h-11 rounded-lg text-sm font-medium whitespace-nowrap transition-colors"
-              style={{ backgroundColor: tab === t.id ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent', color: tab === t.id ? 'var(--color-tint)' : 'var(--color-label-2)' }}>
-              {t.label}
+            <button
+              key={t.id}
+              aria-pressed={tab === t.id}
+              onClick={() => setTab(t.id)}
+              className={`relative shrink-0 h-8 px-3.5 rounded-full text-[15px] font-medium whitespace-nowrap transition-colors duration-200 ${tab === t.id ? 'text-on-tint' : 'text-label bg-fill'}`}
+            >
+              {tab === t.id && (
+                <motion.span
+                  layoutId="profile-tab"
+                  className="absolute inset-0 rounded-full bg-tint"
+                  transition={{ type: 'spring', bounce: 0.15, duration: 0.35 }}
+                />
+              )}
+              <span className="relative">{t.label}</span>
             </button>
           ))}
         </div>
 
         {/* Overview */}
         {tab === 'overview' && (
-          <div className="flex flex-col gap-4 pb-nav md:pb-8">
-            {/* Quarantine banner */}
-            {animal.quarantine_started_at && !animal.quarantine_ended_at && (
-              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-orange) 30%, transparent)' }}>
-                <span className="text-lg">🔬</span>
-                <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-orange)' }}>In quarantine</p>
-                  <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>Since {format(new Date(animal.quarantine_started_at), 'd MMM yyyy')}</p>
-                </div>
-                <button onClick={() => setEditOpen(true)} className="ml-auto text-xs px-2 py-1 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 15%, transparent)', color: 'var(--color-orange)' }}>End</button>
-              </div>
-            )}
-
-            {/* For sale banner */}
-            {animal.is_for_sale && (
-              <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' }}>
-                <span className="text-lg">🏷️</span>
-                <div>
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-tint)' }}>Listed for sale</p>
-                  {animal.asking_price_cents != null && (
-                    <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>Asking {formatAUD(animal.asking_price_cents)} AUD</p>
-                  )}
-                </div>
-              </div>
+          <div className="flex flex-col gap-6 pb-nav md:pb-8">
+            {/* Quarantine and sale: states, so rows with a coloured tile rather
+                than banners. */}
+            {((animal.quarantine_started_at && !animal.quarantine_ended_at) || animal.is_for_sale) && (
+              <ListSection>
+                {animal.quarantine_started_at && !animal.quarantine_ended_at && (
+                  <ListRow
+                    leading={<IconTile name="alert" color="var(--color-orange)" />}
+                    trailing={<button onClick={() => setEditOpen(true)} className="tap-target text-[15px] text-tint active:opacity-60">End</button>}
+                  >
+                    <p className="text-[17px] text-label">In quarantine</p>
+                    <p className="text-[13px] text-label-2">Since {format(new Date(animal.quarantine_started_at), 'd MMM yyyy')}</p>
+                  </ListRow>
+                )}
+                {animal.is_for_sale && (
+                  <ListRow leading={<IconTile name="tag" color="var(--color-tint)" />}>
+                    <p className="text-[17px] text-label">Listed for sale</p>
+                    {animal.asking_price_cents != null && (
+                      <p className="text-[13px] text-label-2">Asking {formatAUD(animal.asking_price_cents)} AUD</p>
+                    )}
+                  </ListRow>
+                )}
+              </ListSection>
             )}
 
             {/* Below 1024 these sit in the Overview tab; above it they move
                 into the rail so they stay put while you read the history. */}
             {renderQuickActions('lg:hidden')}
             {renderVitals('lg:hidden')}
+
             {/* Recent feedings */}
             {feedingLogs.length > 0 && (
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                  <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>RECENT FEEDINGS</p>
-                  <button onClick={() => setTab('feeding')} className="text-xs" style={{ color: 'var(--color-tint)' }}>See all</button>
-                </div>
+              <ListSection
+                header="Recent feedings"
+                action={<button onClick={() => setTab('feeding')} className="tap-target text-[15px] text-tint active:opacity-60">See all</button>}
+              >
                 {feedingLogs.slice(0, 3).map((log) => (
-                  <div key={log.id} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                    <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: log.refused ? 'var(--color-red)' : 'var(--color-green)' }} />
-                    <p className="flex-1 text-sm" style={{ color: log.refused ? 'var(--color-label-2)' : 'var(--color-label)' }}>
+                  <ListRow
+                    key={log.id}
+                    leading={<span className="block w-2 h-2 rounded-full" style={{ backgroundColor: log.refused ? 'var(--color-red)' : 'var(--color-green)' }} />}
+                    separatorInset={36}
+                    trailing={<span className="text-[15px] text-label-2">{format(new Date(log.fed_at), 'd MMM')}</span>}
+                  >
+                    <p className={`text-[17px] truncate ${log.refused ? 'text-label-2' : 'text-label'}`}>
                       {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                     </p>
-                    <p className="text-xs shrink-0" style={{ color: 'var(--color-label-2)' }}>{format(new Date(log.fed_at), 'd MMM')}</p>
-                  </div>
+                  </ListRow>
                 ))}
-              </div>
+              </ListSection>
             )}
 
             {/* Mini weight chart */}
             {chartData.length > 1 && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <div className="flex items-center justify-between mb-3">
-                  <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>WEIGHT TREND</p>
-                  <button onClick={() => setTab('vitals')} className="text-xs" style={{ color: 'var(--color-tint)' }}>See full</button>
+              <ListSection
+                header="Weight trend"
+                action={<button onClick={() => setTab('vitals')} className="tap-target text-[15px] text-tint active:opacity-60">See full</button>}
+              >
+                <div className="px-3 pt-3 pb-1">
+                  <ResponsiveContainer width="100%" height={100}>
+                    <LineChart data={chartData}>
+                      <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
+                      <YAxis hide domain={['auto', 'auto']} />
+                      <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
+                      <Line isAnimationActive={false} type="monotone" dataKey="weight" stroke="var(--color-tint)" strokeWidth={2.5} dot={false} />
+                    </LineChart>
+                  </ResponsiveContainer>
                 </div>
-                <ResponsiveContainer width="100%" height={100}>
-                  <LineChart data={chartData}>
-                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
-                    <YAxis hide domain={['auto', 'auto']} />
-                    <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
-                    <Line isAnimationActive={false} type="monotone" dataKey="weight" stroke="var(--color-tint)" strokeWidth={2} dot={false} />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
+              </ListSection>
             )}
 
             {/* Financials */}
             {(financials.acqCost > 0 || financials.salePrice > 0 || financials.vetCost > 0) && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>FINANCIALS</p>
-                <div className="flex flex-col gap-1.5">
-                  {financials.acqCost > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--color-label-2)' }}>Acquisition</span>
-                      <span style={{ color: 'var(--color-label)' }}>−{formatAUD(financials.acqCost)}</span>
-                    </div>
-                  )}
-                  {financials.vetCost > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--color-label-2)' }}>Vet / health</span>
-                      <span style={{ color: 'var(--color-label)' }}>−{formatAUD(financials.vetCost)}</span>
-                    </div>
-                  )}
-                  {financials.salePrice > 0 && (
-                    <div className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--color-label-2)' }}>Sale price</span>
-                      <span style={{ color: 'var(--color-tint)' }}>+{formatAUD(financials.salePrice)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between text-sm pt-1.5 mt-0.5" style={{ borderTop: '1px solid var(--color-separator)' }}>
-                    {/* "Net", signed: it is a gain when a sale outweighs the costs.
-                        A cost is not a warning, so it is not red. */}
-                    <span className="font-medium" style={{ color: 'var(--color-label)' }}>Net</span>
-                    <span className="font-semibold tabular-nums" style={{ color: financials.net > 0 ? 'var(--color-tint)' : 'var(--color-label)' }}>
+              <ListSection header="Financials">
+                {financials.acqCost > 0 && (
+                  <ListRow trailing={<span className="text-[17px] text-label-2 tabular-nums">−{formatAUD(financials.acqCost)}</span>}>
+                    <span className="text-[17px] text-label">Acquisition</span>
+                  </ListRow>
+                )}
+                {financials.vetCost > 0 && (
+                  <ListRow trailing={<span className="text-[17px] text-label-2 tabular-nums">−{formatAUD(financials.vetCost)}</span>}>
+                    <span className="text-[17px] text-label">Vet / health</span>
+                  </ListRow>
+                )}
+                {financials.salePrice > 0 && (
+                  <ListRow trailing={<span className="text-[17px] text-tint tabular-nums">+{formatAUD(financials.salePrice)}</span>}>
+                    <span className="text-[17px] text-label">Sale price</span>
+                  </ListRow>
+                )}
+                {/* "Net", signed: it is a gain when a sale outweighs the costs.
+                    A cost is not a warning, so it is not red. */}
+                <ListRow
+                  trailing={
+                    <span className={`text-[17px] font-semibold tabular-nums ${financials.net > 0 ? 'text-tint' : 'text-label'}`}>
                       {formatAUD(financials.net, { signed: true })}
                     </span>
-                  </div>
-                </div>
-              </div>
+                  }
+                >
+                  <span className="text-[17px] font-semibold text-label">Net</span>
+                </ListRow>
+              </ListSection>
             )}
 
             {animal.notes && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>NOTES</p>
-                <p className="text-sm" style={{ color: 'var(--color-label)', whiteSpace: 'pre-wrap' }}>{animal.notes}</p>
-              </div>
+              <ListSection header="Notes">
+                <p className="px-4 py-3 text-[17px] text-label" style={{ whiteSpace: 'pre-wrap' }}>{animal.notes}</p>
+              </ListSection>
             )}
 
             {/* Tags */}
             {(animal.tags ?? []).length > 0 && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>TAGS</p>
-                <div className="flex flex-wrap gap-2">
+              <ListSection header="Tags">
+                <div className="flex flex-wrap gap-2 px-4 py-3">
                   {(animal.tags ?? []).map((t) => (
-                    <span key={t} className="px-2.5 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 12%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' }}>
+                    <span key={t} className="px-3 h-7 inline-flex items-center rounded-full text-[15px] text-tint" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)' }}>
                       #{t}
                     </span>
                   ))}
                 </div>
-              </div>
+              </ListSection>
             )}
 
             {/* Custom fields */}
             {Object.keys(animal.custom_fields ?? {}).length > 0 && (
-              <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>CUSTOM FIELDS</p>
-                <div className="flex flex-col gap-2">
-                  {Object.entries(animal.custom_fields).map(([key, value]) => (
-                    <div key={key} className="flex justify-between text-sm">
-                      <span style={{ color: 'var(--color-label-2)' }}>{key}</span>
-                      <span style={{ color: 'var(--color-label)' }}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <ListSection header="Custom fields">
+                {Object.entries(animal.custom_fields).map(([key, value]) => (
+                  <ListRow key={key} trailing={<span className="text-[17px] text-label-2 text-right">{value}</span>}>
+                    <span className="text-[17px] text-label">{key}</span>
+                  </ListRow>
+                ))}
+              </ListSection>
             )}
 
             {/* Photo gallery */}
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <div className="flex items-center justify-between px-4 py-2.5" style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>PHOTOS{animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}</p>
-                <button onClick={() => photoInputRef.current?.click()} className="text-xs" style={{ color: photoUploading ? 'var(--color-label-2)' : 'var(--color-tint)' }} disabled={photoUploading}>
-                  {photoUploading ? 'Uploading…' : '+ Add'}
-                </button>
-                <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddPhoto(f); e.target.value = '' }} />
-              </div>
+            <ListSection
+              header={`Photos${animalPhotos.length > 0 ? ` (${animalPhotos.length})` : ''}`}
+              action={
+                <>
+                  <button onClick={() => photoInputRef.current?.click()} className={`tap-target text-[15px] active:opacity-60 ${photoUploading ? 'text-label-2' : 'text-tint'}`} disabled={photoUploading}>
+                    {photoUploading ? 'Uploading…' : '+ Add'}
+                  </button>
+                  <input ref={photoInputRef} type="file" accept="image/*" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleAddPhoto(f); e.target.value = '' }} />
+                </>
+              }
+            >
               {animalPhotos.length === 0 ? (
-                <p className="px-4 py-3 text-xs" style={{ color: 'var(--color-label-2)' }}>No additional photos yet. Tap "+ Add" to upload.</p>
+                <p className="px-4 py-3 text-[15px] text-label-2">No additional photos yet. Tap "+ Add" to upload.</p>
               ) : (
                 <div className="flex gap-2 p-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
                   {animalPhotos.map((photo) => (
                     <div key={photo.id} className="relative shrink-0 rounded-lg overflow-hidden" style={{ width: 96, height: 96 }}>
                       <img src={photoUrls.get(photo.url)} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover cursor-pointer" onClick={() => setLightboxPhoto(photoUrls.get(photo.url) ?? null)} />
-                      <button onClick={() => handleDeletePhoto(photo.id)} className="absolute top-1 right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold" style={{ backgroundColor: 'rgba(0,0,0,0.65)', color: 'var(--color-label)' }}>×</button>
+                      <button onClick={() => handleDeletePhoto(photo.id)} aria-label="Delete photo" className="absolute top-1 right-1 w-6 h-6 rounded-full flex items-center justify-center text-white bg-black/50 backdrop-blur-sm">
+                        <svg width="10" height="10" viewBox="0 0 10 10" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" aria-hidden="true"><path d="M1 1l8 8M9 1l-8 8" /></svg>
+                      </button>
                     </div>
                   ))}
                 </div>
               )}
-            </div>
+            </ListSection>
           </div>
         )}
 
@@ -1116,10 +1145,10 @@ export function AnimalDetail() {
               const dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', '']
 
               return (
-                <div className="rounded-xl p-4 mb-5" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                <div className="rounded-xl p-4 mb-5 bg-surface">
                   {/* Header with event count */}
                   <div className="flex items-baseline justify-between mb-3">
-                    <p className="text-xs font-medium" style={{ color: 'var(--color-label-2)' }}>ACTIVITY</p>
+                    <p className="text-[15px] font-semibold text-label">Activity</p>
                     <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>
                       {yearTotal} event{yearTotal !== 1 ? 's' : ''} in the past year
                     </p>
@@ -1192,7 +1221,7 @@ export function AnimalDetail() {
             })()}
 
             {/* Filter pills */}
-            <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4" style={{ scrollbarWidth: 'none' }}>
+            <div className="flex gap-2 overflow-x-auto pb-1 mb-5 -mx-4 px-4 lg:mx-0 lg:px-0" style={{ scrollbarWidth: 'none' }}>
               {([
                 { id: 'all', label: 'All' },
                 { id: 'feeding', label: 'Feeding' },
@@ -1203,12 +1232,8 @@ export function AnimalDetail() {
                 <button
                   key={id}
                   onClick={() => { setTimelineFilter(id); setTimelineShowAll(false) }}
-                  className="px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap shrink-0 transition-colors"
-                  style={{
-                    backgroundColor: timelineFilter === id ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'var(--color-fill)',
-                    color: timelineFilter === id ? 'var(--color-tint)' : 'var(--color-label-2)',
-                    border: `1px solid ${timelineFilter === id ? 'color-mix(in srgb, var(--color-tint) 30%, transparent)' : 'transparent'}`,
-                  }}
+                  aria-pressed={timelineFilter === id}
+                  className={`h-8 px-3.5 rounded-full text-[15px] font-medium whitespace-nowrap shrink-0 transition-colors duration-150 ${timelineFilter === id ? 'bg-tint text-on-tint' : 'bg-fill text-label'}`}
                 >
                   {label}
                 </button>
@@ -1238,22 +1263,22 @@ export function AnimalDetail() {
                   {visibleGroups.map((group) => (
                     <div key={group.month} className="mb-5">
                       <div className="flex items-center gap-2 mb-3">
-                        <p className="text-xs font-semibold tracking-wider" style={{ color: 'var(--color-label-2)' }}>{group.month.toUpperCase()}</p>
+                        <p className="text-[15px] font-semibold text-label">{group.month}</p>
                         <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
-                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'var(--color-fill)', color: 'var(--color-label-2)' }}>{group.events.length}</span>
+                        <span className="text-[13px] text-label-2 tabular-nums">{group.events.length}</span>
                       </div>
                       <div className="flex flex-col">
                         {group.events.map((ev, i) => (
                           <div key={ev.id} className="flex gap-3 pb-3" style={{ borderLeft: i < group.events.length - 1 ? '2px solid var(--color-separator)' : '2px solid transparent', marginLeft: 11 }}>
-                            <div className="flex-shrink-0 -ml-3.5 w-6 h-6 rounded-full flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)', border: `2px solid ${ev.color}` }}>
-                              <span style={{ fontSize: 11 }}>{ev.icon}</span>
+                            <div className="flex-shrink-0 -ml-3.5 w-6 h-6 rounded-full flex items-center justify-center text-white ring-4 ring-bg" style={{ backgroundColor: ev.color }}>
+                              <Icon name={ev.icon} size={14} strokeWidth={2.2} />
                             </div>
                             <div className="flex-1 min-w-0 -mt-0.5">
                               <div className="flex items-start justify-between gap-2">
-                                <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{ev.label}</p>
-                                <p className="text-xs shrink-0" style={{ color: 'var(--color-label-2)' }}>{format(ev.date, 'd MMM')}</p>
+                                <p className="text-[17px] text-label">{ev.label}</p>
+                                <p className="text-[13px] shrink-0 text-label-2 mt-0.5">{format(ev.date, 'd MMM')}</p>
                               </div>
-                              {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: 'var(--color-label-2)' }}>{ev.detail}</p>}
+                              {ev.detail && <p className="text-[13px] truncate capitalize text-label-2">{ev.detail}</p>}
                             </div>
                           </div>
                         ))}
@@ -1263,8 +1288,7 @@ export function AnimalDetail() {
                   {!timelineShowAll && groups.length > 3 && (
                     <button
                       onClick={() => setTimelineShowAll(true)}
-                      className="w-full py-3 rounded-xl text-sm"
-                      style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-label-2)', border: '1px solid var(--color-separator)' }}
+                      className="w-full min-h-11 rounded-xl bg-surface text-[17px] text-tint active:opacity-60"
                     >
                       Load {groups.length - 3} older month{groups.length - 3 !== 1 ? 's' : ''}
                     </button>
@@ -1296,31 +1320,31 @@ export function AnimalDetail() {
                         { label: 'Refused', value: refused, color: refused > 0 ? 'var(--color-red)' : undefined },
                         { label: 'Success rate', value: `${rate}%`, color: rate >= 80 ? 'var(--color-tint)' : rate >= 50 ? 'var(--color-orange)' : 'var(--color-red)' },
                       ].map((s) => (
-                        <div key={s.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                        <div key={s.label} className="rounded-xl p-3 text-center bg-surface">
                           <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{s.label}</p>
-                          <p className="text-base font-semibold mt-0.5" style={{ color: s.color ?? 'var(--color-label)' }}>{s.value}</p>
+                          <p className="text-[22px] leading-7 font-bold tabular-nums mt-0.5" style={{ color: s.color ?? 'var(--color-label)' }}>{s.value}</p>
                         </div>
                       ))}
                     </div>
                   )
                 })()}
                 {feedingMonthlyData.length > 1 && (
-                  <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                    <p className="text-xs font-medium mb-3" style={{ color: 'var(--color-label-2)' }}>FEEDINGS PER MONTH</p>
+                  <div className="rounded-xl p-4 bg-surface">
+                    <p className="text-[15px] font-semibold text-label mb-3">Feedings per month</p>
                     <ResponsiveContainer width="100%" height={140}>
                       <BarChart data={feedingMonthlyData} barCategoryGap="30%">
                         <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
                         <YAxis hide allowDecimals={false} />
-                        <Tooltip contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: '1px solid var(--color-separator)', borderRadius: 8, color: 'var(--color-label)' }} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
+                        <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
                         <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="var(--color-green)" radius={[0, 0, 0, 0]} />
                         <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="var(--color-red)" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
                 )}
-                <div className="flex flex-col gap-2">
+                <div className="rounded-xl bg-surface overflow-hidden">
                   {feedingLogs.map((log) => (
-                    <div key={log.id} className="rounded-xl p-3 flex items-center gap-3 lg:gap-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                    <div key={log.id} className="list-row list-row-leading px-4 py-2.5 min-h-11 flex items-center gap-3 lg:gap-4" style={{ '--sep-inset': '36px' } as React.CSSProperties}>
                       <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: log.refused ? 'var(--color-red)' : 'var(--color-green)' }} />
                       {/* Every field below is stored on the row; a phone can show
                           two of them, so above 1024 they get their own columns
@@ -1354,15 +1378,13 @@ export function AnimalDetail() {
         {/* Vitals */}
         {tab === 'vitals' && (
           <div className="pb-nav md:pb-8">
-            <div className="flex p-1 gap-1 rounded-xl mb-4" style={{ backgroundColor: 'var(--color-surface)' }}>
-              {(['weight', 'shedding'] as const).map((t) => (
-                <button key={t} onClick={() => setVitalsSubTab(t)} aria-pressed={vitalsSubTab === t}
-                  className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-                  style={{ backgroundColor: vitalsSubTab === t ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent', color: vitalsSubTab === t ? 'var(--color-tint)' : 'var(--color-label-2)' }}>
-                  {t === 'weight' ? '⚖️ Weight' : '🐍 Shedding'}
-                </button>
-              ))}
-            </div>
+            <SegmentedControl
+              label="Vitals"
+              className="mb-4"
+              value={vitalsSubTab}
+              onChange={setVitalsSubTab}
+              options={[{ value: 'weight', label: 'Weight' }, { value: 'shedding', label: 'Shedding' }]}
+            />
             <div className="flex justify-end mb-4">
               <Button size="sm" onClick={vitalsSubTab === 'weight' ? openAddWeight : openAddShed}>
                 Log {vitalsSubTab === 'weight' ? 'weight' : 'shed'}
@@ -1394,17 +1416,17 @@ export function AnimalDetail() {
             {/* Medications */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>💊 Medications</p>
-                <Button size="sm" onClick={openAddMed}>Add</Button>
+                <h2 className="text-[20px] leading-[25px] font-bold text-label">Medications</h2>
+                <button type="button" onClick={openAddMed} className="tap-target text-[17px] text-tint active:opacity-60">Add</button>
               </div>
               {medicationSchedules.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No medication schedules yet.</p>
+                <p className="text-[15px] py-1 text-label-2">No medication schedules yet.</p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="rounded-xl bg-surface overflow-hidden">
                   {medicationSchedules.map((med) => {
                     const lastDose = medLastDoses[med.id]
                     return (
-                      <div key={med.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: `1px solid ${med.is_active ? 'color-mix(in srgb, var(--color-tint) 20%, transparent)' : 'var(--color-separator)'}` }}>
+                      <div key={med.id} className="list-row px-4 py-3">
                         <div className="flex items-start gap-2">
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
@@ -1420,7 +1442,7 @@ export function AnimalDetail() {
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
                             {med.is_active && (
-                              <button onClick={() => { setLogDoseSchedule(med); setLogDoseNotes(''); setLogDoseOpen(true) }} className="text-xs px-2.5 py-1.5 rounded-lg" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 10%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 20%, transparent)' }}>
+                              <button onClick={() => { setLogDoseSchedule(med); setLogDoseNotes(''); setLogDoseOpen(true) }} className="h-[30px] px-3.5 rounded-full text-[15px] font-semibold text-tint active:opacity-60" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)' }}>
                                 Log dose
                               </button>
                             )}
@@ -1434,9 +1456,7 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
-
-            {/* Health events */}
+                        {/* Health events */}
             <div>
               <div className="flex justify-end mb-3">
                 <Button size="sm" onClick={openAddHealth}>Add event</Button>
@@ -1456,15 +1476,15 @@ export function AnimalDetail() {
             {/* Acquisition */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>🏷️ Acquisition</p>
-                <Button size="sm" onClick={openAddAcquisition}>Add</Button>
+                <h2 className="text-[20px] leading-[25px] font-bold text-label">Acquisition</h2>
+                <button type="button" onClick={openAddAcquisition} className="tap-target text-[17px] text-tint active:opacity-60">Add</button>
               </div>
               {acquisitionRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No acquisition records yet.</p>
+                <p className="text-[15px] py-1 text-label-2">No acquisition records yet.</p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="rounded-xl bg-surface overflow-hidden">
                   {acquisitionRecords.map((r) => (
-                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                    <div key={r.id} className="list-row px-4 py-3">
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{r.source_name ?? r.source ?? 'Unknown source'}</p>
@@ -1483,20 +1503,18 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
-
-            {/* Exit */}
+                        {/* Exit */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>🚪 Exit</p>
-                <Button size="sm" onClick={openAddExit}>Add</Button>
+                <h2 className="text-[20px] leading-[25px] font-bold text-label">Exit</h2>
+                <button type="button" onClick={openAddExit} className="tap-target text-[17px] text-tint active:opacity-60">Add</button>
               </div>
               {exitRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No exit records yet.</p>
+                <p className="text-[15px] py-1 text-label-2">No exit records yet.</p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="rounded-xl bg-surface overflow-hidden">
                   {exitRecords.map((r) => (
-                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                    <div key={r.id} className="list-row px-4 py-3">
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium capitalize" style={{ color: 'var(--color-label)' }}>{r.reason.replace('_', ' ')}</p>
@@ -1514,20 +1532,18 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
-
-            {/* Breeding */}
+                        {/* Breeding */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>🥚 Breeding</p>
-                <Button size="sm" onClick={openAddBreeding}>Add</Button>
+                <h2 className="text-[20px] leading-[25px] font-bold text-label">Breeding</h2>
+                <button type="button" onClick={openAddBreeding} className="tap-target text-[17px] text-tint active:opacity-60">Add</button>
               </div>
               {breedingRecords.length === 0 ? (
-                <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No breeding records yet.</p>
+                <p className="text-[15px] py-1 text-label-2">No breeding records yet.</p>
               ) : (
-                <div className="flex flex-col gap-2">
+                <div className="rounded-xl bg-surface overflow-hidden">
                   {breedingRecords.map((r) => (
-                    <div key={r.id} className="rounded-xl p-3" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+                    <div key={r.id} className="list-row px-4 py-3">
                       <div className="flex items-start gap-2">
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>
@@ -1552,9 +1568,7 @@ export function AnimalDetail() {
               )}
             </div>
 
-            <div className="h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
-
-            <IncubationSection
+                        <IncubationSection
               incubations={incubations}
               onAdd={openAddIncubation}
               onEdit={openEditIncubation}
