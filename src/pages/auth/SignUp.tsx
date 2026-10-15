@@ -174,9 +174,9 @@ export function SignUp() {
 
         <p className="text-center text-[13px] mt-4 leading-relaxed text-label-2">
           By signing up you agree to our{' '}
-          <Link to="/terms" style={{ color: 'var(--color-label-2)' }}>Terms</Link>{' '}
+          <Link to="/terms" className="text-tint">Terms</Link>{' '}
           and{' '}
-          <Link to="/privacy" style={{ color: 'var(--color-label-2)' }}>Privacy Policy</Link>
+          <Link to="/privacy" className="text-tint">Privacy Policy</Link>
         </p>
 
         <p className="text-center text-[15px] mt-3 text-label-2">

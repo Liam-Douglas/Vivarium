@@ -30,16 +30,21 @@ export class ErrorBoundary extends Component<Props, State> {
       return this.props.fallback ?? (
         <div className="flex-1 flex flex-col items-center justify-center px-4 text-center min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
           <Icon name="alert" size={48} strokeWidth={1.4} className="text-label-3 mb-3 mx-auto" />
-          <h2 className="text-[20px] font-semibold mb-2 text-label">
+          <h2 className="text-[20px] leading-[25px] font-bold mb-1 text-label">
             Something went wrong
           </h2>
-          <p className="text-[15px] mb-6 text-label-2">
-            {this.state.error?.message ?? 'An unexpected error occurred.'}
-          </p>
+          <p className="text-[15px] mb-5 text-label-2 max-w-xs">An unexpected error occurred.</p>
+          {/* The raw message is for whoever reports the problem, not the
+              headline: tucked under Details rather than shown as the answer. */}
+          {this.state.error?.message && (
+            <details className="mb-5 max-w-xs text-[13px] text-label-2">
+              <summary className="cursor-pointer text-tint">Details</summary>
+              <p className="mt-1.5 break-words font-mono">{this.state.error.message}</p>
+            </details>
+          )}
           <button
             onClick={() => this.setState({ hasError: false, error: undefined })}
-            className="px-5 py-2.5 rounded-xl text-[15px] font-medium"
-            style={{ backgroundColor: 'var(--color-tint)', color: 'var(--color-bg)' }}
+            className="min-h-11 px-5 rounded-xl text-[17px] font-semibold bg-tint text-on-tint active:opacity-70 transition-opacity"
           >
             Try again
           </button>
