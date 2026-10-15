@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { PageTransition } from '@/components/layout/PageTransition'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { MotionConfig } from 'motion/react'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
@@ -85,6 +86,7 @@ function AppShell() {
         className="flex-1 flex flex-col min-w-0"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
+        <PageTransition>
         <Routes>
           <Route element={<RequireHousehold />}>
             <Route path="/" element={<><OverdueWatcher /><ErrorBoundary><Dashboard /></ErrorBoundary></>} />
@@ -103,6 +105,7 @@ function AppShell() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/onboarding" element={<OnboardingHousehold />} />
         </Routes>
+        </PageTransition>
       </main>
       {showNav && <BottomNav />}
     </div>
