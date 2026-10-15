@@ -197,8 +197,8 @@ export function Stats() {
                 contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
                 labelStyle={{ color: '#a8a090', fontSize: 12 }}
               />
-              <Bar dataKey="fed" name="Fed" stackId="a" fill="#5a9e6a" radius={[0, 0, 0, 0]} />
-              <Bar dataKey="refused" name="Refused" stackId="a" fill="#c45a5a" radius={[4, 4, 0, 0]} />
+              <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="#5a9e6a" radius={[0, 0, 0, 0]} />
+              <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="#c45a5a" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </Section>
@@ -216,7 +216,7 @@ export function Stats() {
                 labelStyle={{ color: '#a8a090', fontSize: 12 }}
                 formatter={(v) => [v, 'Animals']}
               />
-              <Bar dataKey="count" radius={[0, 4, 4, 0]}>
+              <Bar isAnimationActive={false} dataKey="count" radius={[0, 4, 4, 0]}>
                 {animalsByCategory.map((entry, i) => (
                   <Cell key={entry.cat} fill={ANIMAL_CATEGORY_COLORS[i % ANIMAL_CATEGORY_COLORS.length]} />
                 ))}

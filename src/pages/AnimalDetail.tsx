@@ -965,7 +965,7 @@ export function AnimalDetail() {
                     <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
                     <YAxis hide domain={['auto', 'auto']} />
                     <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} />
-                    <Line type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} dot={false} />
+                    <Line isAnimationActive={false} type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} dot={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>
@@ -1312,8 +1312,8 @@ export function AnimalDetail() {
                         <XAxis dataKey="month" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
                         <YAxis hide allowDecimals={false} />
                         <Tooltip contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }} labelStyle={{ color: '#a8a090', fontSize: 12 }} />
-                        <Bar dataKey="fed" name="Fed" stackId="a" fill="#5a9e6a" radius={[0, 0, 0, 0]} />
-                        <Bar dataKey="refused" name="Refused" stackId="a" fill="#c45a5a" radius={[4, 4, 0, 0]} />
+                        <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="#5a9e6a" radius={[0, 0, 0, 0]} />
+                        <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="#c45a5a" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>

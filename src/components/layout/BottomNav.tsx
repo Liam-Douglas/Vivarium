@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { useDragToDismiss } from '@/hooks/useDragToDismiss'
 import { NavLink, useNavigate } from 'react-router-dom'
 
 /**
@@ -59,6 +60,8 @@ function StatsIcon({ active }: { active: boolean }) {
 export function BottomNav() {
   const [moreOpen, setMoreOpen] = useState(false)
   const navigate = useNavigate()
+  const sheetRef = useRef<HTMLDivElement>(null)
+  const drag = useDragToDismiss(sheetRef, () => setMoreOpen(false))
 
   useEffect(() => {
     if (!moreOpen) return
@@ -69,31 +72,38 @@ export function BottomNav() {
 
   return (
     <>
-      {moreOpen && (
-        <button
-          aria-label="Close menu"
-          onClick={() => setMoreOpen(false)}
-          className="md:hidden fixed inset-0 z-30 w-full"
-          style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
-        />
-      )}
+      {/* Mounted all the time and faded, so the sheet can leave the way it
+          came instead of vanishing. */}
+      <button
+        aria-label="Close menu"
+        tabIndex={moreOpen ? 0 : -1}
+        onClick={() => setMoreOpen(false)}
+        data-open={moreOpen || undefined}
+        className={`fade-away md:hidden fixed inset-0 z-30 w-full transition-opacity ease-drawer ${moreOpen ? 'opacity-100 duration-300' : 'opacity-0 duration-200'}`}
+        style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
+      />
 
       {/* Sheet and bar share one bottom-anchored stack, so the sheet sits on
           the bar's real height rather than a guessed offset. */}
-      <div className="md:hidden fixed inset-x-0 bottom-0 z-40">
-        {moreOpen && (
+      <div className="md:hidden fixed inset-x-0 bottom-0 z-40 pointer-events-none">
+          {/* Rises from behind the bar and drops back behind it; the grabber
+              drags it down. Inert while closed, so it is out of the tab order
+              and hidden from screen readers. */}
           <div
-            className="rounded-t-2xl overflow-hidden"
+            ref={sheetRef}
+            inert={!moreOpen}
+            data-open={moreOpen || undefined}
+            className={`fade-away pointer-events-auto rounded-t-2xl overflow-hidden transition-[transform,opacity] ease-drawer ${moreOpen ? 'translate-y-0 duration-300' : 'translate-y-full duration-200 motion-reduce:translate-y-0 motion-reduce:opacity-0'}`}
             style={{ backgroundColor: 'var(--color-bark)', borderTop: '1px solid rgba(255,255,255,0.08)' }}
           >
-            <div className="flex justify-center pt-2.5 pb-1.5">
+            <div className="flex justify-center pt-2.5 pb-3 touch-none" aria-hidden="true" {...drag}>
               <span className="w-9 h-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.14)' }} />
             </div>
             {moreLinks.map((link, i) => (
               <button
                 key={link.to}
                 onClick={() => { setMoreOpen(false); navigate(link.to) }}
-                className="w-full flex items-center gap-3 px-5 text-left"
+                className="w-full flex items-center gap-3 px-5 text-left active:bg-white/5 transition-colors"
                 style={{
                   height: 60,
                   borderBottom: i < moreLinks.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
@@ -109,10 +119,9 @@ export function BottomNav() {
               </button>
             ))}
           </div>
-        )}
 
       <nav
-        className="flex items-stretch"
+        className="relative z-10 flex items-stretch pointer-events-auto"
         style={{
           backgroundColor: 'var(--color-night-soil)',
           borderTop: '1px solid rgba(255,255,255,0.07)',

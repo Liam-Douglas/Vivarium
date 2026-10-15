@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { useDragToDismiss } from '@/hooks/useDragToDismiss'
 import { Button } from './Button'
 
 // Every logging action in this app happens in one of these, and until now the
@@ -81,40 +82,89 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
     }
   }, [open])
 
-  if (!open) return null
+  // Stays mounted through its exit so it can leave the way it came. `shown`
+  // flips a frame after mounting, which is what lets the entrance run.
+  const [mounted, setMounted] = useState(open)
+  const [shown, setShown] = useState(false)
+  if (open && !mounted) setMounted(true)
+
+  // While it leaves, it keeps showing what it showed: callers often clear the
+  // record that fills the dialog in the same breath as closing it, and the
+  // panel would otherwise empty out on its way down.
+  const [held, setHeld] = useState({ title, children })
+  if (open && (held.title !== title || held.children !== children)) setHeld({ title, children })
+
+  useEffect(() => {
+    if (open) {
+      let second = 0
+      const first = requestAnimationFrame(() => { second = requestAnimationFrame(() => setShown(true)) })
+      return () => { cancelAnimationFrame(first); cancelAnimationFrame(second) }
+    }
+    const hide = requestAnimationFrame(() => setShown(false))
+    // Matches the 220ms exit in index.css, with room to finish.
+    const unmount = window.setTimeout(() => setMounted(false), 260)
+    return () => { cancelAnimationFrame(hide); window.clearTimeout(unmount) }
+  }, [open])
+
+  const drag = useDragToDismiss(panelRef, () => onCloseRef.current())
+
+  if (!mounted) return null
+  const isOpen = open && shown
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      // On a phone the panel sits at the bottom edge, so its Save and Cancel
-      // row has to clear the home indicator; and a tall form must stop below
-      // the status bar rather than run under it.
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
       style={{
-        backgroundColor: 'rgba(0,0,0,0.7)',
+        // A tall form stops below the status bar rather than running under it.
         paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))',
-        paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+        pointerEvents: open ? undefined : 'none',
       }}
-      onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
+      <div
+        aria-hidden="true"
+        data-open={isOpen || undefined}
+        className="sheet-backdrop absolute inset-0"
+        style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+        onClick={onClose}
+      />
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
-        className="w-full rounded-2xl shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 flex flex-col"
-        style={{ backgroundColor: 'var(--color-moss-stone)', border: '1px solid rgba(255,255,255,0.08)', maxWidth, maxHeight: 'calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))' }}
+        data-open={isOpen || undefined}
+        // Phone: an edge-to-edge bottom sheet, rounded at the top, padded
+        // clear of the home indicator. From 640px: a centred dialog.
+        className="sheet-panel relative w-full rounded-t-2xl sm:rounded-2xl shadow-2xl flex flex-col"
+        style={{
+          backgroundColor: 'var(--color-moss-stone)',
+          border: '1px solid rgba(255,255,255,0.08)',
+          maxWidth,
+          maxHeight: 'calc(100dvh - 1rem - env(safe-area-inset-top, 0px))',
+        }}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: 'var(--color-hairline)' }}>
-          <h2 id={titleId} className="text-lg font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: 'var(--color-parchment)' }}>
-            {title}
-          </h2>
-          <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
-            <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </Button>
+        {/* Grab area: the grabber and the title row drag the sheet down. */}
+        <div className="shrink-0 touch-none sm:touch-auto" {...drag}>
+          <div className="flex justify-center pt-2.5 sm:hidden" aria-hidden="true">
+            <span className="w-9 h-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.18)' }} />
+          </div>
+          <div className="flex items-center justify-between px-6 pt-2 pb-3 sm:py-4 border-b" style={{ borderColor: 'var(--color-hairline)' }}>
+            <h2 id={titleId} className="text-lg font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: 'var(--color-parchment)' }}>
+              {open ? title : held.title}
+            </h2>
+            <Button variant="ghost" size="sm" onClick={onClose} aria-label="Close">
+              <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </Button>
+          </div>
         </div>
-        <div className="p-6 overflow-y-auto overscroll-contain">{children}</div>
+        <div
+          className="p-6 overflow-y-auto overscroll-contain"
+          style={{ paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom, 0px))' }}
+        >
+          {open ? children : held.children}
+        </div>
       </div>
     </div>
   )

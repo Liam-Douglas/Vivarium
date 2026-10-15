@@ -169,7 +169,7 @@ export function FeedingLog() {
             key={t}
             onClick={() => setTab(t)}
             aria-pressed={tab === t}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
               backgroundColor: tab === t ? 'rgba(143,190,90,0.15)' : 'transparent',
               color: tab === t ? '#8fbe5a' : '#9f9684',
@@ -204,7 +204,7 @@ export function FeedingLog() {
                       type="button"
                       aria-pressed={active}
                       onClick={() => setOutcome(value)}
-                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                      className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
                       style={{
                         backgroundColor: active ? `${accent}26` : 'transparent',
                         color: active ? accent : '#9f9684',

@@ -76,7 +76,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
                 labelStyle={{ color: '#a8a090', fontSize: 12 }}
                 formatter={(v) => [`${v} days`, 'Interval']}
               />
-              <Bar dataKey="days" radius={[4, 4, 0, 0]}>
+              <Bar isAnimationActive={false} dataKey="days" radius={[4, 4, 0, 0]}>
                 {chart.map((entry, i) => (
                   <Cell key={i} fill={entry.complete ? '#5a9e6a' : '#d4924a'} />
                 ))}

@@ -24,7 +24,7 @@ export function AnimalCard({ animal, enclosureName, photoUrl }: AnimalCardProps)
   return (
     <Link
       to={`/animals/${animal.id}`}
-      className="block rounded-xl overflow-hidden transition-all duration-150 hover:scale-[1.01] active:scale-[0.99]"
+      className="block rounded-xl overflow-hidden transition-transform duration-150 ease-out hover:scale-[1.01] active:scale-[0.98] motion-reduce:transform-none"
       style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}
     >
       {/* Photo */}

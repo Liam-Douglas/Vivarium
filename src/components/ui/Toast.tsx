@@ -19,7 +19,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback((message: string, type: ToastItem['type'] = 'info', action?: ToastItem['action']) => {
     const id = Math.random().toString(36).slice(2)
     setToasts((prev) => [...prev, { id, message, type, action }])
-    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 4000)
   }, [])
 
   return (
@@ -34,19 +33,41 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         className="fixed bottom-above-nav sm:bottom-6 left-1/2 -translate-x-1/2 flex flex-col gap-2 z-50 w-full max-w-sm px-4"
       >
         {toasts.map((toast) => (
-          <ToastItem key={toast.id} toast={toast} onDismiss={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))} />
+          <ToastItem key={toast.id} toast={toast} onRemove={() => setToasts((prev) => prev.filter((t) => t.id !== toast.id))} />
         ))}
       </div>
     </ToastContext.Provider>
   )
 }
 
-function ToastItem({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
+/** How long a toast stays, and how long it takes to leave. */
+const SHOW_MS = 4000
+const LEAVE_MS = 300
+
+/**
+ * Each toast owns its lifetime: it rises in from the bottom edge, stays, and
+ * leaves down the same edge before it is removed. It used to be removed
+ * outright, so it vanished mid-sentence; dismissing early takes the same path.
+ */
+function ToastItem({ toast, onRemove }: { toast: ToastItem; onRemove: () => void }) {
   const [visible, setVisible] = useState(false)
+  const [leaving, setLeaving] = useState(false)
 
   useEffect(() => {
-    requestAnimationFrame(() => setVisible(true))
+    let second = 0
+    const first = requestAnimationFrame(() => { second = requestAnimationFrame(() => setVisible(true)) })
+    const stay = window.setTimeout(() => setLeaving(true), SHOW_MS)
+    return () => { cancelAnimationFrame(first); cancelAnimationFrame(second); window.clearTimeout(stay) }
   }, [])
+
+  useEffect(() => {
+    if (!leaving) return
+    const t = window.setTimeout(onRemove, LEAVE_MS)
+    return () => window.clearTimeout(t)
+  }, [leaving, onRemove])
+
+  const onDismiss = () => setLeaving(true)
+  const shown = visible && !leaving
 
   const colors = {
     success: 'var(--color-fern-green)',
@@ -57,7 +78,7 @@ function ToastItem({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
   return (
     <div
       role={toast.type === 'error' ? 'alert' : 'status'}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+      className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg transition-[opacity,transform] duration-300 ease-out ${shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full motion-reduce:translate-y-0'}`}
       style={{ backgroundColor: 'var(--color-moss-stone)', border: `1px solid color-mix(in srgb, ${colors[toast.type]} 25%, transparent)` }}
     >
       <div aria-hidden="true" className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[toast.type] }} />

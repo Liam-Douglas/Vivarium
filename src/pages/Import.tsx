@@ -555,7 +555,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
       {step === 1 && (
         <div>
           <div
-            className="rounded-2xl p-10 text-center cursor-pointer mb-4 transition-all duration-150"
+            className="rounded-2xl p-10 text-center cursor-pointer mb-4 transition-colors duration-150"
             style={{
               border: `2px dashed ${dragOver ? '#8fbe5a' : 'rgba(255,255,255,0.1)'}`,
               backgroundColor: dragOver ? 'rgba(143,190,90,0.06)' : '#242420',
@@ -647,7 +647,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                     <div className="flex gap-2">
                       <button
                         onClick={() => setMatchDecisions((prev) => ({ ...prev, [m.importName.toLowerCase()]: 'merge' }))}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         style={{
                           backgroundColor: decision === 'merge' ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.04)',
                           border: `1px solid ${decision === 'merge' ? 'rgba(143,190,90,0.4)' : 'rgba(255,255,255,0.08)'}`,
@@ -658,7 +658,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                       </button>
                       <button
                         onClick={() => setMatchDecisions((prev) => ({ ...prev, [m.importName.toLowerCase()]: 'new' }))}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
                         style={{
                           backgroundColor: decision === 'new' ? 'rgba(196,90,90,0.12)' : 'rgba(255,255,255,0.04)',
                           border: `1px solid ${decision === 'new' ? 'rgba(196,90,90,0.3)' : 'rgba(255,255,255,0.08)'}`,

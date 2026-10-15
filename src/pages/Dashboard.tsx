@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { useAnimals, type Animal } from '@/hooks/useAnimals'
 import type { MedicationSchedule } from '@/hooks/useMedicationSchedules'
@@ -152,6 +152,18 @@ export function Dashboard() {
 
   // Quick-feed from the queue
   const [quickFeedAnimalId, setQuickFeedAnimalId] = useState<string | null>(null)
+  // Rows just fed, folding away while the refresh that removes them is in
+  // flight, so the queue closes up rather than jumping. If the animal is
+  // somehow still due when the data lands, the row simply comes back.
+  const [leavingIds, setLeavingIds] = useState<ReadonlySet<string>>(new Set())
+  function markLeaving(id: string) {
+    setLeavingIds((prev) => new Set(prev).add(id))
+    window.setTimeout(() => setLeavingIds((prev) => {
+      const next = new Set(prev)
+      next.delete(id)
+      return next
+    }), 1500)
+  }
 
   // Batch logging straight from the queue — feeding by readiness rather than
   // by enclosure, which is the only batch the app offered before.
@@ -290,8 +302,6 @@ export function Dashboard() {
   // A loaded, empty collection: first run. Every logging control needs an
   // animal to log against, so they wait until there is one.
   const firstRun = animalsState === 'empty'
-  const [searchParams] = useSearchParams()
-  const firstRunVariant = searchParams.get('firstrun') === 'b' ? 'b' : 'a'
   // Shedding and weight feed the "Worth a look" section below. A failure there
   // shows up as an empty section, which reads as nothing to look at — the same
   // false all-clear the queue's error region exists to prevent — so it is
@@ -596,7 +606,7 @@ export function Dashboard() {
           than sitting in the rail. */}
       {firstRun && (
         <div className="mb-6">
-          <FirstRun variant={firstRunVariant} onAddAnimal={() => openModal('animal')} />
+          <FirstRun onAddAnimal={() => openModal('animal')} />
         </div>
       )}
 
@@ -663,10 +673,17 @@ export function Dashboard() {
               const tone = item.kind === 'dose' ? '#5a8fbe' : FEEDING_STATUS_META[item.status].color
               const selectable = item.kind === 'feeding'
               const isSelected = selected.has(animal.id)
+              const leaving = item.kind === 'feeding' && leavingIds.has(animal.id)
 
               return (
                 <div
                   key={item.key}
+                  className="grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-opacity"
+                  style={{ gridTemplateRows: leaving ? '0fr' : '1fr', opacity: leaving ? 0 : 1 }}
+                  aria-hidden={leaving || undefined}
+                >
+                <div className="min-h-0 overflow-hidden">
+                <div
                   className="flex items-center gap-3 px-4 py-2.5"
                   style={{ borderBottom: i < queue.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none' }}
                 >
@@ -707,7 +724,7 @@ export function Dashboard() {
                       <button
                         onClick={() => handleLogDose(item)}
                         disabled={loggingDoseId === item.schedule.id}
-                        className="text-sm font-medium px-3 rounded-lg shrink-0 transition-opacity active:opacity-70 disabled:opacity-50"
+                        className="text-sm font-medium px-3 rounded-lg shrink-0 transition-transform duration-150 ease-out active:scale-[0.96] motion-reduce:active:scale-100 disabled:opacity-50"
                         style={{ height: 44, minWidth: 62, backgroundColor: 'rgba(90,143,190,0.15)', color: '#5a8fbe', border: '1px solid rgba(90,143,190,0.25)' }}
                       >
                         Log
@@ -715,13 +732,15 @@ export function Dashboard() {
                     ) : (
                       <button
                         onClick={() => { setQuickFeedAnimalId(animal.id); setActiveModal('feeding') }}
-                        className="text-sm font-medium px-3 rounded-lg shrink-0 transition-opacity active:opacity-70"
+                        className="text-sm font-medium px-3 rounded-lg shrink-0 transition-transform duration-150 ease-out active:scale-[0.96] motion-reduce:active:scale-100"
                         style={{ height: 44, minWidth: 62, backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}
                       >
                         Feed
                       </button>
                     )
                   )}
+                </div>
+                </div>
                 </div>
               )
             })}
@@ -865,19 +884,26 @@ export function Dashboard() {
       </div>
 
       {/* FAB speed dial (mobile only) */}
-      {!firstRun && <div className="md:hidden fixed bottom-above-nav right-4 z-30 flex flex-col items-end gap-3">
-        {/* Backdrop */}
-        {fabOpen && (
-          <div
-            className="fixed inset-0 z-0"
-            style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
-            onClick={() => setFabOpen(false)}
-          />
-        )}
+      {!firstRun && <div className="md:hidden fixed bottom-above-nav right-4 z-30 flex flex-col items-end gap-3 pointer-events-none">
+        {/* Backdrop. Mounted throughout and faded, like the items, so closing
+            reverses the opening instead of everything vanishing at once. */}
+        <div
+          data-open={fabOpen || undefined}
+          className={`fade-away fixed inset-0 z-0 transition-opacity duration-200 ease-out ${fabOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
+          style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
+          onClick={() => setFabOpen(false)}
+        />
 
-        {/* Action items */}
-        {fabOpen && FAB_ACTIONS.map((action) => (
-          <div key={action.key} className="relative z-10 flex items-center gap-3">
+        {/* Action items rise from the button, nearest first, 30ms apart; they
+            leave together. Inert while closed. */}
+        {FAB_ACTIONS.map((action, i) => (
+          <div
+            key={action.key}
+            inert={!fabOpen}
+            data-open={fabOpen || undefined}
+            className={`fade-away relative z-10 flex items-center gap-3 transition-[opacity,transform] duration-150 ease-out ${fabOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-2 motion-reduce:translate-y-0'}`}
+            style={{ transitionDelay: fabOpen ? `${(FAB_ACTIONS.length - 1 - i) * 30}ms` : '0ms' }}
+          >
             <span
               aria-hidden="true"
               className="text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
@@ -889,7 +915,7 @@ export function Dashboard() {
               type="button"
               aria-label={action.label}
               onClick={() => openModal(action.key as ActiveModal)}
-              className="w-11 h-11 rounded-full flex items-center justify-center text-lg shadow-lg transition-transform active:scale-95"
+              className="w-11 h-11 rounded-full flex items-center justify-center text-lg shadow-lg transition-transform duration-150 ease-out active:scale-95 motion-reduce:active:scale-100"
               style={{ backgroundColor: '#2a2a26', border: '1px solid rgba(255,255,255,0.1)' }}
             >
               {action.icon}
@@ -903,12 +929,12 @@ export function Dashboard() {
           aria-label="Quick log"
           aria-expanded={fabOpen}
           onClick={() => setFabOpen((o) => !o)}
-          className="relative z-10 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
+          className="relative z-10 pointer-events-auto w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-transform duration-150 ease-out active:scale-95 motion-reduce:active:scale-100"
           style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}
         >
           <svg
             width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}
-            style={{ transform: fabOpen ? 'rotate(45deg)' : 'none', transition: 'transform 0.2s' }}
+            style={{ transform: fabOpen ? 'rotate(45deg)' : 'none', transition: 'transform 200ms var(--ease-out)' }}
           >
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
@@ -925,7 +951,7 @@ export function Dashboard() {
               ? { preyType: meal.prey_type, preySize: meal.prey_size, quantity: meal.quantity }
               : undefined
           })()}
-          onSuccess={() => { closeModal(); refreshAnimals(); refreshLogs() }}
+          onSuccess={() => { if (quickFeedAnimalId) markLeaving(quickFeedAnimalId); closeModal(); refreshAnimals(); refreshLogs() }}
           onCancel={closeModal}
         />
       </Modal>

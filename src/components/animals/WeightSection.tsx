@@ -79,7 +79,7 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
                 labelStyle={{ color: '#a8a090', fontSize: 12 }}
                 formatter={(v) => [formatWeight(Number(v)), 'Weight']}
               />
-              <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
+              <Area isAnimationActive={false} type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
               {target && (
                 <ReferenceLine y={target} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${formatWeight(target)}`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
               )}

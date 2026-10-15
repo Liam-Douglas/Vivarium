@@ -408,7 +408,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
             key={tab}
             onClick={() => setActiveTab(tab)}
             aria-pressed={activeTab === tab}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
               backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
               color: activeTab === tab ? '#8fbe5a' : '#9f9684',

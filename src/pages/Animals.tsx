@@ -567,7 +567,7 @@ function Chip({ label, icon, active, onClick, tone }: { label: string; icon?: st
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className="tap-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors shrink-0"
+      className="tap-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] motion-reduce:active:scale-100 shrink-0"
       style={{
         backgroundColor: active ? `${accent}26` : '#242420',
         color: active ? accent : tone ?? '#a8a090',

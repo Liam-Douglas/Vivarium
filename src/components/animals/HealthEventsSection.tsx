@@ -60,7 +60,7 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
                 labelStyle={{ color: '#a8a090', fontSize: 12 }}
                 formatter={(v) => [formatAUD(Math.round(Number(v) * 100)), 'Cost']}
               />
-              <Bar dataKey="cost" fill="#d4924a" radius={[0, 4, 4, 0]} />
+              <Bar isAnimationActive={false} dataKey="cost" fill="#d4924a" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

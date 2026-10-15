@@ -25,6 +25,11 @@
   --color-dusk: #8a8476;
   --color-hairline: rgba(255, 255, 255, 0.06);
   --color-hairline-strong: rgba(255, 255, 255, 0.1);
+
+  /* Motion. ease-out replaces Tailwind's default, which is too weak to read
+     as deliberate; drawer is the iOS sheet curve. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 :root {
@@ -171,4 +176,70 @@ input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
   outline-offset: 1px;
+}
+
+/* ── Sheets and dialogs ─────────────────────────────────────────────────
+   Every logging action opens one, so this is the most-felt motion in the
+   app. On a phone the panel is a bottom sheet that rises from the edge and
+   leaves the same way; from 640px it is a centred dialog that settles in
+   from 96%. Transitions rather than keyframes, so closing halfway through
+   opening reverses from where it is instead of jumping. */
+.sheet-backdrop {
+  opacity: 0;
+  transition: opacity 300ms var(--ease-drawer);
+}
+.sheet-backdrop[data-open] {
+  opacity: 1;
+}
+.sheet-panel {
+  transform: translateY(100%);
+  transition: transform 300ms var(--ease-drawer);
+}
+.sheet-panel[data-open] {
+  transform: translateY(0);
+}
+/* Leaving is quicker than arriving: the keeper is done with it. */
+.sheet-backdrop:not([data-open]),
+.sheet-panel:not([data-open]) {
+  transition-duration: 220ms;
+}
+@media (min-width: 640px) {
+  .sheet-panel {
+    opacity: 0;
+    transform: scale(0.96);
+    transition:
+      transform 200ms var(--ease-out),
+      opacity 200ms var(--ease-out);
+  }
+  .sheet-panel[data-open] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Something that is mounted all the time but only sometimes shown (the More
+   sheet, the speed-dial items): hidden from taps and from screen readers
+   once its exit has finished, not before. */
+.fade-away:not([data-open]) {
+  visibility: hidden;
+  pointer-events: none;
+  transition-property: opacity, transform, visibility;
+  transition-delay: 0s, 0s, 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Fewer and gentler, not none: things still fade, nothing travels. */
+  .sheet-panel,
+  .sheet-panel[data-open] {
+    transform: none;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .sheet-panel[data-open] {
+    opacity: 1;
+  }
+  .skeleton,
+  .animate-pulse {
+    animation: none;
+  }
 }

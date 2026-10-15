@@ -420,7 +420,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
             key={tab}
             onClick={() => setActiveTab(tab)}
             aria-pressed={activeTab === tab}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+            className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
             style={{
               backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
               color: activeTab === tab ? '#8fbe5a' : '#9f9684',
@@ -579,7 +579,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                     {budgets[cat] ? (
                       <div>
                         <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (total / 100 / budgets[cat]) * 100)}%`, backgroundColor: total / 100 > budgets[cat] ? '#c45a5a' : total / 100 > budgets[cat] * 0.8 ? '#d4924a' : '#8fbe5a' }} />
+                          <div className="h-full rounded-full" style={{ width: `${Math.min(100, (total / 100 / budgets[cat]) * 100)}%`, backgroundColor: total / 100 > budgets[cat] ? '#c45a5a' : total / 100 > budgets[cat] * 0.8 ? '#d4924a' : '#8fbe5a' }} />
                         </div>
                         <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
                           {total / 100 > budgets[cat] ? `${formatAUD(total - Math.round(budgets[cat] * 100))} over budget` : `${formatAUD(Math.round(budgets[cat] * 100) - total)} remaining`}
@@ -666,7 +666,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                         <span className="text-xs shrink-0" style={{ color: '#9f9684' }}>/{f.low_stock_threshold}</span>
                       </div>
                       <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
+                        <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
                       </div>
                     </div>
                     <div className="flex items-center gap-1 shrink-0">
