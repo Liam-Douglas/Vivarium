@@ -438,14 +438,14 @@ export function Dashboard() {
   // load replaces it rather than rendering a dashboard of zeroes.
   if (animalsState === 'error') {
     return (
-      <div className="flex-1 px-4 lg:px-8 py-6 pb-24 md:pb-8 max-w-[1240px] mx-auto w-full">
+      <div className="flex-1 px-4 lg:px-8 py-6 pb-nav-fab md:pb-8 max-w-[1240px] mx-auto w-full">
         <LoadError subject="your collection" message={animalsError} onRetry={retryAll} />
       </div>
     )
   }
 
   return (
-    <div className="flex-1 px-4 lg:px-8 py-6 pb-24 md:pb-8 max-w-[1240px] mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 py-6 pb-nav-fab md:pb-8 max-w-[1240px] mx-auto w-full">
       {/* A refresh failed over rows already on screen, or something other than
           the animals themselves did — say so without discarding the page. */}
       {(animalsState === 'stale' || secondaryError) && (
@@ -848,7 +848,7 @@ export function Dashboard() {
       </div>
 
       {/* FAB speed dial (mobile only) */}
-      <div className="md:hidden fixed bottom-20 right-4 z-30 flex flex-col items-end gap-3">
+      <div className="md:hidden fixed bottom-above-nav right-4 z-30 flex flex-col items-end gap-3">
         {/* Backdrop */}
         {fabOpen && (
           <div

@@ -903,7 +903,7 @@ export function AnimalDetail() {
 
         {/* Overview */}
         {tab === 'overview' && (
-          <div className="flex flex-col gap-4 pb-24 md:pb-8">
+          <div className="flex flex-col gap-4 pb-nav md:pb-8">
             {/* Quarantine banner */}
             {animal.quarantine_started_at && !animal.quarantine_ended_at && (
               <div className="rounded-xl px-4 py-3 flex items-center gap-3" style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.3)' }}>
@@ -1066,7 +1066,7 @@ export function AnimalDetail() {
 
         {/* Timeline */}
         {tab === 'timeline' && (
-          <div className="pb-24 md:pb-8">
+          <div className="pb-nav md:pb-8">
             {/* Activity heatmap */}
             {(() => {
               const now = new Date()
@@ -1274,7 +1274,7 @@ export function AnimalDetail() {
 
         {/* Feeding */}
         {tab === 'feeding' && (
-          <div className="pb-24 md:pb-8">
+          <div className="pb-nav md:pb-8">
             <div className="flex justify-end mb-4">
               <Button size="sm" onClick={() => setFeedOpen(true)}>Log feeding</Button>
             </div>
@@ -1350,7 +1350,7 @@ export function AnimalDetail() {
 
         {/* Vitals */}
         {tab === 'vitals' && (
-          <div className="pb-24 md:pb-8">
+          <div className="pb-nav md:pb-8">
             <div className="flex p-1 gap-1 rounded-xl mb-4" style={{ backgroundColor: '#242420' }}>
               {(['weight', 'shedding'] as const).map((t) => (
                 <button key={t} onClick={() => setVitalsSubTab(t)}
@@ -1387,7 +1387,7 @@ export function AnimalDetail() {
 
         {/* Health */}
         {tab === 'health' && (
-          <div className="pb-24 md:pb-8 flex flex-col gap-6">
+          <div className="pb-nav md:pb-8 flex flex-col gap-6">
             {/* Medications */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -1449,7 +1449,7 @@ export function AnimalDetail() {
 
         {/* Records */}
         {tab === 'records' && (
-          <div className="pb-24 md:pb-8 flex flex-col gap-6">
+          <div className="pb-nav md:pb-8 flex flex-col gap-6">
             {/* Acquisition */}
             <div>
               <div className="flex items-center justify-between mb-3">

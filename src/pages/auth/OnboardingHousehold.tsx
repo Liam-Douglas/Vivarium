@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { useHousehold } from '@/context/HouseholdContext'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 export function OnboardingHousehold() {
   const navigate = useNavigate()
@@ -135,9 +136,7 @@ export function OnboardingHousehold() {
     <Shell>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl mx-auto mb-4" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
-            V
-          </div>
+          <BrandMark size="lg" className="mx-auto mb-4" />
           <h1 className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
             Set up your collection
           </h1>

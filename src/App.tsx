@@ -28,6 +28,7 @@ import { Stats } from '@/pages/Stats'
 import { Reminders } from '@/pages/Reminders'
 import { Terms } from '@/pages/Terms'
 import { Privacy } from '@/pages/Privacy'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 // Require auth — redirect to sign-in if not logged in
 function RequireAuth() {
@@ -36,9 +37,7 @@ function RequireAuth() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1a1a18' }}>
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg animate-pulse" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
-          V
-        </div>
+        <BrandMark pulse />
       </div>
     )
   }

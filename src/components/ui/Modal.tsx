@@ -86,7 +86,14 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+      // On a phone the panel sits at the bottom edge, so its Save and Cancel
+      // row has to clear the home indicator; and a tall form must stop below
+      // the status bar rather than run under it.
+      style={{
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        paddingTop: 'calc(1rem + env(safe-area-inset-top, 0px))',
+        paddingBottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))',
+      }}
       onClick={(e) => { if (e.target === e.currentTarget) onClose() }}
     >
       <div
@@ -95,7 +102,7 @@ export function Modal({ open, onClose, title, children, maxWidth = '480px' }: Mo
         aria-modal="true"
         aria-labelledby={titleId}
         className="w-full rounded-2xl shadow-2xl animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 flex flex-col"
-        style={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', maxWidth, maxHeight: 'calc(100dvh - 2rem)' }}
+        style={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', maxWidth, maxHeight: 'calc(100dvh - 2rem - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px))' }}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b shrink-0" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
           <h2 id={titleId} className="text-lg font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>

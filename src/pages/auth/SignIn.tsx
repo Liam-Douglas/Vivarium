@@ -4,6 +4,7 @@ import HCaptcha from '@hcaptcha/react-hcaptcha'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 export function SignIn() {
   const navigate = useNavigate()
@@ -63,9 +64,7 @@ export function SignIn() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
-              V
-            </div>
+            <BrandMark />
             <span className="text-2xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
               Vivarium
             </span>

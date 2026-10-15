@@ -909,7 +909,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
   if (embedded) return inner
   return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-2xl mx-auto w-full">
+    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
       {inner}
     </div>
   )

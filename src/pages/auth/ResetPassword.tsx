@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { AuthShell } from './AuthShell'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 const MIN_PASSWORD_LENGTH = 6
 
@@ -100,9 +101,7 @@ export function ResetPassword() {
     return (
       <AuthShell>
         <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg mx-auto mb-4 animate-pulse" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
-            V
-          </div>
+          <BrandMark pulse className="mx-auto mb-4" />
           <p className="text-sm" style={{ color: '#a8a090' }}>Checking your reset link…</p>
         </div>
       </AuthShell>

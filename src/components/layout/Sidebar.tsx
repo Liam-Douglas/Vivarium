@@ -1,6 +1,7 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 const navItems = [
   { to: '/', label: 'Dashboard', icon: DashboardIcon, exact: true },
@@ -80,9 +81,7 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-6 pt-8 pb-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[#1a1a18] font-bold text-sm" style={{ backgroundColor: '#8fbe5a' }}>
-            V
-          </div>
+          <BrandMark size="sm" />
           <div>
             <div className="font-semibold text-sm" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Vivarium</div>
             {householdName && <div className="text-xs" style={{ color: '#9f9684' }}>{householdName}</div>}

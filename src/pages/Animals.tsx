@@ -224,7 +224,7 @@ export function Animals() {
     : (enclosures.length > 0 ? `${enclosures.length} enclosure${enclosures.length !== 1 ? 's' : ''}` : undefined)
 
   return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-5xl mx-auto w-full">
+    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-5xl mx-auto w-full">
       <Header title="Animals" subtitle={headerSubtitle} action={headerAction} />
 
       {/* Tab toggle */}
@@ -250,25 +250,41 @@ export function Animals() {
           {animals.length > 0 && (
             <div className="flex flex-col gap-3 mb-4">
               <div className="flex gap-2">
+                {/* min-w-0: an input's intrinsic width is about twenty
+                    characters, and without this it refused to shrink, pushing
+                    the sort and density controls off a phone screen and making
+                    the whole page scroll sideways. */}
                 <input
                   type="search"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search animals…"
-                  className="flex-1 rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+                  aria-label="Search animals"
+                  className="flex-1 min-w-0 rounded-xl px-3 sm:px-4 py-2.5 text-sm focus:outline-none"
                   style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
                 />
-                <select
-                  value={sort}
-                  onChange={(e) => setSort(e.target.value as SortKey)}
-                  className="rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                {/* On phones the sort is a 44px icon over the native picker, so
+                    search keeps the width; from sm up it shows its label. */}
+                <label
+                  className="relative shrink-0 flex items-center justify-center w-11 sm:w-auto rounded-xl"
                   style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: '#a8a090' }}
                 >
-                  <option value="name-asc">Name A → Z</option>
-                  <option value="name-desc">Name Z → A</option>
-                  <option value="overdue-first">Overdue first</option>
-                  <option value="recently-fed">Recently fed</option>
-                </select>
+                  <svg className="sm:hidden" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
+                  </svg>
+                  <select
+                    value={sort}
+                    onChange={(e) => setSort(e.target.value as SortKey)}
+                    aria-label="Sort animals"
+                    className="absolute inset-0 w-full h-full opacity-0 sm:static sm:opacity-100 sm:w-auto rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                    style={{ backgroundColor: '#242420', color: '#a8a090' }}
+                  >
+                    <option value="name-asc">Name A → Z</option>
+                    <option value="name-desc">Name Z → A</option>
+                    <option value="overdue-first">Overdue first</option>
+                    <option value="recently-fed">Recently fed</option>
+                  </select>
+                </label>
                 <div className="flex gap-0.5 p-0.5 rounded-xl shrink-0" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)' }}>
                   {(['grid', 'list'] as const).map((mode) => (
                     <button

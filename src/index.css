@@ -44,6 +44,21 @@ h1, h2, h3, h4, h5, h6 {
   font-family: 'Playfair Display', Georgia, serif;
 }
 
+/* The phone tab bar is about 57px plus the home-indicator inset, which is
+   34px on a notched iPhone running as an installed app. Anything that has to
+   clear the bar says so with these, rather than a bare 80px or 96px that only
+   held while the inset was zero. */
+@utility pb-nav {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+/* The dashboard also has the floating action button over its last rows. */
+@utility pb-nav-fab {
+  padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0px));
+}
+@utility bottom-above-nav {
+  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
+}
+
 /* Scrollbar styling */
 ::-webkit-scrollbar {
   width: 4px;

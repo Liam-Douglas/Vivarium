@@ -4,7 +4,7 @@ export function Privacy() {
   const mutedStyle = { color: '#9f9684' }
 
   return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-2xl mx-auto w-full">
+    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
       <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Privacy Policy</h1>
       <p className="text-xs mb-6" style={mutedStyle}>Last updated: April 2025</p>
 
