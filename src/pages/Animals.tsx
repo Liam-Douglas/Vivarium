@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useAnimals } from '@/hooks/useAnimals'
 import { getFeedingStatus, describeNextFeeding, FEEDING_STATUS_META, FEEDING_URGENCY } from '@/lib/feedingStatus'
 import { inQuarantine } from '@/lib/animalState'
@@ -55,10 +55,6 @@ function getAnimalFeedingColor(animal: Animal): string {
 
 export function Animals() {
   const { data: animals, loading, error, refresh } = useAnimals()
-  // Prototype switch while a card style is chosen; removed once one is.
-  const [searchParams] = useSearchParams()
-  const cardParam = searchParams.get('card')
-  const cardVariant = cardParam === 'b' || cardParam === 'c' ? cardParam : 'a'
   // Signed in one call for the whole grid rather than one per card.
   const photoUrls = useSignedPhotoUrls(animals.map((a) => a.photo_url))
   const { data: enclosures, loading: enclosuresLoading, refresh: refreshEnclosures } = useEnclosures()
@@ -371,7 +367,6 @@ export function Animals() {
                   animal={animal}
                   enclosureName={enclosures.find((e) => e.id === animal.enclosure_id)?.name}
                   photoUrl={animal.photo_url ? photoUrls.get(animal.photo_url) : null}
-                  variant={cardVariant}
                 />
               ))}
             </div>
