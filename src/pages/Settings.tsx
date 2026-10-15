@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { Import } from '@/pages/Import'
 import { signOutAndClearCaches } from '@/lib/session'
 import { latestWeightByAnimal } from '@/lib/latestWeights'
@@ -19,7 +19,9 @@ import {
 import { Header } from '@/components/layout/Header'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { ListSection, ListRow } from '@/components/ui/List'
+import { Icon, IconTile } from '@/components/ui/icons'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Modal } from '@/components/ui/Modal'
 import { RecordActions } from '@/components/ui/RecordActions'
@@ -398,264 +400,223 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   }
 
   return (
-    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
       <Header title="Settings" />
 
-      {/* Tab switcher */}
-      <div className="flex gap-1 p-1 rounded-xl mb-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-        {(['settings', 'import'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            aria-pressed={activeTab === tab}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-colors"
-            style={{
-              backgroundColor: activeTab === tab ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'transparent',
-              color: activeTab === tab ? 'var(--color-tint)' : 'var(--color-label-2)',
-              border: activeTab === tab ? '1px solid color-mix(in srgb, var(--color-tint) 25%, transparent)' : '1px solid transparent',
-            }}
-          >
-            {tab === 'settings' ? 'Settings' : 'Import & Export'}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        label="Show"
+        className="mb-6 sm:max-w-xs"
+        value={activeTab}
+        onChange={setActiveTab}
+        options={[{ value: 'settings', label: 'Settings' }, { value: 'import', label: 'Import & Export' }]}
+      />
 
       {activeTab === 'import' && <Import embedded />}
 
-      {activeTab === 'settings' && <>
+      {activeTab === 'settings' && <div className="flex flex-col gap-7">
 
       {/* Profile */}
-      <Section title="Profile">
-        <div className="flex flex-col gap-4">
-          <Input
-            label="Display name"
+      <ListSection
+        header="Profile"
+        action={<button type="button" onClick={handleSaveName} disabled={savingName} className="tap-target text-[15px] font-semibold text-tint active:opacity-60 disabled:opacity-40">{savingName ? 'Saving…' : 'Save'}</button>}
+        footer={user?.email}
+      >
+        <label className="list-row flex items-center gap-3 px-4 min-h-11">
+          <span className="text-[17px] text-label shrink-0">Display name</span>
+          <input
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="Your name"
+            className="flex-1 min-w-0 h-11 bg-transparent text-right text-[17px] text-label-2 placeholder:text-label-3 outline-none focus:text-label"
           />
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={handleSaveName} loading={savingName}>Save</Button>
-          </div>
-          <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{user?.email}</p>
-        </div>
-      </Section>
+        </label>
+      </ListSection>
 
       {/* Household */}
-      <Section title="Collection">
-        {householdId ? (
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-sm font-medium mb-0.5" style={{ color: 'var(--color-label)' }}>{householdName}</p>
-              <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>
-                Your role: {currentUserRole === 'owner' ? 'Owner' : 'Member'}
-              </p>
-            </div>
-
+      {householdId ? (
+        <>
+          <ListSection header="Collection" footer={inviteCode ? 'Share this code so your partner can join' : undefined}>
+            <ListRow>
+              <p className="text-[17px] text-label break-words">{householdName}</p>
+              <p className="text-[13px] text-label-2">Your role: {currentUserRole === 'owner' ? 'Owner' : 'Member'}</p>
+            </ListRow>
             {/* Invite code */}
             {inviteCode && (
-              <div>
-                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>INVITE CODE</p>
-                <div className="flex items-center gap-2">
-                  <code
-                    className="flex-1 px-4 py-2 rounded-xl text-sm font-mono tracking-widest"
-                    style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-separator)', color: 'var(--color-tint)' }}
-                  >
-                    {inviteCode}
-                  </code>
-                  <Button size="sm" variant="secondary" onClick={handleCopyCode}>
-                    {copied ? '✓ Copied' : 'Copy'}
-                  </Button>
-                </div>
-                <p className="text-xs mt-1.5" style={{ color: 'var(--color-label-2)' }}>Share this code so your partner can join</p>
-              </div>
+              <ListRow
+                trailing={
+                  <button type="button" onClick={handleCopyCode} className="tap-target inline-flex items-center gap-1 text-[17px] text-tint active:opacity-60">
+                    {copied && <Icon name="check" size={16} strokeWidth={2.6} />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                }
+              >
+                <p className="text-[13px] text-label-2">Invite code</p>
+                <code className="text-[20px] font-mono font-semibold tracking-[0.2em] text-tint">{inviteCode}</code>
+              </ListRow>
             )}
+          </ListSection>
 
-            {/* Pending requests */}
-            {currentUserRole === 'owner' && pendingRequests.length > 0 && (
-              <div>
-                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>PENDING REQUESTS</p>
-                {pendingRequests.map((req) => {
-                  const p = req.profiles as { full_name: string | null } | null
-                  return (
-                    <div key={req.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                      <p className="flex-1 min-w-[8rem] text-sm break-words" style={{ color: 'var(--color-label)' }}>{p?.full_name ?? 'Unknown'}</p>
-                      <div className="flex gap-2 shrink-0 ml-auto">
-                        <Button size="sm" onClick={() => handleApprove(req.id)}>Approve</Button>
-                        <Button size="sm" variant="secondary" onClick={() => handleDeny(req.id)}>Deny</Button>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-
-            {/* Members */}
-            <div>
-              <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-label-2)' }}>MEMBERS</p>
-              {members.filter((m) => m.status === 'active').map((m) => {
-                const p = m.profiles as { full_name: string | null } | null
-                const isSelf = m.user_id === user?.id
-                const name = p?.full_name ?? 'Unknown'
+          {/* Pending requests */}
+          {currentUserRole === 'owner' && pendingRequests.length > 0 && (
+            <ListSection header="Pending requests">
+              {pendingRequests.map((req) => {
+                const p = req.profiles as { full_name: string | null } | null
                 return (
-                  // Wraps rather than squeezing: a long name used to crush the two
-                  // role buttons, which were 24px tall and side by side.
-                  <div key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                    <div className="flex-1 min-w-[8rem]">
-                      <p className="text-sm break-words" style={{ color: 'var(--color-label)' }}>{name}{isSelf ? ' (you)' : ''}</p>
+                  <div key={req.id} className="list-row flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-2.5">
+                    <p className="flex-1 min-w-[8rem] text-[17px] text-label break-words">{p?.full_name ?? 'Unknown'}</p>
+                    <div className="flex gap-2 shrink-0 ml-auto">
+                      <Button size="sm" onClick={() => handleApprove(req.id)}>Approve</Button>
+                      <Button size="sm" variant="secondary" onClick={() => handleDeny(req.id)}>Deny</Button>
                     </div>
-                    {currentUserRole === 'owner' && !isSelf ? (
-                      <div className="flex items-center gap-2 shrink-0 ml-auto">
-                        <button
-                          type="button"
-                          onClick={() => handleToggleRole(m.id, m.role)}
-                          className="text-sm px-3 py-1.5 pointer-coarse:min-h-11 rounded-xl transition-[transform,background-color] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100"
-                          style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 12%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 20%, transparent)' }}
-                        >
-                          {m.role === 'owner' ? 'Demote' : 'Make owner'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveMember(m.id, name)}
-                          className="text-sm px-3 py-1.5 pointer-coarse:min-h-11 rounded-xl transition-[transform,background-color] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100"
-                          style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 12%, transparent)', color: 'var(--color-red)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    ) : (
-                      <Badge status="muted">{m.role}</Badge>
-                    )}
                   </div>
                 )
               })}
-            </div>
+            </ListSection>
+          )}
 
-            {currentUserRole === 'member' && (
-              <Button variant="danger" size="sm" onClick={handleLeave}>Leave collection</Button>
-            )}
-          </div>
-        ) : (
-          <div>
-            <p className="text-sm mb-3" style={{ color: 'var(--color-label-2)' }}>You're not part of a collection yet.</p>
-            <Button size="sm" onClick={() => navigate('/onboarding')}>Set up collection</Button>
-          </div>
-        )}
-      </Section>
-
-      {/* Data */}
-      <Section title="Data">
-        <div className="flex flex-col gap-3">
-          <Button variant="secondary" size="sm" onClick={handleExport} loading={exporting}>Export collection</Button>
-          <div style={{ borderTop: '1px solid var(--color-separator)', paddingTop: 12 }}>
-            <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-label-2)' }}>DATA REPAIR</p>
-            <p className="text-xs mb-3" style={{ color: 'var(--color-label-2)' }}>
-              Detects feeding records pointing at an animal that no longer exists, and duplicate entries (same animal, same day, same type). Archived animals keep their history and are not a problem.
-            </p>
-            {scanResult && (
-              <div className="flex flex-col gap-2 mb-3">
-                {/* Orphaned links */}
-                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.orphanedCount > 0 ? 'color-mix(in srgb, var(--color-orange) 8%, transparent)' : 'color-mix(in srgb, var(--color-green) 8%, transparent)', border: `1px solid ${scanResult.orphanedCount > 0 ? 'color-mix(in srgb, var(--color-orange) 20%, transparent)' : 'color-mix(in srgb, var(--color-green) 20%, transparent)'}` }}>
-                  <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-label-2)' }}>BROKEN LINKS</p>
-                  {scanResult.orphanedCount > 0 ? (
-                    <p className="text-sm" style={{ color: 'var(--color-orange)' }}>
-                      {scanResult.orphanedCount} feeding record{scanResult.orphanedCount !== 1 ? 's point' : ' points'} at an animal that no longer exists. They can't be re-linked automatically — the name went with the animal.
-                    </p>
-                  ) : (
-                    <p className="text-sm" style={{ color: 'var(--color-green)' }}>All clear</p>
-                  )}
-                  {scanResult.onArchivedCount > 0 && (
-                    <p className="text-xs mt-1.5" style={{ color: 'var(--color-label-2)' }}>
-                      {scanResult.onArchivedCount} record{scanResult.onArchivedCount !== 1 ? 's belong' : ' belongs'} to archived animals. That's normal — their history stays with them.
-                    </p>
-                  )}
-                </div>
-                {/* Duplicates */}
-                <div className="rounded-xl p-3" style={{ backgroundColor: scanResult.dupExtra > 0 ? 'color-mix(in srgb, var(--color-red) 8%, transparent)' : 'color-mix(in srgb, var(--color-green) 8%, transparent)', border: `1px solid ${scanResult.dupExtra > 0 ? 'color-mix(in srgb, var(--color-red) 20%, transparent)' : 'color-mix(in srgb, var(--color-green) 20%, transparent)'}` }}>
-                  <p className="text-xs font-medium mb-0.5" style={{ color: 'var(--color-label-2)' }}>DUPLICATES</p>
-                  {scanResult.dupExtra > 0 ? (
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm" style={{ color: 'var(--color-red)' }}>{scanResult.dupExtra} extra record{scanResult.dupExtra !== 1 ? 's' : ''} across {scanResult.dupGroups} group{scanResult.dupGroups !== 1 ? 's' : ''}</p>
-                      <Button size="sm" onClick={handleRemoveDups} loading={removingDups}>Remove</Button>
+          {/* Members */}
+          <ListSection header="Members">
+            {members.filter((m) => m.status === 'active').map((m) => {
+              const p = m.profiles as { full_name: string | null } | null
+              const isSelf = m.user_id === user?.id
+              const name = p?.full_name ?? 'Unknown'
+              return (
+                // Wraps rather than squeezing: a long name used to crush the two
+                // role buttons, which were 24px tall and side by side.
+                <div key={m.id} className="list-row flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 min-h-11">
+                  <p className="flex-1 min-w-[8rem] text-[17px] text-label break-words">{name}{isSelf ? ' (you)' : ''}</p>
+                  {currentUserRole === 'owner' && !isSelf ? (
+                    <div className="flex items-center gap-4 shrink-0 ml-auto">
+                      <button type="button" onClick={() => handleToggleRole(m.id, m.role)} className="tap-target text-[17px] text-tint active:opacity-60">
+                        {m.role === 'owner' ? 'Demote' : 'Make owner'}
+                      </button>
+                      <button type="button" onClick={() => handleRemoveMember(m.id, name)} className="tap-target text-[17px] text-red active:opacity-60">
+                        Remove
+                      </button>
                     </div>
                   ) : (
-                    <p className="text-sm" style={{ color: 'var(--color-green)' }}>No duplicates found</p>
+                    <span className="text-[17px] text-label-2 capitalize">{m.role}</span>
                   )}
                 </div>
-              </div>
-            )}
-            <div className="flex gap-2 flex-wrap">
-              <Button variant="secondary" size="sm" onClick={handleScan} loading={scanning}>Scan for issues</Button>
-              <Button variant="secondary" size="sm" onClick={handleRecalculateLastFed} loading={recalculating}>Fix feeding dates</Button>
-            </div>
-          </div>
-        </div>
-      </Section>
+              )
+            })}
+          </ListSection>
 
-      {/* Legal */}
-      <Section title="Notifications">
-        <p className="text-sm mb-3" style={{ color: 'var(--color-label-2)' }}>
-          A reminder when animals are overdue a feed, shown while the app is open.
-        </p>
+          {currentUserRole === 'member' && (
+            <ListSection>
+              <ActionRow label="Leave collection" onClick={handleLeave} destructive />
+            </ListSection>
+          )}
+        </>
+      ) : (
+        <ListSection header="Collection">
+          <p className="px-4 pt-3 text-[15px] text-label-2">You're not part of a collection yet.</p>
+          <div className="px-4 pt-2 pb-3"><Button size="sm" onClick={() => navigate('/onboarding')}>Set up collection</Button></div>
+        </ListSection>
+      )}
+
+      {/* Data */}
+      <ListSection header="Data">
+        <ActionRow label="Export collection" onClick={handleExport} loading={exporting} />
+      </ListSection>
+
+      <ListSection
+        header="Data repair"
+        footer="Detects feeding records pointing at an animal that no longer exists, and duplicate entries (same animal, same day, same type). Archived animals keep their history and are not a problem."
+      >
+        {scanResult && (
+          <>
+            {/* Orphaned links */}
+            <div className="list-row list-row-leading flex items-start gap-3 px-4 py-2.5">
+              <IconTile name={scanResult.orphanedCount > 0 ? 'alert' : 'check'} color={scanResult.orphanedCount > 0 ? 'var(--color-orange)' : 'var(--color-green)'} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[17px] text-label">Broken links</p>
+                {scanResult.orphanedCount > 0 ? (
+                  <p className="text-[15px] text-orange">
+                    {scanResult.orphanedCount} feeding record{scanResult.orphanedCount !== 1 ? 's point' : ' points'} at an animal that no longer exists. They can't be re-linked automatically — the name went with the animal.
+                  </p>
+                ) : (
+                  <p className="text-[15px] text-green">All clear</p>
+                )}
+                {scanResult.onArchivedCount > 0 && (
+                  <p className="text-[13px] mt-1 text-label-2">
+                    {scanResult.onArchivedCount} record{scanResult.onArchivedCount !== 1 ? 's belong' : ' belongs'} to archived animals. That's normal — their history stays with them.
+                  </p>
+                )}
+              </div>
+            </div>
+            {/* Duplicates */}
+            <div className="list-row list-row-leading flex items-center gap-3 px-4 py-2.5">
+              <IconTile name={scanResult.dupExtra > 0 ? 'alert' : 'check'} color={scanResult.dupExtra > 0 ? 'var(--color-red)' : 'var(--color-green)'} />
+              <div className="flex-1 min-w-0">
+                <p className="text-[17px] text-label">Duplicates</p>
+                {scanResult.dupExtra > 0 ? (
+                  <p className="text-[15px] text-red">{scanResult.dupExtra} extra record{scanResult.dupExtra !== 1 ? 's' : ''} across {scanResult.dupGroups} group{scanResult.dupGroups !== 1 ? 's' : ''}</p>
+                ) : (
+                  <p className="text-[15px] text-green">No duplicates found</p>
+                )}
+              </div>
+              {scanResult.dupExtra > 0 && <Button size="sm" variant="danger" onClick={handleRemoveDups} loading={removingDups}>Remove</Button>}
+            </div>
+          </>
+        )}
+        <ActionRow label="Scan for issues" onClick={handleScan} loading={scanning} />
+        <ActionRow label="Fix feeding dates" onClick={handleRecalculateLastFed} loading={recalculating} />
+      </ListSection>
+
+      <ListSection header="Notifications" footer="A reminder when animals are overdue a feed, shown while the app is open.">
         {notifyPermission === 'unsupported' && (
-          <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>This browser doesn't support notifications.</p>
+          <p className="px-4 py-3 text-[15px] text-label-2">This browser doesn't support notifications.</p>
         )}
         {notifyPermission === 'granted' && (
-          <p className="text-sm" style={{ color: 'var(--color-green)' }}>Notifications are on.</p>
+          <ListRow leading={<IconTile name="bell" color="var(--color-green)" />}>
+            <p className="text-[17px] text-label">Notifications are on.</p>
+          </ListRow>
         )}
         {notifyPermission === 'denied' && (
-          <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>
+          <p className="px-4 py-3 text-[15px] text-label-2">
             Blocked for this site. Your browser's site settings are the only place that can undo it.
           </p>
         )}
         {notifyPermission === 'default' && (
-          <Button variant="secondary" size="sm" onClick={handleEnableNotifications}>
-            Turn on notifications
-          </Button>
+          <ActionRow label="Turn on notifications" onClick={handleEnableNotifications} />
         )}
-      </Section>
+      </ListSection>
 
-      <Section title="Legal">
-        <div className="flex flex-col gap-2">
-          <Link to="/terms" className="text-sm" style={{ color: 'var(--color-label-2)' }}>Terms of Service</Link>
-          <Link to="/privacy" className="text-sm" style={{ color: 'var(--color-label-2)' }}>Privacy Policy</Link>
-        </div>
-      </Section>
+      <ListSection header="Legal">
+        <ListRow to="/terms"><span className="text-[17px] text-label">Terms of Service</span></ListRow>
+        <ListRow to="/privacy"><span className="text-[17px] text-label">Privacy Policy</span></ListRow>
+      </ListSection>
 
       {/* Vet Contacts */}
-      <Section title="Vet Contacts">
-        <div className="flex flex-col gap-3">
-          {vetContacts.length === 0 ? (
-            <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>No vet contacts saved yet.</p>
-          ) : (
-            vetContacts.map((vet) => (
-              <div key={vet.id} className="flex items-start gap-3 py-1" style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{vet.name}</p>
-                  {vet.practice_name && <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{vet.practice_name}</p>}
-                  <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-1">
-                    {vet.phone && (
-                      <a href={`tel:${vet.phone}`} className="text-xs" style={{ color: 'var(--color-tint)' }}>{vet.phone}</a>
-                    )}
-                    {vet.email && (
-                      <a href={`mailto:${vet.email}`} className="text-xs" style={{ color: 'var(--color-tint)' }}>{vet.email}</a>
-                    )}
-                  </div>
-                  {vet.address && <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-label-2)' }}>{vet.address}</p>}
+      <ListSection header="Vet Contacts">
+        {vetContacts.length === 0 ? (
+          <p className="list-row px-4 py-3 text-[15px] text-label-2">No vet contacts saved yet.</p>
+        ) : (
+          vetContacts.map((vet) => (
+            <div key={vet.id} className="list-row flex items-start gap-2 pl-4 pr-2 py-2.5">
+              <div className="flex-1 min-w-0">
+                <p className="text-[17px] text-label">{vet.name}</p>
+                {vet.practice_name && <p className="text-[15px] text-label-2">{vet.practice_name}</p>}
+                <div className="flex flex-wrap gap-x-4 gap-y-0.5 mt-0.5">
+                  {vet.phone && <a href={`tel:${vet.phone}`} className="text-[15px] text-tint">{vet.phone}</a>}
+                  {vet.email && <a href={`mailto:${vet.email}`} className="text-[15px] text-tint break-all">{vet.email}</a>}
                 </div>
-                <RecordActions what="vet contact" onEdit={() => openEditVet(vet)} onDelete={() => handleDeleteVet(vet)} />
+                {vet.address && <p className="text-[13px] mt-0.5 truncate text-label-2">{vet.address}</p>}
               </div>
-            ))
-          )}
-          <Button variant="secondary" size="sm" onClick={openAddVet}>+ Add contact</Button>
-        </div>
-      </Section>
+              <RecordActions what="vet contact" onEdit={() => openEditVet(vet)} onDelete={() => handleDeleteVet(vet)} />
+            </div>
+          ))
+        )}
+        <ActionRow label="+ Add contact" onClick={openAddVet} />
+      </ListSection>
 
       {/* Sign out */}
-      <div className="mt-6">
-        <Button variant="ghost" onClick={handleSignOut} fullWidth>Sign out</Button>
-      </div>
+      <ListSection>
+        <ActionRow label="Sign out" onClick={handleSignOut} destructive center />
+      </ListSection>
 
-      </>}
+      </div>}
 
       {/* Vet contact form modal */}
       <Modal open={vetFormOpen} onClose={() => setVetFormOpen(false)} title={editingVet ? 'Edit vet contact' : 'Add vet contact'}>
@@ -686,13 +647,24 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
   )
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+/** A button row in a grouped list, as in Settings: tint text, or red for a destructive action. */
+function ActionRow({ label, onClick, loading = false, destructive = false, center = false }: {
+  label: string
+  onClick: () => void
+  loading?: boolean
+  destructive?: boolean
+  center?: boolean
+}) {
   return (
-    <div className="mb-6">
-      <p className="text-xs font-semibold tracking-wider mb-3" style={{ color: 'var(--color-label-2)' }}>{title.toUpperCase()}</p>
-      <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-        {children}
-      </div>
-    </div>
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={loading}
+      aria-busy={loading || undefined}
+      className={`list-row relative flex items-center gap-3 w-full px-4 min-h-11 text-[17px] active:bg-fill disabled:opacity-60 transition-colors ${center ? 'justify-center' : 'justify-between text-left'} ${destructive ? 'text-red' : 'text-tint'}`}
+    >
+      {label}
+      {loading && <span className="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin" aria-hidden="true" />}
+    </button>
   )
 }

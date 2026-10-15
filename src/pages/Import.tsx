@@ -9,6 +9,9 @@ import { batchInsertAnimals, batchInsertFeedingLogs, batchInsertSheddingLogs, ge
 import { supabase } from '@/lib/supabase'
 import { importAnimalSchema, importFeedingSchema, importShedSchema, partitionValid } from '@/lib/validation'
 import { Header } from '@/components/layout/Header'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { Icon, IconTile } from '@/components/ui/icons'
+import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
 import { LoadError } from '@/components/ui/LoadError'
 
@@ -531,34 +534,26 @@ export function Import({ embedded }: { embedded?: boolean }) {
     <div>
       {!embedded && <Header title="Import Data" />}
 
-      {/* Step indicator */}
-      <div className="flex items-center gap-2 mb-8">
-        {[1, 2, 3, 4].map((s) => (
-          <div key={s} className="flex items-center gap-2">
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold"
-              style={{
-                backgroundColor: step >= s ? 'var(--color-tint)' : 'var(--color-separator)',
-                color: step >= s ? 'var(--color-bg)' : 'var(--color-label-2)',
-              }}
-            >
-              {s}
-            </div>
-            {s < 4 && <div className="flex-1 h-px w-8" style={{ backgroundColor: step > s ? 'var(--color-tint)' : 'var(--color-separator)' }} />}
-          </div>
-        ))}
-        <div className="ml-2 text-xs" style={{ color: 'var(--color-label-2)' }}>
-          {['Upload', 'Map', 'Preview', 'Result'][step - 1]}
+      {/* Step indicator: four segments filling with the tint, as a
+          progress bar rather than numbered circles. */}
+      <div className="mb-6">
+        <p className="text-[13px] font-semibold text-label-2 px-1 mb-2">
+          Step {step} of 4 · {['Upload', 'Map', 'Preview', 'Result'][step - 1]}
+        </p>
+        <div className="grid grid-cols-4 gap-1.5" aria-hidden="true">
+          {[1, 2, 3, 4].map((n) => (
+            <div key={n} className={`h-1.5 rounded-full transition-colors duration-300 ${step >= n ? 'bg-tint' : 'bg-fill'}`} />
+          ))}
         </div>
       </div>
 
       {step === 1 && (
         <div>
           <div
-            className="rounded-2xl p-10 text-center cursor-pointer mb-4 transition-colors duration-150"
+            className="rounded-2xl p-10 text-center cursor-pointer mb-4 transition-colors duration-150 active:opacity-70"
             style={{
-              border: `2px dashed ${dragOver ? 'var(--color-tint)' : 'var(--color-separator)'}`,
-              backgroundColor: dragOver ? 'color-mix(in srgb, var(--color-tint) 6%, transparent)' : 'var(--color-surface)',
+              border: `2px dashed ${dragOver ? 'var(--color-tint)' : 'var(--color-fill-2)'}`,
+              backgroundColor: dragOver ? 'color-mix(in srgb, var(--color-tint) 8%, transparent)' : 'var(--color-surface)',
             }}
             onClick={() => !processing && fileRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragOver(true) }}
@@ -574,21 +569,21 @@ export function Import({ embedded }: { embedded?: boolean }) {
                 <div className="flex justify-center mb-4">
                   <div className="w-8 h-8 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-tint)', borderTopColor: 'transparent' }} />
                 </div>
-                <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>Reading {fileName}…</p>
+                <p className="text-[15px] font-medium text-label">Reading {fileName}…</p>
               </>
             ) : (
               <>
-                <div className="text-4xl mb-3">{dragOver ? '📂' : '📁'}</div>
-                <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-label)' }}>
+                <Icon name={dragOver ? 'upload' : 'doc'} size={40} strokeWidth={1.4} className="mx-auto mb-3 text-tint" />
+                <p className="text-[15px] font-medium mb-1 text-label">
                   {dragOver ? 'Drop to upload' : 'Drop your file here or tap to browse'}
                 </p>
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Supports .csv and .xlsx</p>
+                <p className="text-[13px] text-label-2">Supports .csv and .xlsx</p>
               </>
             )}
             <input ref={fileRef} type="file" accept=".csv,.xlsx" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f) }} />
           </div>
           <div className="text-center">
-            <button onClick={downloadTemplate} className="text-sm" style={{ color: 'var(--color-tint)', background: 'none', border: 'none', cursor: 'pointer' }}>
+            <button onClick={downloadTemplate} className="tap-target text-[17px] text-tint active:opacity-60">
               Download import template
             </button>
           </div>
@@ -598,76 +593,55 @@ export function Import({ embedded }: { embedded?: boolean }) {
       {step === 2 && (
         <div>
           {/* File badge */}
-          <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-tint) 20%, transparent)' }}>
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 15%, transparent)' }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--color-tint)" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-            </div>
+          <div className="flex items-center gap-3 mb-6 px-4 py-3 rounded-xl bg-surface">
+            <IconTile name="doc" color="var(--color-green)" />
             <div className="min-w-0">
-              <p className="text-sm font-medium truncate" style={{ color: 'var(--color-label)' }}>{fileName}</p>
-              <p className="text-xs" style={{ color: 'var(--color-tint)' }}>{sheets.length} sheet{sheets.length !== 1 ? 's' : ''} detected</p>
+              <p className="text-[15px] font-medium truncate text-label">{fileName}</p>
+              <p className="text-[13px] text-tint">{sheets.length} sheet{sheets.length !== 1 ? 's' : ''} detected</p>
             </div>
           </div>
 
           {/* Stat cards */}
-          <div className="grid grid-cols-3 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-2.5 mb-6">
             {[
-              { icon: '🦎', label: 'Animals', count: importData.animals.length },
-              { icon: '🍖', label: 'Feedings', count: importData.feedingLogs.length },
-              { icon: '🐍', label: 'Sheds', count: importData.sheddingLogs.length },
-            ].map(({ icon, label, count }) => (
-              <div key={label} className="rounded-xl p-4 text-center" style={{ backgroundColor: 'var(--color-surface)', border: `1px solid ${count > 0 ? 'color-mix(in srgb, var(--color-tint) 20%, transparent)' : 'var(--color-separator)'}` }}>
-                <div className="text-2xl mb-1">{icon}</div>
-                <p className="text-xl font-bold" style={{ color: count > 0 ? 'var(--color-tint)' : 'var(--color-label-2)' }}>{count}</p>
-                <p className="text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{label}</p>
+              { label: 'Animals', count: importData.animals.length },
+              { label: 'Feedings', count: importData.feedingLogs.length },
+              { label: 'Sheds', count: importData.sheddingLogs.length },
+            ].map(({ label, count }) => (
+              <div key={label} className="rounded-xl bg-surface px-3 py-2.5">
+                <p className="text-[13px] font-semibold text-label-2">{label}</p>
+                <p className={`text-[28px] leading-[34px] font-bold tabular-nums ${count > 0 ? 'text-tint' : 'text-label-3'}`}>{count}</p>
               </div>
             ))}
           </div>
 
           {/* Match candidates */}
           {matchCandidates.length > 0 && (
-            <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid color-mix(in srgb, var(--color-orange) 30%, transparent)' }}>
-              <div className="px-4 py-3 flex items-center gap-2" style={{ borderBottom: '1px solid var(--color-separator)', backgroundColor: 'color-mix(in srgb, var(--color-orange) 8%, transparent)' }}>
-                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="var(--color-orange)" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
-                <p className="text-xs font-medium" style={{ color: 'var(--color-orange)' }}>
+            <div className="rounded-xl overflow-hidden mb-6 bg-surface">
+              <div className="list-row px-4 py-3 flex items-center gap-3">
+                <IconTile name="alert" color="var(--color-orange)" size={26} />
+                <p className="text-[13px] font-medium text-orange">
                   {matchCandidates.length} animal{matchCandidates.length !== 1 ? 's' : ''} already exist in your collection
                 </p>
               </div>
               {matchCandidates.map((m) => {
                 const decision = getDecision(m.importName)
                 return (
-                  <div key={m.importName} className="px-4 py-3" style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                    <div className="flex items-center gap-2 mb-2.5">
-                      <span className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{m.importName}</span>
+                  <div key={m.importName} className="list-row px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2 mb-2.5">
+                      <span className="text-[15px] font-medium text-label">{m.importName}</span>
                       <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--color-label-2)" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                      <span className="text-sm" style={{ color: 'var(--color-label-2)' }}>{m.existing.name} <span style={{ color: 'var(--color-label-2)' }}>({m.existing.species})</span></span>
+                      <span className="text-[15px] text-label-2">{m.existing.name} <span className="text-label-2">({m.existing.species})</span></span>
                       {!m.existing.is_active && (
-                        <span className="text-xs px-1.5 py-0.5 rounded-md" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 15%, transparent)', color: 'var(--color-orange)' }}>inactive — will reactivate</span>
+                        <Badge status="amber">inactive — will reactivate</Badge>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => setMatchDecisions((prev) => ({ ...prev, [m.importName.toLowerCase()]: 'merge' }))}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                        style={{
-                          backgroundColor: decision === 'merge' ? 'color-mix(in srgb, var(--color-tint) 15%, transparent)' : 'var(--color-separator)',
-                          border: `1px solid ${decision === 'merge' ? 'color-mix(in srgb, var(--color-tint) 40%, transparent)' : 'var(--color-separator)'}`,
-                          color: decision === 'merge' ? 'var(--color-tint)' : 'var(--color-label-2)',
-                        }}
-                      >
-                        ✓ Same animal — merge logs
-                      </button>
-                      <button
-                        onClick={() => setMatchDecisions((prev) => ({ ...prev, [m.importName.toLowerCase()]: 'new' }))}
-                        className="flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                        style={{
-                          backgroundColor: decision === 'new' ? 'color-mix(in srgb, var(--color-red) 12%, transparent)' : 'var(--color-separator)',
-                          border: `1px solid ${decision === 'new' ? 'color-mix(in srgb, var(--color-red) 30%, transparent)' : 'var(--color-separator)'}`,
-                          color: decision === 'new' ? 'var(--color-red)' : 'var(--color-label-2)',
-                        }}
-                      >
-                        + Import as new animal
-                      </button>
-                    </div>
+                    <SegmentedControl
+                      label={`What to do with ${m.importName}`}
+                      value={decision}
+                      onChange={(next) => setMatchDecisions((prev) => ({ ...prev, [m.importName.toLowerCase()]: next }))}
+                      options={[{ value: 'merge', label: 'Same animal — merge logs' }, { value: 'new', label: 'Import as new animal' }]}
+                    />
                   </div>
                 )
               })}
@@ -676,22 +650,21 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
           {/* Unmatched animals — manual link */}
           {unmatchedAnimals.length > 0 && allAnimals.length > 0 && (
-            <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: 'var(--color-label-2)', borderBottom: '1px solid var(--color-separator)' }}>
+            <div className="rounded-xl overflow-hidden mb-6 bg-surface">
+              <p className="list-row px-4 py-2.5 text-[13px] font-semibold text-label-2">
                 No match found — link manually or import as new
               </p>
               {unmatchedAnimals.map((a, i) => {
                 const key = (a.name as string).trim().toLowerCase()
                 const linkedId = manualLinks[key] ?? ''
                 return (
-                  <div key={i} className="px-4 py-3 flex items-center gap-3" style={{ borderBottom: i < unmatchedAnimals.length - 1 ? '1px solid var(--color-separator)' : 'none' }}>
-                    <span className="text-sm shrink-0" style={{ color: 'var(--color-label)' }}>{String(a.name)}</span>
+                  <div key={i} className="list-row px-4 py-2.5 flex items-center gap-3">
+                    <span className="text-[15px] shrink-0 text-label">{String(a.name)}</span>
                     <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="var(--color-label-2)" strokeWidth={2} className="shrink-0"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                     <select
                       value={linkedId}
                       onChange={(e) => setManualLinks((prev) => ({ ...prev, [key]: e.target.value }))}
-                      className="flex-1 text-sm rounded-lg px-3 py-1.5"
-                      style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-separator)', color: linkedId ? 'var(--color-tint)' : 'var(--color-label-2)' }}
+                      className={`flex-1 min-w-0 h-9 text-[15px] rounded-[8px] px-2.5 bg-fill border-0 outline-none focus-visible:ring-2 focus-visible:ring-tint ${linkedId ? 'text-tint' : 'text-label-2'}`}
                     >
                       <option value="">Import as new animal</option>
                       {allAnimals.map((e) => (
@@ -706,26 +679,26 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
           {/* Animal name preview */}
           {importData.animals.length > 0 && (
-            <div className="rounded-xl overflow-hidden mb-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <p className="px-4 py-2.5 text-xs font-medium" style={{ color: 'var(--color-label-2)', borderBottom: '1px solid var(--color-separator)' }}>
+            <div className="rounded-xl overflow-hidden mb-6 bg-surface">
+              <p className="list-row px-4 py-2.5 text-[13px] font-semibold text-label-2">
                 Animals detected
               </p>
               {importData.animals.slice(0, 5).map((a, i) => (
-                <div key={i} className="px-4 py-2.5 flex items-center gap-3" style={{ borderBottom: i < Math.min(importData.animals.length, 5) - 1 ? '1px solid var(--color-separator)' : 'none' }}>
+                <div key={i} className="list-row px-4 py-2.5 flex items-center gap-3">
                   <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: 'var(--color-tint)' }} />
-                  <span className="text-sm" style={{ color: 'var(--color-label)' }}>{String(a.name)}</span>
-                  <span className="text-xs ml-auto" style={{ color: 'var(--color-label-2)' }}>{String(a.species)}</span>
+                  <span className="text-[15px] text-label">{String(a.name)}</span>
+                  <span className="text-[13px] ml-auto text-label-2">{String(a.species)}</span>
                 </div>
               ))}
               {importData.animals.length > 5 && (
-                <p className="px-4 py-2.5 text-xs" style={{ color: 'var(--color-label-2)' }}>+{importData.animals.length - 5} more animals…</p>
+                <p className="list-row px-4 py-2.5 text-[13px] text-label-2">+{importData.animals.length - 5} more animals…</p>
               )}
             </div>
           )}
 
           {importData.animals.length === 0 && importData.feedingLogs.length === 0 && importData.sheddingLogs.length === 0 && (
-            <div className="rounded-xl p-4 mb-6 text-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}>
-              <p className="text-sm" style={{ color: 'var(--color-red)' }}>No data detected. Make sure your file matches the template format.</p>
+            <div className="rounded-xl p-4 mb-6 text-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)' }}>
+              <p className="text-[15px] text-red">No data detected. Make sure your file matches the template format.</p>
             </div>
           )}
 
@@ -740,33 +713,33 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
       {step === 3 && (
         <div>
-          <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-            <p className="text-sm font-semibold mb-1" style={{ color: 'var(--color-label)' }}>
+          <div className="rounded-xl p-4 mb-4 bg-surface">
+            <p className="text-[15px] font-semibold mb-1 text-label">
               {importData.animals.length} animals, {importData.feedingLogs.length} feeding logs, {importData.sheddingLogs.length} shed records ready to import
             </p>
-            <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Feeding/shedding logs will be linked to animals by name (case-insensitive). Unmatched entries will be skipped. Records that already exist will be detected and skipped automatically.</p>
+            <p className="text-[13px] text-label-2">Feeding/shedding logs will be linked to animals by name (case-insensitive). Unmatched entries will be skipped. Records that already exist will be detected and skipped automatically.</p>
           </div>
           {importData.animals.length > 0 && (
-            <div className="mb-4 overflow-x-auto rounded-xl" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              <table className="w-full text-xs">
+            <div className="mb-4 overflow-x-auto rounded-xl bg-surface">
+              <table className="w-full text-[13px]">
                 <thead>
-                  <tr style={{ borderBottom: '1px solid var(--color-separator)' }}>
+                  <tr className="border-b-[0.5px] border-separator">
                     {['Name', 'Species', 'Morph', 'Sex'].map((h) => (
-                      <th key={h} className="text-left px-3 py-2 font-medium" style={{ color: 'var(--color-label-2)' }}>{h}</th>
+                      <th key={h} className="text-left px-3 py-2 font-medium text-label-2">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody>
                   {importData.animals.slice(0, 5).map((row, i) => (
-                    <tr key={i} style={{ borderBottom: '1px solid var(--color-separator)' }}>
-                      <td className="px-3 py-2" style={{ color: 'var(--color-label)' }}>{String(row.name)}</td>
-                      <td className="px-3 py-2" style={{ color: 'var(--color-label-2)' }}>{String(row.species)}</td>
-                      <td className="px-3 py-2" style={{ color: 'var(--color-label-2)' }}>{String(row.morph ?? '')}</td>
-                      <td className="px-3 py-2" style={{ color: 'var(--color-label-2)' }}>{String(row.sex ?? '')}</td>
+                    <tr key={i} className="border-b-[0.5px] border-separator">
+                      <td className="px-3 py-2 text-label">{String(row.name)}</td>
+                      <td className="px-3 py-2 text-label-2">{String(row.species)}</td>
+                      <td className="px-3 py-2 text-label-2">{String(row.morph ?? '')}</td>
+                      <td className="px-3 py-2 text-label-2">{String(row.sex ?? '')}</td>
                     </tr>
                   ))}
                   {importData.animals.length > 5 && (
-                    <tr><td colSpan={4} className="px-3 py-2 text-center" style={{ color: 'var(--color-label-2)' }}>+{importData.animals.length - 5} more…</td></tr>
+                    <tr><td colSpan={4} className="px-3 py-2 text-center text-label-2">+{importData.animals.length - 5} more…</td></tr>
                   )}
                 </tbody>
               </table>
@@ -791,9 +764,9 @@ export function Import({ embedded }: { embedded?: boolean }) {
         <div>
           {importError ? (
             <div className="text-center">
-              <div className="text-4xl mb-4">❌</div>
-              <p className="text-lg font-semibold mb-2" style={{ color: 'var(--color-label)' }}>Import failed</p>
-              <p className="text-sm mb-6 px-4" style={{ color: 'var(--color-red)' }}>{importError}</p>
+              <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center text-white bg-red"><Icon name="x" size={28} strokeWidth={2.6} /></span>
+              <p className="text-lg font-semibold mb-2 text-label">Import failed</p>
+              <p className="text-[15px] mb-6 px-4 text-red">{importError}</p>
               <Button variant="secondary" onClick={() => { setStep(3); setImportError(null) }}>Go back and try again</Button>
             </div>
           ) : !result ? (
@@ -801,96 +774,98 @@ export function Import({ embedded }: { embedded?: boolean }) {
               <div className="flex justify-center mb-6">
                 <div className="w-10 h-10 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-tint)', borderTopColor: 'transparent' }} />
               </div>
-              <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <div className="rounded-xl overflow-hidden bg-surface">
                 <div className="h-2 rounded-full" style={{ width: `${progress}%`, backgroundColor: 'var(--color-tint)', transition: 'width 0.5s' }} />
               </div>
-              <p className="text-center text-sm mt-3" style={{ color: 'var(--color-label-2)' }}>Importing… {progress}%</p>
+              <p className="text-center text-[15px] mt-3 text-label-2">Importing… {progress}%</p>
             </div>
           ) : (
             <div className="text-center">
-              <div className="text-4xl mb-4">{(result.skippedFeedings + result.skippedSheds) > 0 ? '⚠️' : '✅'}</div>
-              <p className="text-lg font-semibold mb-4" style={{ color: 'var(--color-label)' }}>Import complete</p>
-              <div className="rounded-xl p-4 mb-4 text-left" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
+              <span className={`mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center text-white ${(result.skippedFeedings + result.skippedSheds) > 0 ? 'bg-orange' : 'bg-green'}`}>
+                <Icon name={(result.skippedFeedings + result.skippedSheds) > 0 ? 'alert' : 'check'} size={28} strokeWidth={2.4} />
+              </span>
+              <p className="text-lg font-semibold mb-4 text-label">Import complete</p>
+              <div className="rounded-xl p-4 mb-4 text-left bg-surface">
                 <div className="flex flex-col gap-2">
-                  <div className="flex justify-between text-sm"><span style={{ color: 'var(--color-label-2)' }}>Animals added</span><span style={{ color: 'var(--color-label)' }}>{result.animals}</span></div>
+                  <div className="flex justify-between text-[15px]"><span className="text-label-2">Animals added</span><span className="text-label">{result.animals}</span></div>
                   {result.reactivated > 0 && (
-                    <div className="flex justify-between text-sm"><span style={{ color: 'var(--color-tint)' }}>Animals reactivated</span><span style={{ color: 'var(--color-tint)' }}>{result.reactivated}</span></div>
+                    <div className="flex justify-between text-[15px]"><span className="text-tint">Animals reactivated</span><span className="text-tint">{result.reactivated}</span></div>
                   )}
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: 'var(--color-label-2)' }}>Feeding logs added</span>
-                    <span style={{ color: 'var(--color-label)' }}>{result.feedings} / {result.feedingsDetected}</span>
+                  <div className="flex justify-between text-[15px]">
+                    <span className="text-label-2">Feeding logs added</span>
+                    <span className="text-label">{result.feedings} / {result.feedingsDetected}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span style={{ color: 'var(--color-label-2)' }}>Shed records added</span>
+                  <div className="flex justify-between text-[15px]">
+                    <span className="text-label-2">Shed records added</span>
                     <span style={{ color: result.shedsDetected > 0 && result.sheds === 0 ? 'var(--color-red)' : 'var(--color-label)' }}>{result.sheds} / {result.shedsDetected}</span>
                   </div>
                   {(result.duplicateFeedings + result.duplicateSheds + result.skippedFeedings + result.skippedSheds) > 0 && (
-                    <div className="pt-2 flex flex-col gap-2" style={{ borderTop: '1px solid var(--color-separator)' }}>
+                    <div className="pt-2 flex flex-col gap-2 border-t-[0.5px] border-separator">
                       {result.duplicateFeedings > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span style={{ color: 'var(--color-orange)' }}>Feeding duplicates skipped</span>
-                          <span style={{ color: 'var(--color-orange)' }}>{result.duplicateFeedings}</span>
+                        <div className="flex justify-between text-[15px]">
+                          <span className="text-orange">Feeding duplicates skipped</span>
+                          <span className="text-orange">{result.duplicateFeedings}</span>
                         </div>
                       )}
                       {result.duplicateSheds > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span style={{ color: 'var(--color-orange)' }}>Shed duplicates skipped</span>
-                          <span style={{ color: 'var(--color-orange)' }}>{result.duplicateSheds}</span>
+                        <div className="flex justify-between text-[15px]">
+                          <span className="text-orange">Shed duplicates skipped</span>
+                          <span className="text-orange">{result.duplicateSheds}</span>
                         </div>
                       )}
                       {result.skippedFeedings > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span style={{ color: 'var(--color-red)' }}>Feedings — no matching animal</span>
-                          <span style={{ color: 'var(--color-red)' }}>{result.skippedFeedings}</span>
+                        <div className="flex justify-between text-[15px]">
+                          <span className="text-red">Feedings — no matching animal</span>
+                          <span className="text-red">{result.skippedFeedings}</span>
                         </div>
                       )}
                       {result.skippedSheds > 0 && (
-                        <div className="flex justify-between text-sm">
-                          <span style={{ color: 'var(--color-red)' }}>Sheds — no matching animal</span>
-                          <span style={{ color: 'var(--color-red)' }}>{result.skippedSheds}</span>
+                        <div className="flex justify-between text-[15px]">
+                          <span className="text-red">Sheds — no matching animal</span>
+                          <span className="text-red">{result.skippedSheds}</span>
                         </div>
                       )}
                     </div>
                   )}
-                  <div className="pt-2 flex flex-col gap-1" style={{ borderTop: '1px solid var(--color-separator)' }}>
-                    <div className="flex justify-between text-xs">
-                      <span style={{ color: 'var(--color-label-2)' }}>Shed records in DB before import</span>
-                      <span style={{ color: 'var(--color-label-2)' }}>{result.shedsInDbBefore}</span>
+                  <div className="pt-2 flex flex-col gap-1 border-t-[0.5px] border-separator">
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-label-2">Shed records in DB before import</span>
+                      <span className="text-label-2">{result.shedsInDbBefore}</span>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span style={{ color: 'var(--color-label-2)' }}>Shed records in DB after import</span>
-                      <span style={{ color: 'var(--color-label-2)' }}>{result.shedsInDbAfter}</span>
+                    <div className="flex justify-between text-[13px]">
+                      <span className="text-label-2">Shed records in DB after import</span>
+                      <span className="text-label-2">{result.shedsInDbAfter}</span>
                     </div>
                   </div>
                 </div>
               </div>
               {result.shedsDetected > 0 && result.sheds === 0 && result.duplicateSheds === 0 && result.skippedSheds === 0 && (
-                <p className="text-xs mb-4 px-2" style={{ color: 'var(--color-red)' }}>
+                <p className="text-[13px] mb-4 px-2 text-red">
                   Shed records were detected but none were imported. This usually means the date column couldn't be parsed. Make sure dates are formatted as YYYY-MM-DD in your file.
                 </p>
               )}
               {result.skippedSheds > 0 && (
-                <p className="text-xs mb-4 px-2" style={{ color: 'var(--color-label-2)' }}>
+                <p className="text-[13px] mb-4 px-2 text-label-2">
                   {result.skippedSheds} shed record{result.skippedSheds !== 1 ? 's' : ''} couldn't be linked — the animal name in the shed sheet didn't match any animal in your collection. Go back and use manual linking.
                 </p>
               )}
               {result.skippedFeedings > 0 && (
-                <p className="text-xs mb-4 px-2" style={{ color: 'var(--color-label-2)' }}>
+                <p className="text-[13px] mb-4 px-2 text-label-2">
                   {result.skippedFeedings} feeding record{result.skippedFeedings !== 1 ? 's' : ''} couldn't be linked — the animal name in the feeding sheet didn't match any animal in your collection.
                 </p>
               )}
               {result.duplicateAnimalNames.length > 0 && (
-                <div className="rounded-xl p-3 mb-4 text-left" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 8%, transparent)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}>
-                  <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-red)' }}>Duplicate animals detected in your collection</p>
-                  <p className="text-xs mb-2" style={{ color: 'var(--color-label-2)' }}>
+                <div className="rounded-xl p-3 mb-4 text-left" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)' }}>
+                  <p className="text-[13px] font-medium mb-1 text-red">Duplicate animals detected in your collection</p>
+                  <p className="text-[13px] mb-2 text-label-2">
                     Previous imports created ghost copies of these animals and attached logs to the wrong records. Tap below to automatically merge them — logs will be consolidated onto the original animal and the ghosts deleted.
                   </p>
-                  <p className="text-xs mb-3" style={{ color: 'var(--color-red)' }}>{result.duplicateAnimalNames.join(', ')}</p>
+                  <p className="text-[13px] mb-3 text-red">{result.duplicateAnimalNames.join(', ')}</p>
                   <Button
                     size="sm"
+                    variant="danger"
                     loading={fixingDuplicates}
                     onClick={handleFixDuplicates}
-                    style={{ backgroundColor: 'var(--color-red)', color: '#fff', border: 'none' }}
                   >
                     Fix duplicate animals
                   </Button>
@@ -909,7 +884,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
   if (embedded) return inner
   return (
-    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
       {inner}
     </div>
   )
