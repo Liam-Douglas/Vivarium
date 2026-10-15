@@ -32,15 +32,15 @@ type Density = 'grid' | 'list'
 
 const DENSITY_KEY = 'vivarium-animals-density'
 
-const CATEGORIES: { label: string; icon: string; pattern: RegExp }[] = [
-  { label: 'Snakes',          icon: '🐍', pattern: /python|boa|corn\s*snake|king\s*snake|milk\s*snake|rat\s*snake|hognose|blood\s*python|vine\s*snake|sand\s*boa|garter|bull\s*snake|pine\s*snake|viper|mamba|cobra|anaconda|ribbon\s*snake|\bsnake\b/ },
-  { label: 'Lizards',         icon: '🦎', pattern: /gecko|bearded\s*dragon|monitor|agama|iguana|chameleon|skink|blue.tongue|anole|uromastyx|tegu|crested|frilled|savannah|ackie|fat.tail|basilisk|\blizard\b/ },
-  { label: 'Turtles',         icon: '🐢', pattern: /turtle|tortoise|terrapin/ },
-  { label: 'Frogs',           icon: '🐸', pattern: /frog|pacman|dart\s*frog|horned\s*frog|dumpy|whites\s*tree|bullfrog|tree\s*frog/ },
-  { label: 'Amphibians',      icon: '🌿', pattern: /salamander|axolotl|newt|\btoad\b|caecilian/ },
-  { label: 'Crocodilians',    icon: '🐊', pattern: /crocodile|alligator|caiman|gharial/ },
-  { label: 'Invertebrates',   icon: '🕷️', pattern: /tarantula|scorpion|millipede|stick\s*insect|mantis|hermit\s*crab|\bspider\b/ },
-  { label: 'Mammals',         icon: '🐀', pattern: /\brat\b|\bmouse\b|\bmice\b|rabbit|degu|chinchilla|hedgehog|ferret|sugar\s*glider/ },
+const CATEGORIES: { label: string; pattern: RegExp }[] = [
+  { label: 'Snakes',          pattern: /python|boa|corn\s*snake|king\s*snake|milk\s*snake|rat\s*snake|hognose|blood\s*python|vine\s*snake|sand\s*boa|garter|bull\s*snake|pine\s*snake|viper|mamba|cobra|anaconda|ribbon\s*snake|\bsnake\b/ },
+  { label: 'Lizards',         pattern: /gecko|bearded\s*dragon|monitor|agama|iguana|chameleon|skink|blue.tongue|anole|uromastyx|tegu|crested|frilled|savannah|ackie|fat.tail|basilisk|\blizard\b/ },
+  { label: 'Turtles',         pattern: /turtle|tortoise|terrapin/ },
+  { label: 'Frogs',           pattern: /frog|pacman|dart\s*frog|horned\s*frog|dumpy|whites\s*tree|bullfrog|tree\s*frog/ },
+  { label: 'Amphibians',      pattern: /salamander|axolotl|newt|\btoad\b|caecilian/ },
+  { label: 'Crocodilians',    pattern: /crocodile|alligator|caiman|gharial/ },
+  { label: 'Invertebrates',   pattern: /tarantula|scorpion|millipede|stick\s*insect|mantis|hermit\s*crab|\bspider\b/ },
+  { label: 'Mammals',         pattern: /\brat\b|\bmouse\b|\bmice\b|rabbit|degu|chinchilla|hedgehog|ferret|sugar\s*glider/ },
 ]
 
 function categorize(species: string): string {
@@ -108,7 +108,7 @@ export function Animals() {
   const presentCategories = useMemo(() => {
     const seen = new Set(animals.map((a) => categorize(a.species)))
     return CATEGORIES.filter((c) => seen.has(c.label)).concat(
-      seen.has('Other') ? [{ label: 'Other', icon: '❓', pattern: /(?!)/ }] : []
+      seen.has('Other') ? [{ label: 'Other', pattern: /(?!)/ }] : []
     )
   }, [animals])
 

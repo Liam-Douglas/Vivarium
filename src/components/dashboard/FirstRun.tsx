@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/Button'
+import { IconTile } from '@/components/ui/icons'
 
 /**
  * The dashboard before there is a collection.
@@ -13,39 +14,28 @@ export function FirstRun({ onAddAnimal }: { onAddAnimal: () => void }) {
   return (
     <section
       aria-labelledby="first-run-title"
-      className="rounded-2xl p-5 sm:p-6 max-w-xl"
-      style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}
+      className="rounded-2xl p-5 sm:p-6 max-w-xl bg-surface"
     >
-      <LeafIcon />
-      <h2 id="first-run-title" className="text-xl font-semibold mt-4" style={{ color: 'var(--color-label)' }}>
+      <IconTile name="animal" color="var(--color-tint)" size={44} />
+      <h2 id="first-run-title" className="text-[22px] leading-7 font-bold mt-4 text-label">
         Start your collection
       </h2>
-      <p className="text-sm mt-2 leading-relaxed" style={{ color: 'var(--color-label-2)' }}>
+      <p className="text-[17px] mt-1.5 leading-snug text-label-2">
         Add your animals and Vivarium keeps track of who is due to eat, when they last shed, and how their weight is going.
       </p>
-      <div className="flex flex-col sm:flex-row gap-2 mt-5">
-        <Button fullWidth onClick={onAddAnimal}>Add your first animal</Button>
+      <div className="flex flex-col gap-1 mt-5">
+        <Button size="lg" fullWidth onClick={onAddAnimal}>Add your first animal</Button>
         <Link
           to="/import"
-          className="w-full inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium border border-separator text-label hover:bg-fill active:bg-fill active:scale-[0.97] motion-reduce:active:scale-100 transition-[transform,background-color] duration-150 ease-out pointer-coarse:min-h-11"
+          className="w-full inline-flex items-center justify-center min-h-11 text-[17px] text-tint active:opacity-60"
         >
           Import a spreadsheet
         </Link>
       </div>
-      <p className="text-xs mt-4 leading-relaxed" style={{ color: 'var(--color-label-2)' }}>
+      <p className="text-[13px] mt-3 leading-relaxed text-label-2">
         Everyone you invite to your household sees the same records. Your invite code is in{' '}
-        <Link to="/settings" className="underline underline-offset-2" style={{ color: 'var(--color-tint)' }}>Settings</Link>.
+        <Link to="/settings" className="text-tint">Settings</Link>.
       </p>
     </section>
-  )
-}
-
-function LeafIcon() {
-  return (
-    <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 12%, transparent)' }}>
-      <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="var(--color-tint)" strokeWidth={1.75} aria-hidden="true">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M5 19c0-8 5-14 14-14 0 9-6 14-14 14zm0 0l7-7" />
-      </svg>
-    </div>
   )
 }

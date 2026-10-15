@@ -1,3 +1,4 @@
+import { Icon } from './icons'
 import { useState, useEffect, createContext, useContext, useCallback, type ReactNode } from 'react'
 
 interface ToastItem {
@@ -69,33 +70,34 @@ function ToastItem({ toast, onRemove }: { toast: ToastItem; onRemove: () => void
   const onDismiss = () => setLeaving(true)
   const shown = visible && !leaving
 
-  const colors = {
-    success: 'var(--color-green)',
-    error: 'var(--color-red)',
-    info: 'var(--color-tint)',
-  }
+  const tone = {
+    success: { color: 'var(--color-green)', icon: 'check' as const },
+    error: { color: 'var(--color-red)', icon: 'alert' as const },
+    info: { color: 'var(--color-tint)', icon: 'bell' as const },
+  }[toast.type]
 
+  // A banner as iOS draws its own notices: nearly opaque over a blur so what
+  // passes beneath never muddies it, soft-shadowed, its kind told by a small
+  // coloured glyph.
   return (
     <div
       role={toast.type === 'error' ? 'alert' : 'status'}
-      className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg transition-[opacity,transform] duration-300 ease-out ${shown ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full motion-reduce:translate-y-0'}`}
-      style={{ backgroundColor: 'var(--color-surface-2)', border: `1px solid color-mix(in srgb, ${colors[toast.type]} 25%, transparent)` }}
+      className={`bg-surface-2/95 backdrop-blur-xl flex items-center gap-3 pl-3 pr-2 py-2.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.18)] transition-[opacity,transform] duration-300 ease-drawer ${shown ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-full scale-95 motion-reduce:translate-y-0 motion-reduce:scale-100'}`}
     >
-      <div aria-hidden="true" className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[toast.type] }} />
-      <p className="flex-1 text-sm" style={{ color: 'var(--color-label)' }}>{toast.message}</p>
+      <span aria-hidden="true" className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0" style={{ backgroundColor: tone.color }}>
+        <Icon name={tone.icon} size={16} strokeWidth={2.4} />
+      </span>
+      <p className="flex-1 text-[15px] text-label">{toast.message}</p>
       {toast.action && (
         <button
           onClick={() => { toast.action!.onClick(); onDismiss() }}
-          className="tap-target text-xs font-medium shrink-0"
-          style={{ color: 'var(--color-tint)' }}
+          className="tap-target text-[15px] font-semibold text-tint shrink-0 active:opacity-60"
         >
           {toast.action.label}
         </button>
       )}
-      <button onClick={onDismiss} aria-label="Dismiss" className="tap-target" style={{ color: 'var(--color-label-2)' }}>
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+      <button onClick={onDismiss} aria-label="Dismiss" className="tap-target w-8 h-8 rounded-full flex items-center justify-center text-label-2 active:bg-fill">
+        <Icon name="x" size={16} strokeWidth={2.2} />
       </button>
     </div>
   )

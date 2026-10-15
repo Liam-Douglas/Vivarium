@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ui/icons'
 import { useState, useRef, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import HCaptcha from '@hcaptcha/react-hcaptcha'
@@ -69,12 +70,12 @@ export function SignUp() {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="w-full max-w-sm">
-          <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-            <div className="text-4xl mb-4">📬</div>
-            <h2 className="text-xl font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
+          <div className="rounded-2xl p-8 text-center bg-surface">
+            <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)', color: 'var(--color-tint)' }}><Icon name="mail" size={28} strokeWidth={1.8} /></span>
+            <h2 className="text-xl font-semibold mb-2 text-label">
               Check your inbox
             </h2>
-            <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
+            <p className="text-[15px] mb-6 text-label-2">
               We sent a confirmation link to <strong style={{ color: 'var(--color-label)' }}>{email}</strong>. Click the link to verify your account.
             </p>
             <Button variant="secondary" fullWidth onClick={() => navigate('/auth/signin')}>
@@ -90,21 +91,21 @@ export function SignUp() {
     <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: 'var(--color-bg)' }}>
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <BrandMark />
-            <span className="text-2xl font-bold" style={{ color: 'var(--color-label)' }}>
+          <div className="flex flex-col items-center gap-3">
+            <BrandMark size="xl" />
+            <span className="text-[28px] leading-[34px] font-bold text-label">
               Vivarium
             </span>
           </div>
         </div>
 
-        <div className="rounded-2xl p-6" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-          <h2 className="text-xl font-semibold mb-6" style={{ color: 'var(--color-label)' }}>
+        <div className="rounded-2xl p-6 bg-surface">
+          <h2 className="text-[22px] leading-7 font-bold mb-5 text-label">
             Create your account
           </h2>
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)', border: '1px solid color-mix(in srgb, var(--color-red) 20%, transparent)' }}>
+            <div className="mb-4 px-4 py-3 rounded-xl text-[15px]" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)' }}>
               {error}
             </div>
           )}
@@ -144,7 +145,7 @@ export function SignUp() {
                   sitekey={siteKey}
                   onVerify={setCaptchaToken}
                   onExpire={() => setCaptchaToken(null)}
-                  theme="dark"
+                  theme={window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'}
                 />
               </div>
             )}
@@ -155,9 +156,9 @@ export function SignUp() {
           </form>
 
           <div className="flex items-center gap-3 my-4">
-            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
-            <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>or</span>
-            <div className="flex-1 h-px" style={{ backgroundColor: 'var(--color-separator)' }} />
+            <div className="flex-1 h-px bg-separator" />
+            <span className="text-[13px] text-label-2">or</span>
+            <div className="flex-1 h-px bg-separator" />
           </div>
 
           <Button variant="secondary" fullWidth onClick={handleGoogle} loading={googleLoading}>
@@ -171,16 +172,16 @@ export function SignUp() {
           </Button>
         </div>
 
-        <p className="text-center text-xs mt-4 leading-relaxed" style={{ color: 'var(--color-label-2)' }}>
+        <p className="text-center text-[13px] mt-4 leading-relaxed text-label-2">
           By signing up you agree to our{' '}
           <Link to="/terms" style={{ color: 'var(--color-label-2)' }}>Terms</Link>{' '}
           and{' '}
           <Link to="/privacy" style={{ color: 'var(--color-label-2)' }}>Privacy Policy</Link>
         </p>
 
-        <p className="text-center text-sm mt-3" style={{ color: 'var(--color-label-2)' }}>
+        <p className="text-center text-[15px] mt-3 text-label-2">
           Already have an account?{' '}
-          <Link to="/auth/signin" className="font-medium" style={{ color: 'var(--color-tint)' }}>
+          <Link to="/auth/signin" className="font-medium text-tint">
             Sign in
           </Link>
         </p>

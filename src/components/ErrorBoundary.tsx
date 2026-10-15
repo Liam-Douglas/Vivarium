@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ui/icons'
 import { Component, type ReactNode, type ErrorInfo } from 'react'
 
 interface Props {
@@ -28,16 +29,16 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return this.props.fallback ?? (
         <div className="flex-1 flex flex-col items-center justify-center px-4 text-center min-h-dvh" style={{ backgroundColor: 'var(--color-bg)' }}>
-          <div className="text-5xl mb-4">🦎</div>
-          <h2 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-label)' }}>
+          <Icon name="alert" size={48} strokeWidth={1.4} className="text-label-3 mb-3 mx-auto" />
+          <h2 className="text-lg font-semibold mb-2 text-label">
             Something went wrong
           </h2>
-          <p className="text-sm mb-6" style={{ color: 'var(--color-label-2)' }}>
+          <p className="text-[15px] mb-6 text-label-2">
             {this.state.error?.message ?? 'An unexpected error occurred.'}
           </p>
           <button
             onClick={() => this.setState({ hasError: false, error: undefined })}
-            className="px-5 py-2.5 rounded-xl text-sm font-medium"
+            className="px-5 py-2.5 rounded-xl text-[15px] font-medium"
             style={{ backgroundColor: 'var(--color-tint)', color: 'var(--color-bg)' }}
           >
             Try again

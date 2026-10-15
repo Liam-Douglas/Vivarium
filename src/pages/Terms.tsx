@@ -5,8 +5,8 @@ export function Terms() {
 
   return (
     <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
-      <h1 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-label)' }}>Terms of Service</h1>
-      <p className="text-xs mb-6" style={mutedStyle}>Last updated: April 2025</p>
+      <h1 className="text-2xl font-bold mb-2 text-label">Terms of Service</h1>
+      <p className="text-[13px] mb-6" style={mutedStyle}>Last updated: April 2025</p>
 
       <div className="flex flex-col gap-4">
         <Section title="Acceptance of terms" headingStyle={headingStyle} bodyStyle={bodyStyle}>
@@ -81,9 +81,9 @@ function Section({
   bodyStyle: React.CSSProperties
 }) {
   return (
-    <div className="rounded-xl p-5" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-      <h2 className="text-sm font-semibold mb-3" style={headingStyle}>{title}</h2>
-      <div className="text-sm leading-relaxed" style={bodyStyle}>{children}</div>
+    <div className="rounded-xl p-5 bg-surface">
+      <h2 className="text-[15px] font-semibold mb-3" style={headingStyle}>{title}</h2>
+      <div className="text-[15px] leading-relaxed" style={bodyStyle}>{children}</div>
     </div>
   )
 }

@@ -7,9 +7,9 @@ export function AuthShell({ children }: { children: ReactNode }) {
     <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: 'var(--color-bg)' }}>
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <BrandMark />
-            <span className="text-2xl font-bold" style={{ color: 'var(--color-label)' }}>
+          <div className="flex flex-col items-center gap-3">
+            <BrandMark size="xl" />
+            <span className="text-[28px] leading-[34px] font-bold text-label">
               Vivarium
             </span>
           </div>
