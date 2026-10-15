@@ -14,7 +14,10 @@ import { BatchFeedForm } from '@/components/feeding/BatchFeedForm'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
-import { Header } from '@/components/layout/Header'
+import { LargeTitle } from '@/components/ui/LargeTitle'
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { ListSection, ListRow } from '@/components/ui/List'
+import { Icon } from '@/components/ui/icons'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { AnimalCardSkeleton } from '@/components/ui/LoadingSkeleton'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
@@ -203,20 +206,19 @@ export function Animals() {
 
   const hasActiveFilter = search || categoryFilter
 
-  const headerAction = pageTab === 'animals' ? (
-    <Button size="sm" onClick={handleAddClick}>
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-      Add animal
-    </Button>
-  ) : (
-    <Button size="sm" onClick={openAddEnclosure}>
-      <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-        <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-      </svg>
-      Add enclosure
-    </Button>
+  // A bar button, as in Contacts: the plus alone on a phone, labelled where
+  // there is room.
+  const addLabel = pageTab === 'animals' ? 'Add animal' : 'Add enclosure'
+  const headerAction = (
+    <button
+      type="button"
+      onClick={pageTab === 'animals' ? handleAddClick : openAddEnclosure}
+      aria-label={addLabel}
+      className="tap-target inline-flex items-center justify-center gap-1.5 w-9 h-9 sm:w-auto sm:px-3.5 rounded-full bg-tint text-on-tint text-[15px] font-semibold active:opacity-70 transition-opacity"
+    >
+      <Icon name="plus" size={18} strokeWidth={2.4} />
+      <span className="hidden sm:inline">{addLabel}</span>
+    </button>
   )
 
   const headerSubtitle = pageTab === 'animals'
@@ -224,63 +226,56 @@ export function Animals() {
     : (enclosures.length > 0 ? `${enclosures.length} enclosure${enclosures.length !== 1 ? 's' : ''}` : undefined)
 
   return (
-    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-5xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav md:pb-8 max-w-5xl mx-auto w-full">
       {/* With no animals the empty state below carries the add button, and a
           second identical one in the header only competed with it. */}
-      <Header title="Animals" subtitle={headerSubtitle} action={pageTab === 'animals' && !loading && !error && animals.length === 0 ? undefined : headerAction} />
+      <LargeTitle
+        title="Animals"
+        subtitle={headerSubtitle}
+        trailing={pageTab === 'animals' && !loading && !error && animals.length === 0 ? undefined : headerAction}
+      />
 
-      {/* Tab toggle */}
-      <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-separator)' }}>
-        {(['animals', 'enclosures'] as PageTab[]).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setPageTab(tab)}
-            aria-pressed={pageTab === tab}
-            className="flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-colors"
-            style={{
-              backgroundColor: pageTab === tab ? 'var(--color-surface)' : 'transparent',
-              color: pageTab === tab ? 'var(--color-label)' : 'var(--color-label-2)',
-            }}
-          >
-            {tab === 'animals' ? `🐾 Animals` : `🏠 Enclosures`}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        label="Show"
+        className="mb-4 sm:max-w-xs"
+        value={pageTab}
+        onChange={setPageTab}
+        options={[{ value: 'animals', label: 'Animals' }, { value: 'enclosures', label: 'Enclosures' }]}
+      />
 
       {/* ── ANIMALS TAB ── */}
       {pageTab === 'animals' && (
         <>
           {animals.length > 0 && (
-            <div className="flex flex-col gap-3 mb-4">
-              <div className="flex gap-2">
+            <div className="flex flex-col gap-3 mb-5">
+              <div className="flex items-center gap-2">
                 {/* min-w-0: an input's intrinsic width is about twenty
                     characters, and without this it refused to shrink, pushing
                     the sort and density controls off a phone screen and making
                     the whole page scroll sideways. */}
-                <input
-                  type="search"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search animals…"
-                  aria-label="Search animals"
-                  className="flex-1 min-w-0 rounded-xl px-3 sm:px-4 py-2.5 text-sm"
-                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: 'var(--color-label)' }}
-                />
-                {/* On phones the sort is a 44px icon over the native picker, so
-                    search keeps the width; from sm up it shows its label. */}
+                <label className="relative flex-1 min-w-0">
+                  <Icon name="search" size={17} strokeWidth={2} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-label-2 pointer-events-none" />
+                  <input
+                    type="search"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search"
+                    aria-label="Search animals"
+                    className="w-full min-w-0 h-9 rounded-[10px] pl-8 pr-3 text-[17px] bg-fill text-label placeholder:text-label-2 outline-none focus-visible:ring-2 focus-visible:ring-tint"
+                  />
+                </label>
+                {/* The sort is a bar button over the native picker, so iOS
+                    shows its own wheel or menu. */}
                 <label
-                  className="relative shrink-0 flex items-center justify-center w-11 sm:w-auto rounded-xl has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-tint sm:has-[select:focus-visible]:ring-0"
-                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)', color: 'var(--color-label-2)' }}
+                  className="tap-target relative shrink-0 flex items-center justify-center w-9 h-9 rounded-full text-tint active:opacity-60 has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-tint"
+                  title="Sort"
                 >
-                  <svg className="sm:hidden" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 7.5L7.5 3m0 0L12 7.5M7.5 3v13.5m13.5 0L16.5 21m0 0L12 16.5m4.5 4.5V7.5" />
-                  </svg>
+                  <Icon name="sort" size={20} strokeWidth={2} />
                   <select
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortKey)}
                     aria-label="Sort animals"
-                    className="absolute inset-0 w-full h-full opacity-0 sm:static sm:opacity-100 sm:w-auto rounded-xl px-3 py-2.5 text-sm"
-                    style={{ backgroundColor: 'var(--color-surface)', color: 'var(--color-label-2)' }}
+                    className="absolute inset-0 w-full h-full opacity-0"
                   >
                     <option value="name-asc">Name A → Z</option>
                     <option value="name-desc">Name Z → A</option>
@@ -288,27 +283,17 @@ export function Animals() {
                     <option value="recently-fed">Recently fed</option>
                   </select>
                 </label>
-                <div className="flex gap-0.5 p-0.5 rounded-xl shrink-0" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-                  {(['grid', 'list'] as const).map((mode) => (
-                    <button
-                      key={mode}
-                      onClick={() => chooseDensity(mode)}
-                      aria-label={mode === 'grid' ? 'Photo grid' : 'Compact list'}
-                      aria-pressed={density === mode}
-                      className="flex items-center justify-center w-9 rounded-[10px] transition-colors"
-                      style={{ backgroundColor: density === mode ? 'var(--color-surface-2)' : 'transparent', color: density === mode ? 'var(--color-tint)' : 'var(--color-label-2)' }}
-                    >
-                      {mode === 'grid' ? (
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 3h8v8H3V3zm10 0h8v8h-8V3zM3 13h8v8H3v-8zm10 0h8v8h-8v-8z" /></svg>
-                      ) : (
-                        <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" d="M4 6h16M4 12h16M4 18h16" /></svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => chooseDensity(density === 'grid' ? 'list' : 'grid')}
+                  aria-label={density === 'grid' ? 'Show as list' : 'Show as photo grid'}
+                  className="tap-target shrink-0 flex items-center justify-center w-9 h-9 rounded-full text-tint active:opacity-60"
+                >
+                  <Icon name={density === 'grid' ? 'list' : 'animal'} size={20} strokeWidth={2} />
+                </button>
               </div>
 
-              <div className="flex gap-2 overflow-x-auto py-1.5 -my-1.5" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex gap-2 overflow-x-auto -mx-4 px-4 py-0.5" style={{ scrollbarWidth: 'none' }}>
                 <Chip label={`All ${animals.length}`} active={statusFilter === null} onClick={() => setStatusFilter(null)} />
                 {statusCounts.overdue > 0 && (
                   <Chip label={`Overdue ${statusCounts.overdue}`} tone="var(--color-red)" active={statusFilter === 'overdue'} onClick={() => setStatusFilter(statusFilter === 'overdue' ? null : 'overdue')} />
@@ -319,48 +304,44 @@ export function Animals() {
                 {statusCounts.quarantine > 0 && (
                   <Chip label={`Quarantine ${statusCounts.quarantine}`} tone="var(--color-orange)" active={statusFilter === 'quarantine'} onClick={() => setStatusFilter(statusFilter === 'quarantine' ? null : 'quarantine')} />
                 )}
+                {presentCategories.length > 1 && (
+                  <>
+                    <span aria-hidden="true" className="w-px shrink-0 my-1.5 bg-separator" />
+                    {presentCategories.map((c) => (
+                      <Chip key={c.label} label={c.label} active={categoryFilter === c.label} onClick={() => setCategoryFilter(categoryFilter === c.label ? null : c.label)} />
+                    ))}
+                  </>
+                )}
               </div>
-
-              {presentCategories.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto py-1.5 -my-1.5" style={{ scrollbarWidth: 'none' }}>
-                  <Chip label="All" icon="🐾" active={categoryFilter === null} onClick={() => setCategoryFilter(null)} />
-                  {presentCategories.map((c) => (
-                    <Chip key={c.label} label={c.label} icon={c.icon} active={categoryFilter === c.label} onClick={() => setCategoryFilter(categoryFilter === c.label ? null : c.label)} />
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)' }}>
+            <div className="mb-4 px-4 py-3 rounded-xl text-[15px] text-red" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)' }}>
               {error}
             </div>
           )}
 
           {loading ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-5">
               {Array.from({ length: 4 }).map((_, i) => <AnimalCardSkeleton key={i} />)}
             </div>
           ) : displayed.length === 0 ? (
             <EmptyState
-              icon="🦎"
+              icon={hasActiveFilter ? 'search' : 'animal'}
               title={hasActiveFilter ? 'No animals match' : 'No animals yet'}
               description={hasActiveFilter ? 'Try adjusting your search or filter' : 'Add them one at a time, or bring an existing collection across from a spreadsheet.'}
               action={!hasActiveFilter ? (
-                <div className="flex flex-col gap-2 w-full max-w-xs">
-                  <Button fullWidth onClick={handleAddClick}>Add your first animal</Button>
-                  <Link
-                    to="/import"
-                    className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium border border-separator text-label hover:bg-fill active:bg-fill active:scale-[0.97] motion-reduce:active:scale-100 transition-[transform,background-color] duration-150 ease-out pointer-coarse:min-h-11"
-                  >
+                <div className="flex flex-col gap-1 w-full max-w-xs">
+                  <Button size="lg" fullWidth onClick={handleAddClick}>Add your first animal</Button>
+                  <Link to="/import" className="inline-flex items-center justify-center min-h-11 text-[17px] text-tint active:opacity-60">
                     Import a spreadsheet
                   </Link>
                 </div>
               ) : undefined}
             />
           ) : density === 'grid' ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-5">
               {displayed.map((animal) => (
                 <AnimalCard
                   key={animal.id}
@@ -372,128 +353,91 @@ export function Animals() {
             </div>
           ) : (
             /* Twelve animals per screen instead of four; the whole rack legible
-               at once. Same fields as the card, minus the photo. */
-            <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-              {displayed.map((animal, i) => {
+               at once. Same fields as the card, with the photo as a thumbnail. */
+            <ListSection>
+              {displayed.map((animal) => {
                 const status = getFeedingStatus(animal)
                 const where = enclosures.find((e) => e.id === animal.enclosure_id)?.name
                 return (
-                  <Link
+                  <ListRow
                     key={animal.id}
                     to={`/animals/${animal.id}`}
-                    className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-white/[0.02]"
-                    style={{ borderBottom: i < displayed.length - 1 ? '1px solid var(--color-separator)' : 'none' }}
+                    separatorInset={68}
+                    leading={<Thumb animal={animal} photoUrl={animal.photo_url ? photoUrls.get(animal.photo_url) : null} />}
+                    trailing={
+                      <span className="text-[15px] text-right" style={{ color: FEEDING_STATUS_META[status].color }}>
+                        {describeNextFeeding(animal)}
+                      </span>
+                    }
                   >
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: FEEDING_STATUS_META[status].color }} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate" style={{ color: 'var(--color-label)' }}>
-                        {animal.name}
-                        {inQuarantine(animal) && (
-                          <span className="ml-1.5 text-xs" style={{ color: 'var(--color-orange)' }}>· Q</span>
-                        )}
-                      </p>
-                      <p className="text-xs mt-0.5 truncate" style={{ color: 'var(--color-label-2)' }}>
-                        {animal.species}{where ? ` · ${where}` : ''}
-                      </p>
-                    </div>
-                    <span className="text-xs shrink-0 text-right" style={{ color: FEEDING_STATUS_META[status].color }}>
-                      {describeNextFeeding(animal)}
-                    </span>
-                  </Link>
+                    <p className="text-[17px] text-label truncate">
+                      {animal.name}
+                      {inQuarantine(animal) && <span className="ml-1.5 text-[13px] text-orange">· Q</span>}
+                    </p>
+                    <p className="text-[13px] text-label-2 truncate">
+                      {animal.species}{where ? ` · ${where}` : ''}
+                    </p>
+                  </ListRow>
                 )
               })}
-            </div>
+            </ListSection>
           )}
         </>
       )}
 
       {/* ── ENCLOSURES TAB ── */}
       {pageTab === 'enclosures' && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-6">
           {enclosuresLoading ? (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-6">
               {Array.from({ length: 2 }).map((_, i) => (
-                <div key={i} className="rounded-xl h-32 animate-pulse" style={{ backgroundColor: 'var(--color-surface)' }} />
+                <div key={i} className="rounded-xl h-32 animate-pulse bg-surface" />
               ))}
             </div>
           ) : enclosures.length === 0 ? (
             <EmptyState
-              icon="🏠"
+              icon="home"
               title="No enclosures yet"
               description="Create enclosures to group animals and batch feed them together"
-              action={<Button onClick={openAddEnclosure}>Add your first enclosure</Button>}
+              action={<Button size="lg" onClick={openAddEnclosure}>Add your first enclosure</Button>}
             />
           ) : (
             enclosures.map((enc) => {
               const encAnimals = animals.filter(a => a.enclosure_id === enc.id)
               return (
-                <div
+                <ListSection
                   key={enc.id}
-                  className="rounded-xl p-4"
-                  style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}
+                  prominent
+                  header={enc.name}
+                  action={
+                    <div className="flex gap-4 shrink-0">
+                      <button onClick={() => openEditEnclosure(enc)} className="tap-target text-[15px] text-tint active:opacity-60">Edit</button>
+                      <button onClick={() => handleDeleteEnclosure(enc)} className="tap-target text-[15px] text-red active:opacity-60">Delete</button>
+                    </div>
+                  }
+                  footer={enc.notes || undefined}
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div>
-                      <h3 className="font-semibold" style={{ color: 'var(--color-label)' }}>
-                        {enc.name}
-                      </h3>
-                    </div>
-                    <div className="flex gap-2 shrink-0 ml-3">
-                      <button
-                        onClick={() => openEditEnclosure(enc)}
-                        className="text-xs px-2.5 py-1 rounded-lg"
-                        style={{ backgroundColor: 'var(--color-separator)', color: 'var(--color-label-2)' }}
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteEnclosure(enc)}
-                        className="text-xs px-2.5 py-1 rounded-lg"
-                        style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)' }}
-                      >
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-
                   {encAnimals.length > 0 ? (
                     <>
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {encAnimals.map(a => (
-                          <Link
-                            key={a.id}
-                            to={`/animals/${a.id}`}
-                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs transition-opacity hover:opacity-80"
-                            style={{ backgroundColor: 'var(--color-fill)', color: 'var(--color-label)' }}
-                          >
-                            <span
-                              className="w-2 h-2 rounded-full shrink-0"
-                              style={{ backgroundColor: getAnimalFeedingColor(a) }}
-                            />
-                            {a.name}
-                          </Link>
-                        ))}
-                      </div>
-                      <button
-                        onClick={() => openBatchFeed(enc)}
-                        className="w-full rounded-xl py-2 text-sm font-medium transition-opacity hover:opacity-80"
-                        style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 10%, transparent)', color: 'var(--color-tint)', border: '1px solid color-mix(in srgb, var(--color-tint) 20%, transparent)' }}
-                      >
-                        Feed all {encAnimals.length} animal{encAnimals.length !== 1 ? 's' : ''}
-                      </button>
+                      {encAnimals.map(a => (
+                        <ListRow
+                          key={a.id}
+                          to={`/animals/${a.id}`}
+                          trailing={<span className="text-[15px]" style={{ color: getAnimalFeedingColor(a) }}>{describeNextFeeding(a)}</span>}
+                        >
+                          <span className="text-[17px] text-label truncate block">{a.name}</span>
+                        </ListRow>
+                      ))}
+                      <ListRow onClick={() => openBatchFeed(enc)}>
+                        <span className="text-[17px] text-tint">Feed all {encAnimals.length} animal{encAnimals.length !== 1 ? 's' : ''}</span>
+                      </ListRow>
                     </>
                   ) : (
-                    <p className="text-xs mt-1" style={{ color: 'var(--color-label-2)' }}>
-                      No animals assigned. Edit an animal to assign it to this enclosure.
-                    </p>
+                    <ListRow>
+                      <span className="text-[15px] text-label-2">No animals assigned. Edit an animal to assign it to this enclosure.</span>
+                    </ListRow>
                   )}
-
-                  {enc.notes && (
-                    <p className="text-xs mt-3 pt-3" style={{ color: 'var(--color-label-2)', borderTop: '1px solid var(--color-fill)' }}>
-                      {enc.notes}
-                    </p>
-                  )}
-                </div>
+                </ListSection>
               )
             })
           )}
@@ -560,22 +504,32 @@ export function Animals() {
   )
 }
 
-function Chip({ label, icon, active, onClick, tone }: { label: string; icon?: string; active: boolean; onClick: () => void; tone?: string }) {
+/** A filter capsule: gray when off, filled with its colour when on. */
+function Chip({ label, active, onClick, tone }: { label: string; active: boolean; onClick: () => void; tone?: string }) {
   const accent = tone ?? 'var(--color-tint)'
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className="tap-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-[color,background-color,border-color,transform] duration-150 ease-out active:scale-[0.96] motion-reduce:active:scale-100 shrink-0"
+      className="tap-target shrink-0 h-8 px-3.5 rounded-full text-[15px] font-medium whitespace-nowrap transition-[color,background-color,transform] duration-150 ease-out active:scale-[0.96] motion-reduce:active:scale-100"
       style={{
-        backgroundColor: active ? `color-mix(in srgb, ${accent} 15%, transparent)` : 'var(--color-surface)',
-        color: active ? accent : tone ?? 'var(--color-label-2)',
-        border: `1px solid ${active ? `color-mix(in srgb, ${accent} 35%, transparent)` : 'var(--color-separator)'}`,
+        backgroundColor: active ? accent : 'var(--color-fill)',
+        color: active ? 'var(--color-on-tint)' : (tone ?? 'var(--color-label)'),
       }}
     >
-      {icon && <span>{icon}</span>}
       {label}
     </button>
+  )
+}
+
+/** A 40pt rounded photo, or the initial on gray, for the list rows. */
+function Thumb({ animal, photoUrl }: { animal: Animal; photoUrl?: string | null }) {
+  if (photoUrl) return <img src={photoUrl} alt="" loading="lazy" decoding="async" className="w-10 h-10 rounded-lg object-cover block" />
+  const initial = Array.from(animal.name.trim())[0]?.toUpperCase() ?? '?'
+  return (
+    <span aria-hidden="true" className="w-10 h-10 rounded-lg bg-fill text-label-2 text-[17px] font-semibold flex items-center justify-center">
+      {initial}
+    </span>
   )
 }

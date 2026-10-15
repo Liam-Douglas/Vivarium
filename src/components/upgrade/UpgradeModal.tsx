@@ -37,9 +37,9 @@ export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
 
 function Option({ title, body }: { title: string; body: string }) {
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-surface)', border: '1px solid var(--color-separator)' }}>
-      <p className="text-sm font-medium" style={{ color: 'var(--color-label)' }}>{title}</p>
-      <p className="text-sm mt-1" style={{ color: 'var(--color-label-2)' }}>{body}</p>
+    <div className="rounded-xl px-4 py-3 bg-fill">
+      <p className="text-[17px] font-semibold text-label">{title}</p>
+      <p className="text-[15px] mt-0.5 text-label-2">{body}</p>
     </div>
   )
 }

@@ -28,7 +28,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
   if (logs.length === 0) {
     return (
       <EmptyState
-        icon="🐍"
+        icon="shed"
         title="No sheds logged"
         description="Tap 'Log shed' to record a shedding event."
       />

@@ -46,7 +46,7 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
   if (logs.length === 0) {
     return (
       <EmptyState
-        icon="⚖️"
+        icon="weight"
         title="No weights logged"
         description="Tap 'Log weight' to start tracking growth."
       />

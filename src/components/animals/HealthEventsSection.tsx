@@ -23,7 +23,7 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
   if (events.length === 0) {
     return (
       <EmptyState
-        icon="🏥"
+        icon="heart"
         title="No health events"
         description="Tap 'Add event' to log an observation or vet visit."
       />

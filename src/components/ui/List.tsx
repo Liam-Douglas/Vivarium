@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import type { CSSProperties, ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 
 /**
@@ -49,6 +49,8 @@ interface ListRowProps {
   to?: string
   onClick?: () => void
   className?: string
+  /** Where the separator starts when the leading element is wider than an icon tile. */
+  separatorInset?: number
 }
 
 /**
@@ -56,7 +58,7 @@ interface ListRowProps {
  * in Settings, and is drawn by the row itself so a row that animates out
  * takes its line with it.
  */
-export function ListRow({ children, leading, trailing, to, onClick, className = '' }: ListRowProps) {
+export function ListRow({ children, leading, trailing, to, onClick, className = '', separatorInset }: ListRowProps) {
   const inner = (
     <>
       {leading && <span className="shrink-0">{leading}</span>}
@@ -66,9 +68,10 @@ export function ListRow({ children, leading, trailing, to, onClick, className = 
     </>
   )
   const cls = `list-row relative flex items-center gap-3 px-4 min-h-11 py-2.5 text-left w-full ${leading ? 'list-row-leading' : ''} ${to || onClick ? 'active:bg-fill transition-colors duration-150' : ''} ${className}`
-  if (to) return <Link to={to} className={cls}>{inner}</Link>
-  if (onClick) return <button type="button" onClick={onClick} className={cls}>{inner}</button>
-  return <div className={cls}>{inner}</div>
+  const style = separatorInset ? ({ '--sep-inset': `${separatorInset}px` } as CSSProperties) : undefined
+  if (to) return <Link to={to} className={cls} style={style}>{inner}</Link>
+  if (onClick) return <button type="button" onClick={onClick} className={cls} style={style}>{inner}</button>
+  return <div className={cls} style={style}>{inner}</div>
 }
 
 export function Chevron() {

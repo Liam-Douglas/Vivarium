@@ -316,5 +316,5 @@ textarea:focus-visible {
 }
 .list-row-leading + .list-row::before,
 .list-row + .list-row-leading::before {
-  left: 60px;
+  left: var(--sep-inset, 60px);
 }

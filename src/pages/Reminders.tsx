@@ -206,7 +206,7 @@ export function Reminders() {
           </div>
         ) : tasks.length === 0 ? (
           <EmptyState
-            icon="🧽"
+            icon="bell"
             title="No care reminders yet"
             description="Add one for cage cleaning, weigh-ins, water changes — anything on a repeat."
             action={<Button onClick={() => { setEditingTask(null); setFormOpen(true) }}>Add the first one</Button>}

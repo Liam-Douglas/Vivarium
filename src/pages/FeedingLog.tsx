@@ -312,14 +312,14 @@ export function FeedingLog() {
           ) : logs.length === 0 ? (
             filtersActive ? (
               <EmptyState
-                icon="🔍"
+                icon="search"
                 title="No feedings match these filters"
                 description="Try widening the period, or clear the filters to see everything."
                 action={<Button variant="secondary" onClick={clearFilters}>Clear filters</Button>}
               />
             ) : (
               <EmptyState
-                icon="🍽️"
+                icon="feed"
                 title="No feedings logged yet"
                 description="Tap to log one"
                 action={<Button onClick={() => setAddOpen(true)}>Log first feeding</Button>}

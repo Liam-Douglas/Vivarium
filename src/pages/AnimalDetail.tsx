@@ -1220,7 +1220,7 @@ export function AnimalDetail() {
                 : timelineEvents.filter((ev) => ev.type === timelineFilter)
 
               if (filtered.length === 0) {
-                return <EmptyState icon="📋" title="No records" description="No events match the selected filter." />
+                return <EmptyState icon="list" title="No records" description="No events match the selected filter." />
               }
 
               const groups: { month: string; events: TEvent[] }[] = []
@@ -1282,7 +1282,7 @@ export function AnimalDetail() {
               <Button size="sm" onClick={() => setFeedOpen(true)}>Log feeding</Button>
             </div>
             {feedingLogs.length === 0 ? (
-              <EmptyState icon="🍖" title="No feedings logged" description="Tap 'Log feeding' to record the first meal." />
+              <EmptyState icon="feed" title="No feedings logged" description="Tap 'Log feeding' to record the first meal." />
             ) : (
               <div className="flex flex-col gap-4">
                 {(() => {
