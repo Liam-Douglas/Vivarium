@@ -80,7 +80,7 @@ export function BottomNav() {
         onClick={() => setMoreOpen(false)}
         data-open={moreOpen || undefined}
         className={`fade-away md:hidden fixed inset-0 z-30 w-full transition-opacity ease-drawer ${moreOpen ? 'opacity-100 duration-300' : 'opacity-0 duration-200'}`}
-        style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
+        style={{ backgroundColor: 'var(--color-scrim)' }}
       />
 
       {/* Sheet and bar share one bottom-anchored stack, so the sheet sits on
@@ -110,8 +110,8 @@ export function BottomNav() {
                 }}
               >
                 <span className="flex-1 min-w-0">
-                  <span className="block text-[15px]" style={{ color: 'var(--color-label)' }}>{link.label}</span>
-                  <span className="block text-xs mt-0.5" style={{ color: 'var(--color-label-2)' }}>{link.detail}</span>
+                  <span className="block text-[15px] text-label">{link.label}</span>
+                  <span className="block text-[13px] mt-0.5 text-label-2">{link.detail}</span>
                 </span>
                 <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--color-label-2)" strokeWidth={2} className="shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />

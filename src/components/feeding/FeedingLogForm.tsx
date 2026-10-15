@@ -183,7 +183,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
         />
         {showPreyList && (
           <div
-            className="absolute z-20 w-full mt-1.5 rounded-xl overflow-auto bg-surface-2 shadow-[0_12px_32px_rgba(0,0,0,0.2)]"
+            className="popover-in origin-top absolute z-20 w-full mt-1.5 rounded-xl overflow-auto bg-surface-2 shadow-[var(--shadow-popover)]"
             style={{ maxHeight: 240 }}
           >
             {PREY_TYPES.map((cat) => {

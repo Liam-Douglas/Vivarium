@@ -1,6 +1,7 @@
 import { useLayoutEffect, useState, type ReactNode } from 'react'
 import { useLocation } from 'react-router-dom'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
+import { SPRING_PUSH } from '@/lib/motion'
 
 type Direction = 'push' | 'pop' | 'none'
 
@@ -31,15 +32,25 @@ export function PageTransition({ children }: { children: ReactNode }) {
     if (nav.dir === 'push') window.scrollTo(0, 0)
   }, [nav])
 
-  const initial = nav.dir === 'push' ? { x: 64, opacity: 0 } : nav.dir === 'pop' ? { x: -40, opacity: 0 } : false
+  // Whole transform strings rather than Motion's x shorthand, so the slide runs
+  // on the compositor; and back to no transform at rest, since a transformed
+  // ancestor would pin the fixed bars and the FAB to this element.
+  // MotionConfig's reducedMotion covers Motion's shorthands, not a transform
+  // string, so Reduce Motion is honoured here directly: the fade stays, the
+  // travel goes.
+  const reduce = useReducedMotion()
+  const offset = nav.dir === 'push' ? 64 : -40
+  const initial = nav.dir === 'none'
+    ? false
+    : reduce ? { opacity: 0 } : { transform: `translateX(${offset}px)`, opacity: 0 }
 
   return (
     <motion.div
       key={pathname}
       className="flex-1 flex flex-col min-w-0"
       initial={initial}
-      animate={{ x: 0, opacity: 1 }}
-      transition={{ x: { type: 'spring', bounce: 0, duration: 0.42 }, opacity: { duration: 0.22, ease: 'easeOut' } }}
+      animate={reduce ? { opacity: 1 } : { transform: 'translateX(0px)', opacity: 1, transitionEnd: { transform: 'none' } }}
+      transition={{ transform: SPRING_PUSH, opacity: { duration: 0.22, ease: 'easeOut' } }}
     >
       {children}
     </motion.div>

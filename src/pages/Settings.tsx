@@ -408,7 +408,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
         className="mb-6 sm:max-w-xs"
         value={activeTab}
         onChange={setActiveTab}
-        options={[{ value: 'settings', label: 'Settings' }, { value: 'import', label: 'Import & Export' }]}
+        options={[{ value: 'settings', label: 'General' }, { value: 'import', label: 'Import & Export' }]}
       />
 
       {activeTab === 'import' && <Import embedded />}

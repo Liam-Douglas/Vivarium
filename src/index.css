@@ -22,6 +22,8 @@
   --color-green: #1E7A35;
   --color-blue: #0040DD;
   --color-purple: #8944AB;
+  /* Popovers and banners: an offset, soft shadow, deeper in the dark. */
+  --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.16);
   --color-destructive: #D70015;   /* filled destructive button, white label */
   --color-scrim: rgba(0, 0, 0, 0.4);
   --color-segment: #FFFFFF;       /* the raised segment of a segmented control */
@@ -51,6 +53,7 @@
     --color-green: #30D158;
     --color-blue: #409CFF;
     --color-purple: #BF5AF2;
+    --shadow-popover: 0 8px 24px rgba(0, 0, 0, 0.5);
     --color-scrim: rgba(0, 0, 0, 0.6);
     --color-segment: #636366;
     --color-bar: rgba(22, 22, 23, 0.8);
@@ -121,7 +124,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--color-fill-2);
-  border-radius: 2px;
+  border-radius: 9999px;
 }
 
 /* Skeleton pulse animation */
@@ -132,19 +135,19 @@ h1, h2, h3, h4, h5, h6 {
 .skeleton {
   animation: skeleton-pulse 1.5s ease-in-out infinite;
   background: var(--color-fill-2);
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* Pinch-zoom is a right, not a preference (WCAG 1.4.4). The viewport meta used
-   to carry maximum-scale=1.0, which switched it off for everyone in order to
-   stop one specific annoyance: iOS zooms the page when you focus a control
-   whose text is under 16px, and these are 14px. Sizing the controls up on
-   small screens fixes that annoyance directly, so zoom can stay available. */
+   to carry maximum-scale=1.0, which switched it off for everyone to stop one
+   annoyance: iOS zooms the page when you focus a control whose text is under
+   16px. Controls are set at 17px (Body) on small screens instead, which fixes
+   that directly, so zoom stays available. */
 @media (max-width: 640px) {
   input,
   select,
   textarea {
-    font-size: 16px;
+    font-size: 17px;
   }
 }
 
@@ -268,7 +271,7 @@ textarea:focus-visible {
   width: 51px;
   height: 31px;
   margin: 0;
-  border-radius: 999px;
+  border-radius: 9999px;
   background: var(--color-fill-2);
   cursor: pointer;
   transition: background-color 250ms var(--ease-out);
@@ -291,6 +294,17 @@ textarea:focus-visible {
 .switch:checked::before { transform: translateX(20px); }
 .switch:disabled { opacity: 0.4; cursor: default; }
 
+/* A popover or menu opening from its trigger: a short scale-and-fade from
+   the corner it hangs off (set transform-origin where it is used). Mount-only,
+   so a keyframe is enough; closing is instant, as iOS menus close. */
+@keyframes popover-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+.popover-in {
+  animation: popover-in 160ms var(--ease-out) both;
+}
+
 /* The Things-style check-off: the tick lands with a small overshoot. */
 @keyframes check-pop {
   0% { transform: scale(0.5); opacity: 0; }
@@ -308,6 +322,9 @@ textarea:focus-visible {
   }
   .switch::before {
     transition-duration: 0ms;
+  }
+  .popover-in {
+    animation: fade-in 120ms ease both;
   }
   .sheet-panel,
   .sheet-panel[data-open] {

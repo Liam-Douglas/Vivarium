@@ -2,6 +2,70 @@
 
 Stage 1 of the design pass. Scanned on 15 October 2026 against `main` @ `109e577`, on the `design-pass` branch. Read-only: no source files changed. This file, `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json` and the evidence images in `docs/design/scan/` are the only new files.
 
+## Status (updated 15 October 2026, end of Stage 3)
+
+Stage 2 ran batches 1 to 5 as planned. After batch 5 the direction changed at your request: the dark leaf/olive "field journal" was replaced by **iOS native, played straight** (light and dark from the phone, system green tint, SF Pro, grouped lists, Things 3 as the bar). That redesign rebuilt every screen, so several findings below were fixed by being replaced rather than patched. DESIGN.md now documents the new system; this report is kept as the record of the scan.
+
+Statuses: **Fixed**, **Fixed by the redesign** (the element no longer exists in that form), **Partly**, **Open**, **Superseded** (no longer applies).
+
+| ID | P | Status | Where it stands |
+|---|---|---|---|
+| A1 | P0 | Fixed | Batch 1 (`min-w-0` on search); re-checked at 320px after the redesign, no sideways scroll on any screen. |
+| U1 | P0 | Fixed | Batch 1/5: no email collected; "Pro is on the way, we'll announce it here in the app". |
+| G1 | P1 | Fixed | Batch 1: FAB, toasts, sheets and page padding clear the home indicator; device check still advised. |
+| G2 | P1 | Fixed by the redesign | Tab bar uses iOS secondary label (4.7:1 light) and tint for the selected tab. |
+| G3 | P1 | Fixed by the redesign | Red is Apple's increased-contrast red in light (#D70015) and system red in dark (#FF453A), both AA as text. |
+| G4 | P1 | Fixed | 44px targets on touch; record actions, month arrows, member actions, capsules and text buttons carry a 44px hit area. |
+| G5 | P1 | Fixed | Batch 2 phone baseline; press feedback everywhere. |
+| G6 | P2 | Fixed | Every colour is a semantic token with light and dark values; the design detector finds no literal colours outside the documented set. |
+| G7 | P1 | Fixed | Batch 1 favicon, apple-touch and maskable icons. |
+| G8 | P1 | Fixed | Batch 4 sheets, kept and restyled as iOS 17 sheets in the redesign. |
+| G9 | P2 | Fixed by the redesign | Apple's text styles (17/15/13 and titles), 11px floor, tabular figures; no uppercase label system. |
+| G10 | P2 | Fixed | theme-color per appearance, dvh, overscroll, `interactive-widget`. |
+| G11 | P2 | Fixed | Focus rings on keyboard focus only, in the tint. |
+| G12 | P2 | Partly | Segmented controls and profile sections use `aria-pressed` and every icon button has a name. Proper `role="tab"` semantics were not added: they need tab panels and arrow-key handling, and the render tests address these as buttons. |
+| G13 | P2 | Fixed | Batch 3: day-first dates everywhere. |
+| G14 | P2 | Fixed by the redesign | One outline glyph set (`ui/icons.tsx`); no emoji used as UI anywhere. |
+| G15 | P2 | Open | Still one bundle; route-level code splitting not done. |
+| G16 | P2 | Superseded | No web fonts load now; the system font is used. |
+| G17 | P2 | Fixed | Batch 1. |
+| G18 | P2 | Fixed | The error screen says "An unexpected error occurred." and tucks the raw message under Details. |
+| D1 | P1 | Fixed | Batch 3, kept in the redesigned Feed now rows. |
+| D2 | P1 | Fixed | Batch 3 first run, restyled in the redesign. |
+| D3 | P2 | Fixed | Glyph buttons with names, staggered motion, named FAB. |
+| D4 | P2 | Fixed by the redesign | Desktop rows show the full last meal and enclosure; care, stock and activity sit in the right column. |
+| A2 | P2 | Fixed by the redesign | One search row with sort/view bar buttons and one capsule row; about two rows of animals in the first screen. |
+| A3 | P2 | Fixed | Initial on a fill placeholder; status shown once. |
+| A4 | P2 | Fixed | Card chosen in batch 5, restyled as an album tile in the redesign. |
+| A5 | P2 | Fixed | Batch 3. |
+| A6 | P2 | Fixed | "For sale", "Quarantine". |
+| PR1 | P1 | Fixed | Batch 3 money formatting, "Net" signed and not red. |
+| PR2 | P2 | Partly | Weights format as grams up to 10 kg and kilograms beyond on every screen built from records. Today's Recent activity line is composed in `lib/queries.ts`, left untouched under the no-query-changes rule. |
+| PR3 | P2 | Fixed by the redesign | No-photo hero shows the initial; long names wrap at the large-title size. |
+| PR4 | P2 | Fixed by the redesign | Section capsules run to the screen edge so the cut-off capsule shows the row scrolls, with a sliding selection; semantics as G12. |
+| PR5 | P2 | Fixed by the redesign | One section-header style (grouped list headers). |
+| PR6 | P2 | Fixed | No chart draw animation; the target weight field sits on its own row. |
+| L1 | P1 | Fixed | Sheets (G8). |
+| L2 | P2 | Partly | `inputMode` on every number field; `enterKeyHint` not added. |
+| L3 | P2 | Fixed | Check-off then fold (batch 4; Things-style in the redesign). |
+| H1 | P1 | Fixed | 44px member actions as plain tint and red text buttons that wrap under long names. |
+| H2 | P2 | Fixed | Roles read "Owner" / "Member". |
+| H3 | P2 | Fixed | Glyphs in tinted circles; dvh. |
+| S1 | P2 | Fixed | The segment inside Settings is now "General"; sections are grouped lists with footers. |
+| I1 | P2 | Fixed | "Step n of 4 · Name" over a four-segment bar. |
+| I2 | P2 | Partly | Step 2 (mapping) is now rendered and checked; steps 3 and 4 still only by code. |
+| U2 | P1 | Fixed | Batch 1. |
+| AU1 | P2 | Fixed | Password placeholder removed. |
+| AU2 | P2 | Fixed | Terms and Privacy links are in the tint. |
+| AU3 | P2 | Fixed | One BrandMark in the icon's serif. |
+| X1 | P2 | Fixed | No coloured edge stripes; dots and status text. |
+| X2 | P2 | Fixed | Tabular system figures; category bars in the tint alone. |
+| X3 | P2 | Fixed | Bar buttons sit above the large title on phones. |
+| M1 to M5 | P2 | Fixed | Batch 4, then the redesign's motion (see DESIGN.md, Components). Stage 3 review also moved the push slide onto the compositor, added popover entrances from the trigger and held the Reminders tick. |
+| O1 to O4 | | Fixed | Sheets, press feedback, row check-off and fold, FAB stagger. |
+
+Still open, for a later pass: **G15** code splitting; **G12** full tab semantics; **L2** `enterKeyHint`; **PR2** the activity line's weight text (needs a change in `lib/queries.ts`); and, out of scope as flagged, supabase-js keeping the session in `localStorage`.
+
 ## Summary
 
 Vivarium is better than most apps at this stage where it counts: it is honest about loading, failure and emptiness, its copy is calm and specific, the dark warm palette suits keepers checking animals at night, and the Today queue on the dashboard is a genuinely good phone screen. The weaknesses are in the layer underneath. The palette exists as CSS variables but nothing uses them (about 1,300 hard-coded hex values across 818 inline styles), so colour, contrast and spacing have drifted screen by screen. On a real iPhone it still reads as a website: no tap-highlight reset, no press feedback, modals that pop in with no motion, a FAB and dialogs that ignore the home-indicator area, and a home-screen icon and favicon that were never finished. One screen is actually broken on a phone (the Animals list is wider than the screen), and one dialog says something untrue (the Pro waitlist does not save the email it promises to use).
@@ -112,7 +176,7 @@ What held up: 120-character limits in the schema; long, emoji and unbreakable na
 | PR5 | P2 | Section labels inside cards are uppercase 12px ("RECENT FEEDINGS", "WEIGHT TREND", "FINANCIALS") while the dashboard uses Playfair titles. Quick actions use emoji (G14). | Inconsistent hierarchy. | Covered by G9 and G14. | | |
 | PR6 | P2 | The growth chart draws over 1.5s every time the Vitals tab opens (Recharts default), and the target-weight input sits inside the chart card. | Functional data should not perform; see M1. | See M1. | | |
 
-What held up: the overview cards (last fed, next feeding, weight, shed, "Takes food 4 of last 5") are excellent; long morph text wraps fully; the back, QR and edit buttons are 44px.
+What held up: the overview cards (last fed, next feeding, weight, shed, "Takes food 4 of last 5") are excellent; long morph text wraps fully. ~~The back, QR and edit buttons are 44px.~~ **Correction (15 October 2026):** this was wrong. They were 36px (`w-9 h-9`). They became 44px on touch screens in batch 2 and remain 44px in the redesigned glass buttons over the photo.
 
 ### Logging a feeding, weight or shed (core)
 

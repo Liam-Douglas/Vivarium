@@ -84,8 +84,8 @@ export function Sidebar() {
         <div className="flex items-center gap-2.5">
           <BrandMark size="sm" />
           <div>
-            <div className="font-semibold text-sm" style={{ color: 'var(--color-label)' }}>Vivarium</div>
-            {householdName && <div className="text-xs" style={{ color: 'var(--color-label-2)' }}>{householdName}</div>}
+            <div className="font-semibold text-[15px] text-label">Vivarium</div>
+            {householdName && <div className="text-[13px] text-label-2">{householdName}</div>}
           </div>
         </div>
       </div>
@@ -117,16 +117,16 @@ export function Sidebar() {
       <div className="px-4 py-5 border-t" style={{ borderColor: 'var(--color-separator)' }}>
         <div className="flex items-center gap-3">
           <div
-            className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
+            className="w-8 h-8 rounded-full flex items-center justify-center text-[15px] font-semibold shrink-0"
             style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 20%, transparent)', color: 'var(--color-tint)' }}
           >
             {profile?.full_name?.[0]?.toUpperCase() ?? user?.email?.[0]?.toUpperCase() ?? '?'}
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate" style={{ color: 'var(--color-label)' }}>
+            <div className="text-[15px] font-medium truncate text-label">
               {profile?.full_name ?? 'User'}
             </div>
-            <div className="text-xs truncate" style={{ color: 'var(--color-label-2)' }}>
+            <div className="text-[13px] truncate text-label-2">
               {user?.email}
             </div>
           </div>

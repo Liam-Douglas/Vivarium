@@ -35,7 +35,7 @@ export function AnimalCard({ animal, enclosureName, photoUrl }: AnimalCardProps)
       className="group block min-w-0 transition-transform duration-150 ease-out active:scale-[0.97] motion-reduce:transform-none"
     >
       <div className="w-full aspect-[4/3] relative rounded-xl overflow-hidden bg-fill">
-        <Portrait animal={animal} photoUrl={photoUrl} className="w-full h-full text-5xl transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
+        <Portrait animal={animal} photoUrl={photoUrl} className="w-full h-full text-[48px] transition-transform duration-300 ease-out group-hover:scale-[1.03] motion-reduce:transform-none" />
         <div className="absolute top-2 left-2"><Flags quarantined={quarantined} forSale={!!animal.is_for_sale} /></div>
         {/* Over a photo it needs the scrim; on the plain placeholder it does not. */}
         <div

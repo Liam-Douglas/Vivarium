@@ -5,7 +5,7 @@ export function Terms() {
 
   return (
     <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
-      <h1 className="text-2xl font-bold mb-2 text-label">Terms of Service</h1>
+      <h1 className="text-[28px] font-bold mb-2 text-label">Terms of Service</h1>
       <p className="text-[13px] mb-6" style={mutedStyle}>Last updated: April 2025</p>
 
       <div className="flex flex-col gap-4">

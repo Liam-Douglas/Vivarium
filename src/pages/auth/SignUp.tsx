@@ -72,7 +72,7 @@ export function SignUp() {
         <div className="w-full max-w-sm">
           <div className="rounded-2xl p-8 text-center bg-surface">
             <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)', color: 'var(--color-tint)' }}><Icon name="mail" size={28} strokeWidth={1.8} /></span>
-            <h2 className="text-xl font-semibold mb-2 text-label">
+            <h2 className="text-[22px] font-semibold mb-2 text-label">
               Check your inbox
             </h2>
             <p className="text-[15px] mb-6 text-label-2">
@@ -174,9 +174,9 @@ export function SignUp() {
 
         <p className="text-center text-[13px] mt-4 leading-relaxed text-label-2">
           By signing up you agree to our{' '}
-          <Link to="/terms" style={{ color: 'var(--color-label-2)' }}>Terms</Link>{' '}
+          <Link to="/terms" className="text-tint">Terms</Link>{' '}
           and{' '}
-          <Link to="/privacy" style={{ color: 'var(--color-label-2)' }}>Privacy Policy</Link>
+          <Link to="/privacy" className="text-tint">Privacy Policy</Link>
         </p>
 
         <p className="text-center text-[15px] mt-3 text-label-2">

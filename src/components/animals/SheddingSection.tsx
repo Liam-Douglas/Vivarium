@@ -2,6 +2,7 @@ import { format } from 'date-fns'
 import {
   ResponsiveContainer, BarChart, Bar, Cell, XAxis, YAxis, Tooltip,
 } from 'recharts'
+import { CHART_TOOLTIP, CHART_TOOLTIP_LABEL } from '@/lib/chartStyle'
 import { shedIntervals, summariseSheds } from '@/lib/shedStatus'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Badge } from '@/components/ui/Badge'
@@ -55,25 +56,25 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
           },
         ].map((stat) => (
           <div key={stat.label} className="rounded-xl px-3 py-2.5 bg-surface">
-            <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{stat.label}</p>
-            <p className="text-base font-semibold mt-0.5" style={{ color: stat.color ?? 'var(--color-label)' }}>{stat.value}</p>
+            <p className="text-[13px] font-semibold text-label-2">{stat.label}</p>
+            <p className="text-[22px] leading-7 font-bold tabular-nums mt-0.5" style={{ color: stat.color ?? 'var(--color-label)' }}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       {chart.length > 1 && (
         <div className="rounded-xl p-4 bg-surface">
-          <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-label-2)' }}>SHED INTERVALS (days)</p>
-          <p className="text-xs mb-3" style={{ color: 'var(--color-label-2)' }}>
+          <p className="text-[13px] font-medium mb-1 text-label-2">SHED INTERVALS (days)</p>
+          <p className="text-[13px] mb-3 text-label-2">
             Days between consecutive sheds — green = complete, amber = incomplete
           </p>
           <ResponsiveContainer width="100%" height={130}>
             <BarChart data={chart} barCategoryGap="25%">
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
-                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
+                contentStyle={CHART_TOOLTIP}
+                labelStyle={CHART_TOOLTIP_LABEL}
                 formatter={(v) => [`${v} days`, 'Interval']}
               />
               <Bar isAnimationActive={false} dataKey="days" radius={[4, 4, 0, 0]}>
@@ -93,9 +94,9 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
               {log.complete ? 'Complete' : 'Incomplete'}
             </Badge>
             <div className="flex-1">
-              {log.notes && <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{log.notes}</p>}
+              {log.notes && <p className="text-[13px] font-semibold text-label-2">{log.notes}</p>}
             </div>
-            <p className="text-xs shrink-0 mr-1" style={{ color: 'var(--color-label-2)' }}>
+            <p className="text-[13px] shrink-0 mr-1 text-label-2">
               {format(new Date(log.shed_at), 'd MMM yyyy')}
             </p>
             <RecordActions what="shed" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />

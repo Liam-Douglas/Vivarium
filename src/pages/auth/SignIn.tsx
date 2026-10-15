@@ -99,7 +99,6 @@ export function SignIn() {
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              placeholder="••••••••"
             />
             <div className="-mt-1 text-right">
               <Link to="/auth/forgot-password" className="text-[13px] font-medium text-tint">

@@ -5,9 +5,9 @@
  */
 
 const sizes = {
-  sm: 'w-8 h-8 rounded-lg text-base',
-  md: 'w-10 h-10 rounded-xl text-xl',
-  lg: 'w-12 h-12 rounded-2xl text-2xl',
+  sm: 'w-8 h-8 rounded-lg text-[17px]',
+  md: 'w-10 h-10 rounded-xl text-[22px]',
+  lg: 'w-12 h-12 rounded-2xl text-[28px]',
   /** The app icon at the size iOS draws it on a sign-in screen. */
   xl: 'w-16 h-16 rounded-[15px] text-[34px] shadow-[0_4px_12px_rgba(0,0,0,0.12)]',
 }

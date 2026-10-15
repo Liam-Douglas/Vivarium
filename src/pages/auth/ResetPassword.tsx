@@ -114,7 +114,7 @@ export function ResetPassword() {
       <AuthShell>
         <div className="rounded-2xl p-8 text-center bg-surface">
           <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 14%, transparent)', color: 'var(--color-orange)' }}><Icon name="link" size={28} strokeWidth={1.8} /></span>
-          <h2 className="text-xl font-semibold mb-2 text-label">
+          <h2 className="text-[22px] font-semibold mb-2 text-label">
             This link didn't work
           </h2>
           <p className="text-[15px] mb-2 text-label-2">
@@ -134,7 +134,7 @@ export function ResetPassword() {
   return (
     <AuthShell>
       <div className="rounded-2xl p-6 bg-surface">
-        <h2 className="text-xl font-semibold mb-2 text-label">
+        <h2 className="text-[22px] font-semibold mb-2 text-label">
           Choose a new password
         </h2>
         <p className="text-[15px] mb-6 text-label-2">

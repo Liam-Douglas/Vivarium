@@ -650,7 +650,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                           aria-label={`Set stock of ${f.name}, currently ${f.currentStock}`}
                           className="w-full rounded-[8px] py-0.5 active:bg-fill hover:bg-fill"
                         >
-                          <p className="text-[24px] leading-7 font-bold tabular-nums" style={{ color }}>{f.currentStock}</p>
+                          <p className="text-[22px] leading-7 font-bold tabular-nums" style={{ color }}>{f.currentStock}</p>
                         </button>
                       )}
                       <p className="text-[12px] text-label-2 truncate">{f.unit_label}</p>

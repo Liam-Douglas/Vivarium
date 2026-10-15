@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { format, startOfYear } from 'date-fns'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { CHART_TOOLTIP, CHART_TOOLTIP_LABEL } from '@/lib/chartStyle'
 import { useAnimals } from '@/hooks/useAnimals'
 import { summariseFeeding } from '@/lib/feedingStatus'
 import { useFeedingLogs } from '@/hooks/useFeedingLogs'
@@ -177,8 +178,8 @@ export function Stats() {
               <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
               <YAxis hide allowDecimals={false} />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
-                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
+                contentStyle={CHART_TOOLTIP}
+                labelStyle={CHART_TOOLTIP_LABEL}
               />
               <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="var(--color-green)" radius={[0, 0, 0, 0]} />
               <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="var(--color-red)" radius={[4, 4, 0, 0]} />
@@ -195,8 +196,8 @@ export function Stats() {
               <XAxis type="number" hide allowDecimals={false} />
               <YAxis type="category" dataKey="cat" tick={{ fontSize: 13, fill: 'var(--color-label)' }} axisLine={false} tickLine={false} width={90} />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
-                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
+                contentStyle={CHART_TOOLTIP}
+                labelStyle={CHART_TOOLTIP_LABEL}
                 formatter={(v) => [v, 'Animals']}
               />
               <Bar isAnimationActive={false} dataKey="count" radius={[0, 6, 6, 0]} fill="var(--color-tint)" barSize={20} />

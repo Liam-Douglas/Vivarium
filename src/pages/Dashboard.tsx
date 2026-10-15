@@ -528,7 +528,7 @@ export function Dashboard() {
               </button>
             </div>
             {logMenuOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-xl py-1 z-30 bg-surface-2 shadow-[0_12px_32px_rgba(0,0,0,0.18)] border-[0.5px] border-separator">
+              <div className="popover-in origin-top-right absolute right-0 mt-2 w-56 rounded-xl py-1 z-30 bg-surface-2 shadow-[var(--shadow-popover)] border-[0.5px] border-separator">
                 {FAB_ACTIONS.filter((a) => a.key !== 'feeding').map((action) => (
                   <button
                     key={action.key}
@@ -830,7 +830,7 @@ export function Dashboard() {
         <div
           data-open={fabOpen || undefined}
           className={`fade-away fixed inset-0 z-0 transition-opacity duration-200 ease-out ${fabOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0'}`}
-          style={{ backgroundColor: 'rgba(10,10,8,0.72)', backdropFilter: 'blur(2px)' }}
+          style={{ backgroundColor: 'var(--color-scrim)', backdropFilter: 'blur(2px)' }}
           onClick={() => setFabOpen(false)}
         />
 
@@ -846,7 +846,7 @@ export function Dashboard() {
           >
             <span
               aria-hidden="true"
-              className="text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
+              className="text-[13px] font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
               style={{ backgroundColor: 'var(--color-surface-2)', color: 'var(--color-label)', border: '1px solid var(--color-separator)' }}
             >
               {action.label}
