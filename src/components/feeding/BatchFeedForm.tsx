@@ -112,6 +112,7 @@ export function BatchFeedForm({ animals, onSuccess, onCancel }: BatchFeedFormPro
         <Input
           label="Qty per animal"
           type="number"
+          inputMode="numeric"
           min={1}
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}

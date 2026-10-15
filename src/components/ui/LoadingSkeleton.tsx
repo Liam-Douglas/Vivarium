@@ -16,7 +16,7 @@ export function Skeleton({ className = '', height, width, rounded = 'rounded-lg'
 
 export function AnimalCardSkeleton() {
   return (
-    <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+    <div className="rounded-xl p-4" style={{ backgroundColor: 'var(--color-bark)', border: '1px solid rgba(255,255,255,0.06)' }}>
       <Skeleton height={160} rounded="rounded-lg" className="mb-3 w-full" />
       <Skeleton height={18} width="60%" className="mb-2" />
       <Skeleton height={14} width="40%" className="mb-3" />

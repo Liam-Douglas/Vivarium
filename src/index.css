@@ -1,19 +1,39 @@
 @import "tailwindcss";
 
+/* The palette, as Tailwind theme tokens: each one is a CSS variable
+   (var(--color-leaf)) and a utility (text-leaf, bg-bark, border-hairline).
+   Names follow DESIGN.md. These were :root variables that nothing used, so
+   every screen repeated the hex values by hand and drifted. */
+@theme {
+  --color-night-soil: #1a1a18;
+  --color-bark: #242420;
+  --color-moss-stone: #2e2e2a;
+  --color-leaf: #8fbe5a;
+  --color-lamp-amber: #d4924a;
+  /* Clay red is for dots, borders, tints and chart fills. As text it is
+     3.7:1 on a card, so words use clay-red-text (5.3:1), and the danger
+     button's fill is the deeper clay-red-deep so its label passes. */
+  --color-clay-red: #c45a5a;
+  --color-clay-red-text: #dc7a7a;
+  --color-clay-red-deep: #a84a4a;
+  --color-fern-green: #5a9e6a;
+  --color-pond-blue: #5a8fbe;
+  --color-parchment: #f0ece0;
+  --color-dry-grass: #a8a090;
+  --color-sand: #9f9684;
+  /* Inactive navigation. Was #505048, 2.1:1; this is 4.7:1. */
+  --color-dusk: #8a8476;
+  --color-hairline: rgba(255, 255, 255, 0.06);
+  --color-hairline-strong: rgba(255, 255, 255, 0.1);
+}
+
 :root {
-  --bg-primary: #1a1a18;
-  --bg-surface: #242420;
-  --bg-elevated: #2e2e2a;
-  --accent-primary: #8fbe5a;
-  --accent-warm: #d4924a;
-  --accent-cool: #5a8fbe;
-  --text-primary: #f0ece0;
-  --text-secondary: #a8a090;
-  --text-muted: #9f9684;
-  --status-green: #5a9e6a;
-  --status-amber: #d4924a;
-  --status-red: #c45a5a;
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  /* Native controls (date pickers, select menus, scrollbars, the caret)
+     draw in their dark variants instead of black-on-dark. */
+  color-scheme: dark;
+  /* No grey flash over everything tapped; press states below replace it. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
 }
 
 * {
@@ -28,8 +48,8 @@ html, body, #root {
 
 body {
   font-family: 'DM Sans', system-ui, sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  background-color: var(--color-night-soil);
+  color: var(--color-parchment);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -65,10 +85,10 @@ h1, h2, h3, h4, h5, h6 {
   height: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: var(--color-night-soil);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-elevated);
+  background: var(--color-moss-stone);
   border-radius: 2px;
 }
 
@@ -79,7 +99,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 .skeleton {
   animation: skeleton-pulse 1.5s ease-in-out infinite;
-  background: var(--bg-elevated);
+  background: var(--color-moss-stone);
   border-radius: 6px;
 }
 
@@ -94,4 +114,61 @@ h1, h2, h3, h4, h5, h6 {
   textarea {
     font-size: 16px;
   }
+}
+
+/* Controls behave like controls on a phone: no double-tap-zoom wait before a
+   tap registers, and a long press does not select the label or open the link
+   callout. Body text is untouched, so names and notes can still be copied. */
+button,
+a,
+label,
+select,
+summary,
+[role='button'],
+[role='tab'] {
+  touch-action: manipulation;
+}
+button,
+[role='button'],
+[role='tab'],
+nav a {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* The focus ring for anything that does not draw its own: keyboard focus
+   only, in leaf, so a tap never leaves a ring behind. */
+:focus-visible {
+  outline: 2px solid var(--color-leaf);
+  outline-offset: 2px;
+}
+
+/* Text selection in the palette rather than the browser's blue. */
+::selection {
+  background: rgba(143, 190, 90, 0.35);
+  color: var(--color-parchment);
+}
+
+/* A 44px touch area around a control that is drawn smaller, such as a chip
+   or a text link, without changing how it looks. */
+@utility tap-target {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Text fields show focus on every focus, tap included, which is right for a
+   field; a tighter offset keeps the ring hugging the rounded box. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 1px;
 }

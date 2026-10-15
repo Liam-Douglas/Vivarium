@@ -141,7 +141,7 @@ export function ResetPassword() {
         </p>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a', border: '1px solid rgba(196,90,90,0.2)' }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}>
             {error}
           </div>
         )}

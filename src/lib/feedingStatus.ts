@@ -22,7 +22,7 @@ export interface FeedingSchedule {
 }
 
 export const FEEDING_STATUS_META: Record<FeedingStatus, { color: string; label: string }> = {
-  overdue: { color: '#c45a5a', label: 'Overdue' },
+  overdue: { color: '#dc7a7a', label: 'Overdue' },
   'due-soon': { color: '#d4924a', label: 'Due soon' },
   'on-schedule': { color: '#5a9e6a', label: 'Fed recently' },
   'never-fed': { color: '#9f9684', label: 'Never fed' },

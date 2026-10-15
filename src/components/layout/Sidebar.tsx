@@ -75,16 +75,16 @@ export function Sidebar() {
 
   return (
     <aside
-      className="hidden md:flex flex-col w-56 h-screen sticky top-0 flex-shrink-0"
-      style={{ backgroundColor: '#1a1a18', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+      className="hidden md:flex flex-col w-56 h-dvh sticky top-0 flex-shrink-0"
+      style={{ backgroundColor: 'var(--color-night-soil)', borderRight: '1px solid rgba(255,255,255,0.06)' }}
     >
       {/* Logo */}
       <div className="px-6 pt-8 pb-6">
         <div className="flex items-center gap-2.5">
           <BrandMark size="sm" />
           <div>
-            <div className="font-semibold text-sm" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Vivarium</div>
-            {householdName && <div className="text-xs" style={{ color: '#9f9684' }}>{householdName}</div>}
+            <div className="font-semibold text-sm" style={{ fontFamily: 'Playfair Display, serif', color: 'var(--color-parchment)' }}>Vivarium</div>
+            {householdName && <div className="text-xs" style={{ color: 'var(--color-sand)' }}>{householdName}</div>}
           </div>
         </div>
       </div>
@@ -99,11 +99,11 @@ export function Sidebar() {
             className={({ isActive }) =>
               `flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-colors text-sm font-medium ${
                 isActive
-                  ? 'text-[#f0ece0]'
-                  : 'text-[#9f9684] hover:text-[#a8a090] hover:bg-white/5'
+                  ? 'text-parchment'
+                  : 'text-sand hover:text-dry-grass hover:bg-white/5'
               }`
             }
-            style={({ isActive }) => isActive ? { backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a' } : {}}
+            style={({ isActive }) => isActive ? { backgroundColor: 'rgba(143,190,90,0.12)', color: 'var(--color-leaf)' } : {}}
           >
             {({ isActive }) => (
               <>
@@ -116,19 +116,19 @@ export function Sidebar() {
       </nav>
 
       {/* User */}
-      <div className="px-4 py-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="px-4 py-5 border-t" style={{ borderColor: 'var(--color-hairline)' }}>
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-            style={{ backgroundColor: 'rgba(143,190,90,0.2)', color: '#8fbe5a' }}
+            style={{ backgroundColor: 'rgba(143,190,90,0.2)', color: 'var(--color-leaf)' }}
           >
             {profile?.full_name?.[0]?.toUpperCase() ?? user?.email?.[0]?.toUpperCase() ?? '?'}
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>
+            <div className="text-sm font-medium truncate" style={{ color: 'var(--color-parchment)' }}>
               {profile?.full_name ?? 'User'}
             </div>
-            <div className="text-xs truncate" style={{ color: '#9f9684' }}>
+            <div className="text-xs truncate" style={{ color: 'var(--color-sand)' }}>
               {user?.email}
             </div>
           </div>

@@ -146,7 +146,7 @@ export function OnboardingHousehold() {
         </div>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a', border: '1px solid rgba(196,90,90,0.2)' }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}>
             {error}
           </div>
         )}
@@ -229,7 +229,7 @@ export function OnboardingHousehold() {
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
       {children}
     </div>
   )

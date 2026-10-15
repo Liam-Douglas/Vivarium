@@ -240,7 +240,7 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
             onKeyDown={handleTagKey}
             onBlur={addTag}
             placeholder="Add tag (Enter to confirm)"
-            className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
+            className="flex-1 rounded-lg px-3 py-2 text-sm"
             style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
           />
         </div>
@@ -284,17 +284,17 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
               value={cf.key}
               onChange={(e) => updateCustomField(i, 'key', e.target.value)}
               placeholder="Field name"
-              className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
+              className="flex-1 rounded-lg px-3 py-2 text-sm"
               style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
             />
             <input
               value={cf.value}
               onChange={(e) => updateCustomField(i, 'value', e.target.value)}
               placeholder="Value"
-              className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
+              className="flex-1 rounded-lg px-3 py-2 text-sm"
               style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
             />
-            <button type="button" onClick={() => removeCustomField(i)} className="w-8 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>×</button>
+            <button type="button" onClick={() => removeCustomField(i)} className="w-8 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a' }}>×</button>
           </div>
         ))}
         {customFields.length === 0 && (

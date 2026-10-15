@@ -233,6 +233,7 @@ export function Animals() {
           <button
             key={tab}
             onClick={() => setPageTab(tab)}
+            aria-pressed={pageTab === tab}
             className="flex-1 py-2 rounded-lg text-sm font-medium capitalize transition-colors"
             style={{
               backgroundColor: pageTab === tab ? '#242420' : 'transparent',
@@ -260,13 +261,13 @@ export function Animals() {
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Search animals…"
                   aria-label="Search animals"
-                  className="flex-1 min-w-0 rounded-xl px-3 sm:px-4 py-2.5 text-sm focus:outline-none"
+                  className="flex-1 min-w-0 rounded-xl px-3 sm:px-4 py-2.5 text-sm"
                   style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
                 />
                 {/* On phones the sort is a 44px icon over the native picker, so
                     search keeps the width; from sm up it shows its label. */}
                 <label
-                  className="relative shrink-0 flex items-center justify-center w-11 sm:w-auto rounded-xl"
+                  className="relative shrink-0 flex items-center justify-center w-11 sm:w-auto rounded-xl has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-leaf sm:has-[select:focus-visible]:ring-0"
                   style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: '#a8a090' }}
                 >
                   <svg className="sm:hidden" width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
@@ -276,7 +277,7 @@ export function Animals() {
                     value={sort}
                     onChange={(e) => setSort(e.target.value as SortKey)}
                     aria-label="Sort animals"
-                    className="absolute inset-0 w-full h-full opacity-0 sm:static sm:opacity-100 sm:w-auto rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                    className="absolute inset-0 w-full h-full opacity-0 sm:static sm:opacity-100 sm:w-auto rounded-xl px-3 py-2.5 text-sm"
                     style={{ backgroundColor: '#242420', color: '#a8a090' }}
                   >
                     <option value="name-asc">Name A → Z</option>
@@ -305,10 +306,10 @@ export function Animals() {
                 </div>
               </div>
 
-              <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+              <div className="flex gap-2 overflow-x-auto py-1.5 -my-1.5" style={{ scrollbarWidth: 'none' }}>
                 <Chip label={`All ${animals.length}`} active={statusFilter === null} onClick={() => setStatusFilter(null)} />
                 {statusCounts.overdue > 0 && (
-                  <Chip label={`Overdue ${statusCounts.overdue}`} tone="#c45a5a" active={statusFilter === 'overdue'} onClick={() => setStatusFilter(statusFilter === 'overdue' ? null : 'overdue')} />
+                  <Chip label={`Overdue ${statusCounts.overdue}`} tone="#dc7a7a" active={statusFilter === 'overdue'} onClick={() => setStatusFilter(statusFilter === 'overdue' ? null : 'overdue')} />
                 )}
                 {statusCounts['due-soon'] > 0 && (
                   <Chip label={`Due soon ${statusCounts['due-soon']}`} tone="#d4924a" active={statusFilter === 'due-soon'} onClick={() => setStatusFilter(statusFilter === 'due-soon' ? null : 'due-soon')} />
@@ -319,7 +320,7 @@ export function Animals() {
               </div>
 
               {presentCategories.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-0.5" style={{ scrollbarWidth: 'none' }}>
+                <div className="flex gap-2 overflow-x-auto py-1.5 -my-1.5" style={{ scrollbarWidth: 'none' }}>
                   <Chip label="All" icon="🐾" active={categoryFilter === null} onClick={() => setCategoryFilter(null)} />
                   {presentCategories.map((c) => (
                     <Chip key={c.label} label={c.label} icon={c.icon} active={categoryFilter === c.label} onClick={() => setCategoryFilter(categoryFilter === c.label ? null : c.label)} />
@@ -330,7 +331,7 @@ export function Animals() {
           )}
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>
+            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a' }}>
               {error}
             </div>
           )}
@@ -436,7 +437,7 @@ export function Animals() {
                       <button
                         onClick={() => handleDeleteEnclosure(enc)}
                         className="text-xs px-2.5 py-1 rounded-lg"
-                        style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}
+                        style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a' }}
                       >
                         Delete
                       </button>
@@ -551,8 +552,10 @@ function Chip({ label, icon, active, onClick, tone }: { label: string; icon?: st
   const accent = tone ?? '#8fbe5a'
   return (
     <button
+      type="button"
       onClick={onClick}
-      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors shrink-0"
+      aria-pressed={active}
+      className="tap-target flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors shrink-0"
       style={{
         backgroundColor: active ? `${accent}26` : '#242420',
         color: active ? accent : tone ?? '#a8a090',

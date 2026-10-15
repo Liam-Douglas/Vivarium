@@ -89,6 +89,7 @@ export function CareTaskForm({ task, animals, enclosures, onSaved, onCancel }: C
               key={k}
               type="button"
               onClick={() => setKind(k)}
+              aria-pressed={kind === k}
               className="text-xs px-2 py-1 rounded-lg transition-colors"
               style={{
                 backgroundColor: kind === k ? 'rgba(143,190,90,0.15)' : 'rgba(255,255,255,0.04)',
@@ -119,6 +120,7 @@ export function CareTaskForm({ task, animals, enclosures, onSaved, onCancel }: C
       <Input
         label="Repeat every (days) *"
         type="number"
+        inputMode="numeric"
         min={1}
         value={frequencyDays}
         onChange={(e) => setFrequencyDays(e.target.value)}

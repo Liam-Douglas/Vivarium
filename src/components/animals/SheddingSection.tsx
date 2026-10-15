@@ -98,7 +98,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
             <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>
               {format(new Date(log.shed_at), 'MMM d, yyyy')}
             </p>
-            <RecordActions onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
+            <RecordActions what="shed" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
           </div>
         ))}
       </div>

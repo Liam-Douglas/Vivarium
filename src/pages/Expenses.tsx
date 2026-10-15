@@ -418,6 +418,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
+            aria-pressed={activeTab === tab}
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
@@ -435,11 +436,11 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
         <>
           {/* Month nav */}
           <div className="flex items-center justify-between mb-5">
-            <button onClick={() => changeMonth(-1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: '#a8a090' }}>
+            <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/5" style={{ color: '#a8a090' }}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{monthName} {year}</span>
-            <button onClick={() => changeMonth(1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: '#a8a090' }}>
+            <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/5" style={{ color: '#a8a090' }}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>
@@ -516,7 +517,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                   <div className="flex flex-col gap-2">
                     {feeders.slice(0, 5).map((f) => {
                       const pct = Math.min(f.currentStock / (f.low_stock_threshold * 2), 1)
-                      const color = f.currentStock <= 0 ? '#c45a5a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
+                      const color = f.currentStock <= 0 ? '#dc7a7a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
                       return (
                         <div key={f.id} className="rounded-xl px-4 py-2.5 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                           <p className="text-lg font-bold w-10 shrink-0 text-center" style={{ color, fontFamily: 'Playfair Display, serif' }}>{f.currentStock}</p>
@@ -550,7 +551,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                     </div>
                     <div className="flex items-center gap-2">
                       {budgets[cat] && (
-                        <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#c45a5a' : '#9f9684' }}>/ ${budgets[cat].toFixed(2)}</span>
+                        <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#dc7a7a' : '#9f9684' }}>/ ${budgets[cat].toFixed(2)}</span>
                       )}
                       <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>${(total / 100).toFixed(2)}</span>
                       <button
@@ -563,10 +564,10 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                   {editingBudget === cat && (
                     <div className="mx-4 mb-2 flex gap-2">
                       <input
-                        type="number" min={0} step={0.01} value={budgetInput}
+                        type="number" inputMode="decimal" min={0} step={0.01} value={budgetInput}
                         onChange={(e) => setBudgetInput(e.target.value)}
                         placeholder="Monthly budget (AUD)" autoFocus
-                        className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+                        className="flex-1 rounded-lg px-3 py-1.5 text-sm"
                         style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
                       />
                       <button onClick={() => saveBudget(cat)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>Set</button>
@@ -596,10 +597,10 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                         <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(expense.expense_date), 'MMM d')}</p>
                       </div>
                       <p className="text-sm shrink-0" style={{ color: '#f0ece0' }}>${(expense.amount_cents / 100).toFixed(2)}</p>
-                      <button onClick={() => openEdit(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
+                      <button type="button" onClick={() => openEdit(expense)} aria-label="Edit expense" className="shrink-0 w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       </button>
-                      <button onClick={() => handleDelete(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
+                      <button type="button" onClick={() => handleDelete(expense)} aria-label="Delete expense" className="shrink-0 w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                       </button>
                     </div>
@@ -615,7 +616,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
       {activeTab === 'feeders' && (
         <>
           {feedersError && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>{feedersError}</div>
+            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a' }}>{feedersError}</div>
           )}
           {feedersLoading ? (
             <div className="flex flex-col gap-3">
@@ -634,18 +635,18 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
             <div className="flex flex-col gap-3">
               {feeders.map((f) => {
                 const pct = Math.min(f.currentStock / (f.low_stock_threshold * 2), 1)
-                const color = f.currentStock <= 0 ? '#c45a5a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
+                const color = f.currentStock <= 0 ? '#dc7a7a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
                 return (
                   <div key={f.id} className="rounded-xl px-4 py-3 flex items-center gap-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
                     {/* Stock count — tap to edit inline */}
                     <div className="text-center shrink-0 w-14">
                       {inlineEditId === f.id ? (
                         <input
-                          type="number" min={0} value={inlineEditValue} autoFocus
+                          type="number" inputMode="numeric" min={0} value={inlineEditValue} autoFocus
                           onChange={(e) => setInlineEditValue(e.target.value)}
                           onBlur={() => handleInlineStockSave(f)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleInlineStockSave(f); if (e.key === 'Escape') setInlineEditId(null) }}
-                          className="w-full text-center text-xl font-bold rounded-lg px-1 py-0.5 focus:outline-none"
+                          className="w-full text-center text-xl font-bold rounded-lg px-1 py-0.5"
                           style={{ backgroundColor: 'rgba(255,255,255,0.08)', color, fontFamily: 'Playfair Display, serif', border: `1px solid ${color}` }}
                         />
                       ) : (

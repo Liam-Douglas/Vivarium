@@ -168,6 +168,7 @@ export function FeedingLog() {
           <button
             key={t}
             onClick={() => setTab(t)}
+            aria-pressed={tab === t}
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               backgroundColor: tab === t ? 'rgba(143,190,90,0.15)' : 'transparent',
@@ -196,7 +197,7 @@ export function FeedingLog() {
                   ['refused', 'Refused'],
                 ] as const).map(([value, label]) => {
                   const active = outcome === value
-                  const accent = value === 'refused' ? '#c45a5a' : '#8fbe5a'
+                  const accent = value === 'refused' ? '#dc7a7a' : '#8fbe5a'
                   return (
                     <button
                       key={value}
@@ -242,7 +243,7 @@ export function FeedingLog() {
                 value={selectedAnimalId ?? ''}
                 onChange={(e) => setSelectedAnimalId(e.target.value || undefined)}
                 aria-label="Filter by animal"
-                className="w-full rounded-xl px-4 py-2.5 text-sm focus:outline-none"
+                className="w-full rounded-xl px-4 py-2.5 text-sm"
                 style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: selectedAnimalId ? '#f0ece0' : '#9f9684' }}
               >
                 <option value="">All animals</option>
@@ -256,7 +257,7 @@ export function FeedingLog() {
                   value={periodDays}
                   onChange={(e) => setPeriodDays(Number(e.target.value))}
                   aria-label="Filter by period"
-                  className="rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+                  className="rounded-xl px-3 py-2.5 text-sm"
                   style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: periodDays ? '#f0ece0' : '#9f9684' }}
                 >
                   <option value={0}>All time</option>
@@ -270,7 +271,7 @@ export function FeedingLog() {
                   onChange={(e) => setPreyType(e.target.value)}
                   aria-label="Filter by prey type"
                   disabled={preyOptions.length < 2}
-                  className="rounded-xl px-3 py-2.5 text-sm focus:outline-none disabled:opacity-40"
+                  className="rounded-xl px-3 py-2.5 text-sm disabled:opacity-40"
                   style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.08)', color: preyType ? '#f0ece0' : '#9f9684' }}
                 >
                   <option value="">All prey</option>
@@ -407,11 +408,11 @@ export function FeedingLog() {
         <>
           {/* Month nav */}
           <div className="flex items-center justify-between mb-4">
-            <button onClick={() => changeMonth(-1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: '#a8a090' }}>
+            <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/5" style={{ color: '#a8a090' }}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
             </button>
             <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{format(monthStart, 'MMMM yyyy')}</span>
-            <button onClick={() => changeMonth(1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: '#a8a090' }}>
+            <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 rounded-lg flex items-center justify-center hover:bg-white/5 active:bg-white/5" style={{ color: '#a8a090' }}>
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
             </button>
           </div>
@@ -427,7 +428,7 @@ export function FeedingLog() {
                 <p className="text-xs" style={{ color: '#9f9684' }}>Feedings</p>
               </div>
               <div>
-                <p className="text-lg font-bold" style={{ color: '#c45a5a', fontFamily: 'Playfair Display, serif' }}>
+                <p className="text-lg font-bold" style={{ color: '#dc7a7a', fontFamily: 'Playfair Display, serif' }}>
                   {logsInMonth.filter((l) => l.refused).length}
                 </p>
                 <p className="text-xs" style={{ color: '#9f9684' }}>Refused</p>
@@ -574,7 +575,7 @@ export function FeedingLog() {
               type="button"
               onClick={() => setConfirmDelete(editingLog)}
               className="text-sm py-2 rounded-xl transition-colors hover:bg-white/5"
-              style={{ color: '#c45a5a' }}
+              style={{ color: '#dc7a7a' }}
             >
               Delete this feeding
             </button>

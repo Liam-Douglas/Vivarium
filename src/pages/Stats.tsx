@@ -153,11 +153,11 @@ export function Stats() {
           label="Overdue"
           value={overdueCount}
           // Zero overdue only earns green when every animal is actually tracked.
-          color={overdueCount > 0 ? '#c45a5a' : feedingSummary.untracked > 0 ? '#d4924a' : '#5a9e6a'}
+          color={overdueCount > 0 ? '#dc7a7a' : feedingSummary.untracked > 0 ? '#d4924a' : '#5a9e6a'}
           note={feedingSummary.untracked > 0 ? `${feedingSummary.untracked} not tracked` : undefined}
         />
         <StatCard label="YTD feedings" value={feedingStats.fed} color="#8fbe5a" />
-        <StatCard label="Compliance" value={`${feedingStats.rate}%`} color={feedingStats.rate >= 80 ? '#8fbe5a' : feedingStats.rate >= 60 ? '#d4924a' : '#c45a5a'} />
+        <StatCard label="Compliance" value={`${feedingStats.rate}%`} color={feedingStats.rate >= 80 ? '#8fbe5a' : feedingStats.rate >= 60 ? '#d4924a' : '#dc7a7a'} />
       </div>
 
       {/* YTD spend */}

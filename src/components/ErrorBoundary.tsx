@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return this.props.fallback ?? (
-        <div className="flex-1 flex flex-col items-center justify-center px-4 text-center min-h-screen" style={{ backgroundColor: '#1a1a18' }}>
+        <div className="flex-1 flex flex-col items-center justify-center px-4 text-center min-h-dvh" style={{ backgroundColor: '#1a1a18' }}>
           <div className="text-5xl mb-4">🦎</div>
           <h2 className="text-lg font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
             Something went wrong

@@ -9,11 +9,11 @@ export function EmptyState({ icon = '🦎', title, description, action }: EmptyS
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
       <div className="text-5xl mb-4 opacity-60">{icon}</div>
-      <h3 className="text-lg font-semibold mb-2" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>
+      <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-parchment)', fontFamily: 'Playfair Display, serif' }}>
         {title}
       </h3>
       {description && (
-        <p className="text-sm mb-6 max-w-xs" style={{ color: '#a8a090' }}>
+        <p className="text-sm mb-6 max-w-xs" style={{ color: 'var(--color-dry-grass)' }}>
           {description}
         </p>
       )}

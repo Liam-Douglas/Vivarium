@@ -22,6 +22,7 @@ import { Input, Textarea } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { Modal } from '@/components/ui/Modal'
+import { RecordActions } from '@/components/ui/RecordActions'
 import { useVetContacts } from '@/hooks/useVetContacts'
 import { requestNotificationPermission, notificationPermission } from '@/hooks/useOverdueNotification'
 import type { VetContact } from '@/hooks/useVetContacts'
@@ -406,6 +407,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
+            aria-pressed={activeTab === tab}
             className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
             style={{
               backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
@@ -475,9 +477,9 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                 {pendingRequests.map((req) => {
                   const p = req.profiles as { full_name: string | null } | null
                   return (
-                    <div key={req.id} className="flex items-center justify-between gap-3 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                      <p className="text-sm" style={{ color: '#f0ece0' }}>{p?.full_name ?? 'Unknown'}</p>
-                      <div className="flex gap-2">
+                    <div key={req.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                      <p className="flex-1 min-w-[8rem] text-sm break-words" style={{ color: '#f0ece0' }}>{p?.full_name ?? 'Unknown'}</p>
+                      <div className="flex gap-2 shrink-0 ml-auto">
                         <Button size="sm" onClick={() => handleApprove(req.id)}>Approve</Button>
                         <Button size="sm" variant="secondary" onClick={() => handleDeny(req.id)}>Deny</Button>
                       </div>
@@ -495,23 +497,27 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                 const isSelf = m.user_id === user?.id
                 const name = p?.full_name ?? 'Unknown'
                 return (
-                  <div key={m.id} className="flex items-center justify-between gap-2 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm" style={{ color: '#f0ece0' }}>{name}{isSelf ? ' (you)' : ''}</p>
+                  // Wraps rather than squeezing: a long name used to crush the two
+                  // role buttons, which were 24px tall and side by side.
+                  <div key={m.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div className="flex-1 min-w-[8rem]">
+                      <p className="text-sm break-words" style={{ color: '#f0ece0' }}>{name}{isSelf ? ' (you)' : ''}</p>
                     </div>
                     {currentUserRole === 'owner' && !isSelf ? (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 shrink-0 ml-auto">
                         <button
+                          type="button"
                           onClick={() => handleToggleRole(m.id, m.role)}
-                          className="text-xs px-2 py-1 rounded-lg transition-colors"
+                          className="text-sm px-3 py-1.5 pointer-coarse:min-h-11 rounded-xl transition-[transform,background-color] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100"
                           style={{ backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}
                         >
                           {m.role === 'owner' ? 'Demote' : 'Make owner'}
                         </button>
                         <button
+                          type="button"
                           onClick={() => handleRemoveMember(m.id, name)}
-                          className="text-xs px-2 py-1 rounded-lg transition-colors"
-                          style={{ backgroundColor: 'rgba(196,90,90,0.12)', color: '#c45a5a', border: '1px solid rgba(196,90,90,0.2)' }}
+                          className="text-sm px-3 py-1.5 pointer-coarse:min-h-11 rounded-xl transition-[transform,background-color] duration-150 ease-out active:scale-[0.97] motion-reduce:active:scale-100"
+                          style={{ backgroundColor: 'rgba(196,90,90,0.12)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}
                         >
                           Remove
                         </button>
@@ -568,7 +574,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                   <p className="text-xs font-medium mb-0.5" style={{ color: '#a8a090' }}>DUPLICATES</p>
                   {scanResult.dupExtra > 0 ? (
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-sm" style={{ color: '#c45a5a' }}>{scanResult.dupExtra} extra record{scanResult.dupExtra !== 1 ? 's' : ''} across {scanResult.dupGroups} group{scanResult.dupGroups !== 1 ? 's' : ''}</p>
+                      <p className="text-sm" style={{ color: '#dc7a7a' }}>{scanResult.dupExtra} extra record{scanResult.dupExtra !== 1 ? 's' : ''} across {scanResult.dupGroups} group{scanResult.dupGroups !== 1 ? 's' : ''}</p>
                       <Button size="sm" onClick={handleRemoveDups} loading={removingDups}>Remove</Button>
                     </div>
                   ) : (
@@ -636,14 +642,7 @@ export function Settings({ initialTab = 'settings' }: SettingsProps = {}) {
                   </div>
                   {vet.address && <p className="text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>{vet.address}</p>}
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <button onClick={() => openEditVet(vet)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(143,190,90,0.1)', color: '#8fbe5a' }}>
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
-                  </button>
-                  <button onClick={() => handleDeleteVet(vet)} className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>
-                    <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  </button>
-                </div>
+                <RecordActions what="vet contact" onEdit={() => openEditVet(vet)} onDelete={() => handleDeleteVet(vet)} />
               </div>
             ))
           )}

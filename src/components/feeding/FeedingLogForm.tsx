@@ -177,8 +177,8 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
           }}
           onFocus={() => setShowPreyList(true)}
           placeholder="Search prey types…"
-          className="w-full rounded-xl px-4 py-2.5 text-sm border focus:outline-none focus:border-[#8fbe5a]"
-          style={{ backgroundColor: '#1a1a18', borderColor: 'rgba(255,255,255,0.1)', color: '#f0ece0' }}
+          className="w-full rounded-xl px-4 py-2.5 text-sm border border-white/10 focus:outline-none focus:border-leaf"
+          style={{ backgroundColor: 'var(--color-night-soil)', color: 'var(--color-parchment)' }}
         />
         {showPreyList && (
           <div
@@ -251,6 +251,7 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
       <Input
         label="Quantity"
         type="number"
+        inputMode="numeric"
         min={1}
         value={quantity}
         onChange={(e) => setQuantity(e.target.value)}

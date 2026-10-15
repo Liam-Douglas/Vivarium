@@ -84,14 +84,15 @@ function FeedingCadenceRow({ animal, onSaved }: { animal: Animal; onSaved: () =>
       <div className="flex items-center gap-1.5 shrink-0">
         <input
           type="number"
+          inputMode="numeric"
           min={1}
           value={value}
           disabled={saving}
           aria-label={`Feeding frequency in days for ${animal.name}`}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
-          className="w-16 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:border-[#8fbe5a]"
-          style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.1)', color: '#f0ece0' }}
+          className="w-16 rounded-lg px-2 py-1.5 text-sm text-right border border-white/10 focus:outline-none focus:border-leaf"
+          style={{ backgroundColor: 'var(--color-night-soil)', color: 'var(--color-parchment)' }}
         />
         <span className="text-xs" style={{ color: '#9f9684' }}>days</span>
       </div>
@@ -334,7 +335,7 @@ export function Reminders() {
               type="button"
               onClick={() => setConfirmDelete(editingTask)}
               className="text-sm py-2 rounded-xl transition-colors hover:bg-white/5"
-              style={{ color: '#c45a5a' }}
+              style={{ color: '#dc7a7a' }}
             >
               Delete this reminder
             </button>

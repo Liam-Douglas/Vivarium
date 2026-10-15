@@ -49,29 +49,29 @@ function ToastItem({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
   }, [])
 
   const colors = {
-    success: '#5a9e6a',
-    error: '#c45a5a',
-    info: '#8fbe5a',
+    success: 'var(--color-fern-green)',
+    error: 'var(--color-clay-red)',
+    info: 'var(--color-leaf)',
   }
 
   return (
     <div
       role={toast.type === 'error' ? 'alert' : 'status'}
       className={`flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
-      style={{ backgroundColor: '#2e2e2a', border: `1px solid ${colors[toast.type]}40` }}
+      style={{ backgroundColor: 'var(--color-moss-stone)', border: `1px solid color-mix(in srgb, ${colors[toast.type]} 25%, transparent)` }}
     >
       <div aria-hidden="true" className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: colors[toast.type] }} />
-      <p className="flex-1 text-sm" style={{ color: '#f0ece0' }}>{toast.message}</p>
+      <p className="flex-1 text-sm" style={{ color: 'var(--color-parchment)' }}>{toast.message}</p>
       {toast.action && (
         <button
           onClick={() => { toast.action!.onClick(); onDismiss() }}
-          className="text-xs font-medium shrink-0"
-          style={{ color: '#8fbe5a' }}
+          className="tap-target text-xs font-medium shrink-0"
+          style={{ color: 'var(--color-leaf)' }}
         >
           {toast.action.label}
         </button>
       )}
-      <button onClick={onDismiss} aria-label="Dismiss" style={{ color: '#9f9684' }}>
+      <button onClick={onDismiss} aria-label="Dismiss" className="tap-target" style={{ color: 'var(--color-sand)' }}>
         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
         </svg>

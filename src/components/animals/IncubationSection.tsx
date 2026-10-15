@@ -133,7 +133,7 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
                     )}
                   </div>
 
-                  <RecordActions onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} />
+                  <RecordActions what="clutch" onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} />
                 </div>
               </div>
             )

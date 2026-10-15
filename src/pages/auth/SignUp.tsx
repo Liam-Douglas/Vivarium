@@ -67,7 +67,7 @@ export function SignUp() {
 
   if (step === 'verify') {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
+      <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
         <div className="w-full max-w-sm">
           <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="text-4xl mb-4">📬</div>
@@ -87,7 +87,7 @@ export function SignUp() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="min-h-dvh flex flex-col items-center justify-center px-4 py-12" style={{ backgroundColor: '#1a1a18' }}>
       <div className="w-full max-w-sm">
         <div className="flex justify-center mb-8">
           <div className="flex items-center gap-3">
@@ -104,7 +104,7 @@ export function SignUp() {
           </h2>
 
           {error && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a', border: '1px solid rgba(196,90,90,0.2)' }}>
+            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#dc7a7a', border: '1px solid rgba(196,90,90,0.2)' }}>
               {error}
             </div>
           )}

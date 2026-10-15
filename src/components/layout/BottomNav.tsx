@@ -84,7 +84,7 @@ export function BottomNav() {
         {moreOpen && (
           <div
             className="rounded-t-2xl overflow-hidden"
-            style={{ backgroundColor: '#242420', borderTop: '1px solid rgba(255,255,255,0.08)' }}
+            style={{ backgroundColor: 'var(--color-bark)', borderTop: '1px solid rgba(255,255,255,0.08)' }}
           >
             <div className="flex justify-center pt-2.5 pb-1.5">
               <span className="w-9 h-1 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.14)' }} />
@@ -100,10 +100,10 @@ export function BottomNav() {
                 }}
               >
                 <span className="flex-1 min-w-0">
-                  <span className="block text-[15px]" style={{ color: '#f0ece0' }}>{link.label}</span>
-                  <span className="block text-xs mt-0.5" style={{ color: '#9f9684' }}>{link.detail}</span>
+                  <span className="block text-[15px]" style={{ color: 'var(--color-parchment)' }}>{link.label}</span>
+                  <span className="block text-xs mt-0.5" style={{ color: 'var(--color-sand)' }}>{link.detail}</span>
                 </span>
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="#9f9684" strokeWidth={2} className="shrink-0">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="var(--color-sand)" strokeWidth={2} className="shrink-0">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
@@ -114,7 +114,7 @@ export function BottomNav() {
       <nav
         className="flex items-stretch"
         style={{
-          backgroundColor: '#1a1a18',
+          backgroundColor: 'var(--color-night-soil)',
           borderTop: '1px solid rgba(255,255,255,0.07)',
           paddingBottom: 'env(safe-area-inset-bottom)',
         }}
@@ -129,12 +129,12 @@ export function BottomNav() {
           >
             {({ isActive }) => (
               <>
-                <span style={{ color: isActive && !moreOpen ? '#8fbe5a' : '#505048' }}>
+                <span style={{ color: isActive && !moreOpen ? 'var(--color-leaf)' : 'var(--color-dusk)' }}>
                   <tab.icon active={isActive && !moreOpen} />
                 </span>
                 <span
-                  className="text-[10px] tracking-wide"
-                  style={{ color: isActive && !moreOpen ? '#8fbe5a' : '#505048', fontWeight: isActive && !moreOpen ? 600 : 400 }}
+                  className="text-[11px] tracking-wide"
+                  style={{ color: isActive && !moreOpen ? 'var(--color-leaf)' : 'var(--color-dusk)', fontWeight: isActive && !moreOpen ? 600 : 400 }}
                 >
                   {tab.label}
                 </span>
@@ -146,12 +146,12 @@ export function BottomNav() {
           onClick={() => setMoreOpen((open) => !open)}
           aria-expanded={moreOpen}
           className="flex-1 flex flex-col items-center justify-center py-2 gap-1"
-          style={{ color: moreOpen ? '#8fbe5a' : '#505048' }}
+          style={{ color: moreOpen ? 'var(--color-leaf)' : 'var(--color-dusk)' }}
         >
           <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM12.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0zM18.75 12a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
           </svg>
-          <span className="text-[10px] tracking-wide" style={{ fontWeight: moreOpen ? 600 : 400 }}>More</span>
+          <span className="text-[11px] tracking-wide" style={{ fontWeight: moreOpen ? 600 : 400 }}>More</span>
         </button>
       </nav>
       </div>

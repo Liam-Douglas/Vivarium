@@ -87,10 +87,10 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
 
           <div className="flex items-center gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <input
-              type="number" min={1} value={targetInput}
+              type="number" inputMode="decimal" min={1} value={targetInput}
               onChange={(e) => setTargetInput(e.target.value)}
               placeholder={target ? `Target: ${target}g` : 'Set target weight (g)'}
-              className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
+              className="flex-1 rounded-lg px-3 py-1.5 text-sm"
               style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
             />
             <button onClick={saveTarget} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a', border: '1px solid rgba(212,146,74,0.2)' }}>Set</button>
@@ -114,7 +114,7 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
               </div>
               <div className="text-center">
                 <p className="text-xs" style={{ color: '#9f9684' }}>Total gain</p>
-                <p className="text-sm font-semibold" style={{ color: summary.gain >= 0 ? '#8fbe5a' : '#c45a5a' }}>
+                <p className="text-sm font-semibold" style={{ color: summary.gain >= 0 ? '#8fbe5a' : '#dc7a7a' }}>
                   {summary.gain >= 0 ? '+' : ''}{summary.gain}g
                 </p>
               </div>
@@ -137,7 +137,7 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
             <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>
               {format(new Date(log.logged_at), 'MMM d, yyyy')}
             </p>
-            <RecordActions onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
+            <RecordActions what="weight" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
           </div>
         ))}
       </div>

@@ -28,10 +28,10 @@ export function LoadError({ subject, message, onRetry, inline = false }: LoadErr
         style={{ backgroundColor: 'rgba(212,146,74,0.1)', border: '1px solid rgba(212,146,74,0.3)' }}
       >
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium" style={{ color: '#d4924a' }}>
+          <p className="text-sm font-medium" style={{ color: 'var(--color-lamp-amber)' }}>
             Showing what loaded earlier
           </p>
-          <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
+          <p className="text-xs mt-0.5" style={{ color: 'var(--color-dry-grass)' }}>
             {message ?? `Could not refresh ${subject}.`}
           </p>
         </div>
@@ -39,7 +39,7 @@ export function LoadError({ subject, message, onRetry, inline = false }: LoadErr
           type="button"
           onClick={onRetry}
           className="text-xs font-medium underline shrink-0"
-          style={{ color: '#d4924a' }}
+          style={{ color: 'var(--color-lamp-amber)' }}
         >
           Retry
         </button>
@@ -50,12 +50,12 @@ export function LoadError({ subject, message, onRetry, inline = false }: LoadErr
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center" role="alert">
       <div className="text-5xl mb-4 opacity-60">⚠️</div>
-      <h3 className="text-lg font-semibold mb-2" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>
+      <h3 className="text-lg font-semibold mb-2" style={{ color: 'var(--color-parchment)', fontFamily: 'Playfair Display, serif' }}>
         Couldn't load {subject}
       </h3>
       {/* The message is shown rather than summarised: "failed to fetch" and
           "JWT expired" need different things from the keeper. */}
-      <p className="text-sm mb-6 max-w-xs" style={{ color: '#a8a090' }}>
+      <p className="text-sm mb-6 max-w-xs" style={{ color: 'var(--color-dry-grass)' }}>
         {message ?? 'Something went wrong. Your records are safe — this is a problem reading them.'}
       </p>
       <Button variant="secondary" onClick={onRetry}>Try again</Button>

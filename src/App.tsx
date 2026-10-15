@@ -36,7 +36,7 @@ function RequireAuth() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1a1a18' }}>
+      <div className="min-h-dvh flex items-center justify-center" style={{ backgroundColor: '#1a1a18' }}>
         <BrandMark pulse />
       </div>
     )
@@ -71,7 +71,7 @@ function AppShell() {
   const showNav = !!householdId
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="flex min-h-dvh" style={{ backgroundColor: '#1a1a18' }}>
       {showNav && <Sidebar />}
       {/* index.html sets viewport-fit=cover, which extends the page under the
           status bar and the notch. BottomNav has always compensated at the

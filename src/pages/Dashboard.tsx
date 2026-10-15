@@ -465,7 +465,7 @@ export function Dashboard() {
           </h1>
           <p className="text-sm mt-0.5" style={{ color: '#a8a090' }}>
             {feedingSummary.overdue > 0 && (
-              <span style={{ color: '#c45a5a', fontWeight: 500 }}>{feedingSummary.overdue} overdue</span>
+              <span style={{ color: '#dc7a7a', fontWeight: 500 }}>{feedingSummary.overdue} overdue</span>
             )}
             {feedingSummary.overdue > 0 && feedingSummary.dueSoon > 0 && ' · '}
             {feedingSummary.dueSoon > 0 && `${feedingSummary.dueSoon} due soon`}
@@ -546,7 +546,7 @@ export function Dashboard() {
       {/* Feeding strike warning */}
       {strikeAnimals.length > 0 && (
         <div className="mb-6 rounded-xl p-4" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
-          <p className="text-sm font-medium mb-1" style={{ color: '#c45a5a' }}>
+          <p className="text-sm font-medium mb-1" style={{ color: '#dc7a7a' }}>
             Feeding strike detected
           </p>
           <p className="text-xs" style={{ color: '#a8a090' }}>
@@ -595,7 +595,7 @@ export function Dashboard() {
             <span
               className="text-xs font-medium px-1.5 py-0.5 rounded-full"
               style={feedingSummary.overdue > 0
-                ? { backgroundColor: 'rgba(196,90,90,0.18)', color: '#c45a5a' }
+                ? { backgroundColor: 'rgba(196,90,90,0.18)', color: '#dc7a7a' }
                 : { backgroundColor: 'rgba(212,146,74,0.18)', color: '#d4924a' }}
             >
               {queue.length}
@@ -603,7 +603,7 @@ export function Dashboard() {
             {selectableIds.length > 1 && (
               <button
                 onClick={() => { setSelectMode((on) => !on); setSelected(new Set()) }}
-                className="ml-auto text-xs font-medium"
+                className="tap-target ml-auto text-xs font-medium"
                 style={{ color: selectMode ? '#a8a090' : '#8fbe5a' }}
               >
                 {selectMode ? 'Cancel' : 'Select'}
@@ -862,12 +862,15 @@ export function Dashboard() {
         {fabOpen && FAB_ACTIONS.map((action) => (
           <div key={action.key} className="relative z-10 flex items-center gap-3">
             <span
+              aria-hidden="true"
               className="text-xs font-medium px-2.5 py-1.5 rounded-lg whitespace-nowrap shadow-lg"
               style={{ backgroundColor: '#2a2a26', color: '#f0ece0', border: '1px solid rgba(255,255,255,0.08)' }}
             >
               {action.label}
             </span>
             <button
+              type="button"
+              aria-label={action.label}
               onClick={() => openModal(action.key as ActiveModal)}
               className="w-11 h-11 rounded-full flex items-center justify-center text-lg shadow-lg transition-transform active:scale-95"
               style={{ backgroundColor: '#2a2a26', border: '1px solid rgba(255,255,255,0.1)' }}
@@ -879,6 +882,9 @@ export function Dashboard() {
 
         {/* Main FAB */}
         <button
+          type="button"
+          aria-label="Quick log"
+          aria-expanded={fabOpen}
           onClick={() => setFabOpen((o) => !o)}
           className="relative z-10 w-14 h-14 rounded-full shadow-lg flex items-center justify-center transition-all duration-200 active:scale-95"
           style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}

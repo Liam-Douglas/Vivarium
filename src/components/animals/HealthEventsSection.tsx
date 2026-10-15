@@ -80,7 +80,7 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
                   <p className="text-xs mt-0.5" style={{ color: '#d4924a' }}>${(event.cost_cents / 100).toFixed(2)}</p>
                 )}
               </div>
-              <RecordActions onEdit={() => onEdit(event)} onDelete={() => onDelete(event)} />
+              <RecordActions what="health event" onEdit={() => onEdit(event)} onDelete={() => onDelete(event)} />
             </div>
           </div>
         ))}

@@ -662,7 +662,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                         style={{
                           backgroundColor: decision === 'new' ? 'rgba(196,90,90,0.12)' : 'rgba(255,255,255,0.04)',
                           border: `1px solid ${decision === 'new' ? 'rgba(196,90,90,0.3)' : 'rgba(255,255,255,0.08)'}`,
-                          color: decision === 'new' ? '#c45a5a' : '#9f9684',
+                          color: decision === 'new' ? '#dc7a7a' : '#9f9684',
                         }}
                       >
                         + Import as new animal
@@ -690,7 +690,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                     <select
                       value={linkedId}
                       onChange={(e) => setManualLinks((prev) => ({ ...prev, [key]: e.target.value }))}
-                      className="flex-1 text-sm rounded-lg px-3 py-1.5 focus:outline-none"
+                      className="flex-1 text-sm rounded-lg px-3 py-1.5"
                       style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.1)', color: linkedId ? '#8fbe5a' : '#a8a090' }}
                     >
                       <option value="">Import as new animal</option>
@@ -725,7 +725,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
 
           {importData.animals.length === 0 && importData.feedingLogs.length === 0 && importData.sheddingLogs.length === 0 && (
             <div className="rounded-xl p-4 mb-6 text-center" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
-              <p className="text-sm" style={{ color: '#c45a5a' }}>No data detected. Make sure your file matches the template format.</p>
+              <p className="text-sm" style={{ color: '#dc7a7a' }}>No data detected. Make sure your file matches the template format.</p>
             </div>
           )}
 
@@ -793,7 +793,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
             <div className="text-center">
               <div className="text-4xl mb-4">❌</div>
               <p className="text-lg font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Import failed</p>
-              <p className="text-sm mb-6 px-4" style={{ color: '#c45a5a' }}>{importError}</p>
+              <p className="text-sm mb-6 px-4" style={{ color: '#dc7a7a' }}>{importError}</p>
               <Button variant="secondary" onClick={() => { setStep(3); setImportError(null) }}>Go back and try again</Button>
             </div>
           ) : !result ? (
@@ -822,7 +822,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                   </div>
                   <div className="flex justify-between text-sm">
                     <span style={{ color: '#a8a090' }}>Shed records added</span>
-                    <span style={{ color: result.shedsDetected > 0 && result.sheds === 0 ? '#c45a5a' : '#f0ece0' }}>{result.sheds} / {result.shedsDetected}</span>
+                    <span style={{ color: result.shedsDetected > 0 && result.sheds === 0 ? '#dc7a7a' : '#f0ece0' }}>{result.sheds} / {result.shedsDetected}</span>
                   </div>
                   {(result.duplicateFeedings + result.duplicateSheds + result.skippedFeedings + result.skippedSheds) > 0 && (
                     <div className="pt-2 flex flex-col gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
@@ -840,14 +840,14 @@ export function Import({ embedded }: { embedded?: boolean }) {
                       )}
                       {result.skippedFeedings > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span style={{ color: '#c45a5a' }}>Feedings — no matching animal</span>
-                          <span style={{ color: '#c45a5a' }}>{result.skippedFeedings}</span>
+                          <span style={{ color: '#dc7a7a' }}>Feedings — no matching animal</span>
+                          <span style={{ color: '#dc7a7a' }}>{result.skippedFeedings}</span>
                         </div>
                       )}
                       {result.skippedSheds > 0 && (
                         <div className="flex justify-between text-sm">
-                          <span style={{ color: '#c45a5a' }}>Sheds — no matching animal</span>
-                          <span style={{ color: '#c45a5a' }}>{result.skippedSheds}</span>
+                          <span style={{ color: '#dc7a7a' }}>Sheds — no matching animal</span>
+                          <span style={{ color: '#dc7a7a' }}>{result.skippedSheds}</span>
                         </div>
                       )}
                     </div>
@@ -865,7 +865,7 @@ export function Import({ embedded }: { embedded?: boolean }) {
                 </div>
               </div>
               {result.shedsDetected > 0 && result.sheds === 0 && result.duplicateSheds === 0 && result.skippedSheds === 0 && (
-                <p className="text-xs mb-4 px-2" style={{ color: '#c45a5a' }}>
+                <p className="text-xs mb-4 px-2" style={{ color: '#dc7a7a' }}>
                   Shed records were detected but none were imported. This usually means the date column couldn't be parsed. Make sure dates are formatted as YYYY-MM-DD in your file.
                 </p>
               )}
@@ -881,11 +881,11 @@ export function Import({ embedded }: { embedded?: boolean }) {
               )}
               {result.duplicateAnimalNames.length > 0 && (
                 <div className="rounded-xl p-3 mb-4 text-left" style={{ backgroundColor: 'rgba(196,90,90,0.08)', border: '1px solid rgba(196,90,90,0.2)' }}>
-                  <p className="text-xs font-medium mb-1" style={{ color: '#c45a5a' }}>Duplicate animals detected in your collection</p>
+                  <p className="text-xs font-medium mb-1" style={{ color: '#dc7a7a' }}>Duplicate animals detected in your collection</p>
                   <p className="text-xs mb-2" style={{ color: '#a8a090' }}>
                     Previous imports created ghost copies of these animals and attached logs to the wrong records. Tap below to automatically merge them — logs will be consolidated onto the original animal and the ghosts deleted.
                   </p>
-                  <p className="text-xs mb-3" style={{ color: '#c45a5a' }}>{result.duplicateAnimalNames.join(', ')}</p>
+                  <p className="text-xs mb-3" style={{ color: '#dc7a7a' }}>{result.duplicateAnimalNames.join(', ')}</p>
                   <Button
                     size="sm"
                     loading={fixingDuplicates}
