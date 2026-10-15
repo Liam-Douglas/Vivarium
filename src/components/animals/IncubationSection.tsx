@@ -4,7 +4,6 @@ import {
 } from '@/lib/incubationStatus'
 import type { IncubationState } from '@/lib/incubationStatus'
 import { Badge } from '@/components/ui/Badge'
-import { Button } from '@/components/ui/Button'
 import { RecordActions } from '@/components/ui/RecordActions'
 import type { Incubation } from '@/hooks/useIncubations'
 
@@ -41,16 +40,14 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <p className="text-sm font-semibold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
-          🌡️ Incubation
-        </p>
-        <Button size="sm" onClick={onAdd}>Add</Button>
+        <h2 className="text-[20px] leading-[25px] font-bold text-label">Incubation</h2>
+        <button type="button" onClick={onAdd} className="tap-target text-[17px] text-tint active:opacity-60">Add</button>
       </div>
 
       {incubations.length === 0 ? (
-        <p className="text-sm py-1" style={{ color: '#9f9684' }}>No incubations yet.</p>
+        <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No incubations yet.</p>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="rounded-xl bg-surface overflow-hidden">
           {incubations.map((row) => {
             const state = incubationState(row, now)
             const badge = STATE_BADGE[state]
@@ -60,23 +57,23 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
             const rate = hatchRate(row)
 
             return (
-              <div key={row.id} className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div key={row.id} className="list-row px-4 py-3">
                 <div className="flex items-start gap-2">
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge status={badge.status}>{badge.label}</Badge>
                       {row.clutch_size != null && (
-                        <span className="text-xs" style={{ color: '#a8a090' }}>{row.clutch_size} eggs</span>
+                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.clutch_size} eggs</span>
                       )}
                       {row.eggs_fertile != null && (
-                        <span className="text-xs" style={{ color: '#8fbe5a' }}>{row.eggs_fertile} fertile</span>
+                        <span className="text-xs" style={{ color: 'var(--color-tint)' }}>{row.eggs_fertile} fertile</span>
                       )}
                       {row.hatchlings != null && (
-                        <span className="text-xs" style={{ color: '#8fbe5a' }}>{row.hatchlings} hatched</span>
+                        <span className="text-xs" style={{ color: 'var(--color-tint)' }}>{row.hatchlings} hatched</span>
                       )}
                     </div>
 
-                    <p className="text-xs mt-1.5" style={{ color: '#a8a090' }}>
+                    <p className="text-xs mt-1.5" style={{ color: 'var(--color-label-2)' }}>
                       {/* Day N while it runs, total once it is over: the same
                           column reads as progress or as a result, never both. */}
                       {duration != null
@@ -90,9 +87,9 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
                     </p>
 
                     {rate && (
-                      <p className="text-xs mt-1" style={{ color: '#8fbe5a' }}>
+                      <p className="text-xs mt-1" style={{ color: 'var(--color-tint)' }}>
                         {Math.round(rate.rate * 100)}% hatch rate
-                        <span style={{ color: '#9f9684' }}>
+                        <span style={{ color: 'var(--color-label-2)' }}>
                           {rate.basis === 'fertile' ? ' of fertile eggs' : ' of the clutch'}
                         </span>
                       </p>
@@ -100,13 +97,13 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
 
                     <div className="flex flex-wrap gap-2 mt-1">
                       {row.temperature_c != null && (
-                        <span className="text-xs" style={{ color: '#9f9684' }}>{row.temperature_c}°C</span>
+                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.temperature_c}°C</span>
                       )}
                       {row.humidity_percent != null && (
-                        <span className="text-xs" style={{ color: '#9f9684' }}>{row.humidity_percent}% RH</span>
+                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.humidity_percent}% RH</span>
                       )}
                       {row.incubation_medium && (
-                        <span className="text-xs" style={{ color: '#9f9684' }}>{row.incubation_medium}</span>
+                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.incubation_medium}</span>
                       )}
                     </div>
 
@@ -115,25 +112,25 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
                         the state from the dates and leaves this to the keeper
                         who wrote it. */}
                     {row.outcome && (
-                      <p className="text-xs mt-1" style={{ color: '#9f9684' }}>{row.outcome}</p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--color-label-2)' }}>{row.outcome}</p>
                     )}
                     {row.notes && (
-                      <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{row.notes}</p>
+                      <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-label-2)' }}>{row.notes}</p>
                     )}
                   </div>
 
                   <div className="text-right shrink-0 mr-1">
-                    <p className="text-xs" style={{ color: '#9f9684' }}>
-                      {format(new Date(row.start_date), 'MMM d, yyyy')}
+                    <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>
+                      {format(new Date(row.start_date), 'd MMM yyyy')}
                     </p>
                     {row.actual_hatch_date && (
-                      <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>
-                        {format(new Date(row.actual_hatch_date), 'MMM d')}
+                      <p className="text-xs mt-0.5" style={{ color: 'var(--color-tint)' }}>
+                        {format(new Date(row.actual_hatch_date), 'd MMM')}
                       </p>
                     )}
                   </div>
 
-                  <RecordActions onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} />
+                  <RecordActions what="clutch" onEdit={() => onEdit(row)} onDelete={() => onDelete(row)} />
                 </div>
               </div>
             )

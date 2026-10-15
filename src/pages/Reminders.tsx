@@ -22,13 +22,15 @@ import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { LoadError } from '@/components/ui/LoadError'
 import { CareTaskForm } from '@/components/reminders/CareTaskForm'
+import { ListSection, ListRow } from '@/components/ui/List'
+import { Icon, IconTile } from '@/components/ui/icons'
 
 function Section({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <section className="mb-7">
-      <h2 className="text-xs font-semibold tracking-wider mb-1" style={{ color: '#9f9684' }}>{title.toUpperCase()}</h2>
-      {subtitle && <p className="text-xs mb-2.5" style={{ color: '#9f9684' }}>{subtitle}</p>}
-      <div className={subtitle ? '' : 'mt-2.5'}>{children}</div>
+    <section className="mb-8">
+      <h2 className="text-[20px] leading-[25px] font-bold text-label px-1">{title}</h2>
+      {subtitle && <p className="text-[15px] text-label-2 px-1 mt-0.5">{subtitle}</p>}
+      <div className="mt-2.5">{children}</div>
     </section>
   )
 }
@@ -71,29 +73,27 @@ function FeedingCadenceRow({ animal, onSaved }: { animal: Animal; onSaved: () =>
   }
 
   return (
-    <div
-      className="rounded-xl p-3.5 flex items-center gap-3"
-      style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)', borderLeft: `3px solid ${meta.color}` }}
-    >
+    <div className="list-row list-row-leading flex items-center gap-3 px-4 py-2 min-h-11" style={{ '--sep-inset': '42px' } as React.CSSProperties}>
+      <span aria-hidden="true" className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: meta.color }} />
       <div className="flex-1 min-w-0">
-        <Link to={`/animals/${animal.id}`} className="text-sm font-medium" style={{ color: '#f0ece0' }}>
+        <Link to={`/animals/${animal.id}`} className="text-[17px] text-label block truncate">
           {animal.name}
         </Link>
-        <p className="text-xs mt-0.5" style={{ color: meta.color }}>{describeNextFeeding(animal)}</p>
+        <p className="text-[13px]" style={{ color: meta.color }}>{describeNextFeeding(animal)}</p>
       </div>
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <input
           type="number"
+          inputMode="numeric"
           min={1}
           value={value}
           disabled={saving}
           aria-label={`Feeding frequency in days for ${animal.name}`}
           onChange={(e) => setValue(e.target.value)}
           onBlur={commit}
-          className="w-16 rounded-lg px-2 py-1.5 text-sm text-right focus:outline-none focus:border-[#8fbe5a]"
-          style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.1)', color: '#f0ece0' }}
+          className="w-16 h-9 rounded-[8px] px-2.5 text-[17px] text-right tabular-nums bg-fill text-label border-0 outline-none focus-visible:ring-2 focus-visible:ring-tint disabled:opacity-50"
         />
-        <span className="text-xs" style={{ color: '#9f9684' }}>days</span>
+        <span className="text-[15px] text-label-2">days</span>
       </div>
     </div>
   )
@@ -186,10 +186,20 @@ export function Reminders() {
   }
 
   return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-3xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav md:pb-8 max-w-3xl mx-auto w-full">
       <Header
         title="Reminders"
-        action={<Button size="sm" onClick={() => { setEditingTask(null); setFormOpen(true) }}>Add reminder</Button>}
+        action={
+          <button
+            type="button"
+            onClick={() => { setEditingTask(null); setFormOpen(true) }}
+            aria-label="Add reminder"
+            className="tap-target inline-flex items-center justify-center gap-1.5 w-9 h-9 sm:w-auto sm:px-3.5 rounded-full bg-tint text-on-tint text-[15px] font-semibold active:opacity-70 transition-opacity"
+          >
+            <Icon name="plus" size={18} strokeWidth={2.4} />
+            <span className="hidden sm:inline">Add reminder</span>
+          </button>
+        }
       />
 
       {/* ── Care tasks ── */}
@@ -201,21 +211,21 @@ export function Reminders() {
           <LoadError subject="your reminders" message={tasksError} onRetry={refreshTasks} />
         ) : tasksState === 'loading' ? (
           <div className="flex justify-center py-8">
-            <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+            <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-tint)', borderTopColor: 'transparent' }} />
           </div>
         ) : tasks.length === 0 ? (
           <EmptyState
-            icon="🧽"
+            icon="bell"
             title="No care reminders yet"
             description="Add one for cage cleaning, weigh-ins, water changes — anything on a repeat."
-            action={<Button onClick={() => { setEditingTask(null); setFormOpen(true) }}>Add the first one</Button>}
+            action={<Button size="lg" onClick={() => { setEditingTask(null); setFormOpen(true) }}>Add the first one</Button>}
           />
         ) : (
           <>
             {tasksState === 'stale' && (
               <LoadError inline subject="reminders" message={tasksError} onRetry={refreshTasks} />
             )}
-            <div className="flex flex-col gap-2">
+            <div className="rounded-xl bg-surface overflow-hidden">
               {sortedTasks.map((task) => {
                 const status = getCareStatus(task)
                 const meta = CARE_STATUS_META[status]
@@ -223,45 +233,51 @@ export function Reminders() {
                 return (
                   <div
                     key={task.id}
-                    className="rounded-xl p-3.5 flex items-center gap-3"
-                    style={{
-                      backgroundColor: '#242420',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      borderLeft: `3px solid ${meta.color}`,
-                      opacity: task.is_active ? 1 : 0.55,
-                    }}
+                    className="list-row list-row-leading flex items-center gap-3 px-4 py-2.5 min-h-11"
+                    style={{ '--sep-inset': '56px' } as React.CSSProperties}
                   >
+                    {/* The Things check: a ring in the task's status colour that
+                        marks it done. A paused task is one the keeper asked not
+                        to be reminded about, so it offers no check at all. */}
+                    {task.is_active ? (
+                      <button
+                        type="button"
+                        onClick={() => handleMarkDone(task)}
+                        disabled={busy}
+                        aria-label={`Done: ${task.name}`}
+                        className="tap-target relative w-[26px] h-[26px] rounded-full shrink-0 flex items-center justify-center transition-transform duration-150 ease-out active:scale-90 motion-reduce:active:scale-100"
+                        style={{ border: `2px solid ${meta.color}` }}
+                      >
+                        {busy && (
+                          <span className="check-pop absolute inset-[-2px] rounded-full bg-tint text-on-tint flex items-center justify-center">
+                            <Icon name="check" size={15} strokeWidth={3} />
+                          </span>
+                        )}
+                      </button>
+                    ) : (
+                      <span aria-hidden="true" className="w-[26px] h-[26px] rounded-full shrink-0 border-2 border-dashed border-label-3" />
+                    )}
+
                     <button
                       type="button"
                       onClick={() => { setEditingTask(task); setFormOpen(true) }}
-                      className="flex-1 min-w-0 text-left"
+                      className={`flex-1 min-w-0 text-left ${task.is_active ? '' : 'opacity-55'}`}
                       aria-label={`Edit reminder: ${task.name}`}
                     >
-                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{task.name}</p>
-                      <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
+                      <p className="text-[17px] text-label truncate">{task.name}</p>
+                      <p className="text-[13px] text-label-2">
                         {targetLabel(task)} · every {task.frequency_days} day{task.frequency_days === 1 ? '' : 's'}
                       </p>
-                      <p className="text-xs mt-0.5" style={{ color: meta.color }}>{describeNextCare(task)}</p>
+                      <p className="text-[13px]" style={{ color: meta.color }}>{describeNextCare(task)}</p>
                     </button>
 
-                    <div className="flex flex-col items-end gap-1.5 shrink-0">
-                      {/* A paused task is one the keeper asked not to be
-                          reminded about; offering a bright action on a dimmed
-                          row asks them to act on it anyway. */}
-                      {task.is_active && (
-                        <Button size="sm" onClick={() => handleMarkDone(task)} loading={busy} disabled={busy}>
-                          Done
-                        </Button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => handleTogglePaused(task)}
-                        className="text-xs underline"
-                        style={{ color: '#9f9684' }}
-                      >
-                        {task.is_active ? 'Pause' : 'Resume'}
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleTogglePaused(task)}
+                      className="tap-target shrink-0 text-[15px] text-tint active:opacity-60"
+                    >
+                      {task.is_active ? 'Pause' : 'Resume'}
+                    </button>
                   </div>
                 )
               })}
@@ -278,9 +294,9 @@ export function Reminders() {
         {animalsState === 'error' ? (
           <LoadError subject="your animals" message={animalsError} onRetry={refreshAnimals} />
         ) : animals.length === 0 ? (
-          <p className="text-sm" style={{ color: '#9f9684' }}>No animals yet.</p>
+          <p className="text-[15px] text-label-2 px-1">No animals yet.</p>
         ) : (
-          <div className="flex flex-col gap-2">
+          <div className="rounded-xl bg-surface overflow-hidden">
             {sortedAnimals.map((animal) => (
               <FeedingCadenceRow key={animal.id} animal={animal} onSaved={refreshAnimals} />
             ))}
@@ -294,25 +310,17 @@ export function Reminders() {
           title="Medication"
           subtitle="Courses run from the animal's Health tab, where a start, an end and a dose position can be set properly."
         >
-          <div className="flex flex-col gap-2">
+          <ListSection>
             {activeMedSchedules.map((schedule) => (
-              <Link
-                key={schedule.id}
-                to={`/animals/${schedule.animal_id}`}
-                className="rounded-xl p-3.5 flex items-center gap-3"
-                style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>{schedule.name}</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
-                    {animalName.get(schedule.animal_id) ?? 'Unknown animal'}
-                    {schedule.frequency_days ? ` · every ${schedule.frequency_days} day${schedule.frequency_days === 1 ? '' : 's'}` : ''}
-                  </p>
-                </div>
-                <span className="text-xs shrink-0" style={{ color: '#9f9684' }}>View →</span>
-              </Link>
+              <ListRow key={schedule.id} to={`/animals/${schedule.animal_id}`} leading={<IconTile name="pill" color="var(--color-purple)" />}>
+                <p className="text-[17px] text-label truncate">{schedule.name}</p>
+                <p className="text-[13px] text-label-2">
+                  {animalName.get(schedule.animal_id) ?? 'Unknown animal'}
+                  {schedule.frequency_days ? ` · every ${schedule.frequency_days} day${schedule.frequency_days === 1 ? '' : 's'}` : ''}
+                </p>
+              </ListRow>
             ))}
-          </div>
+          </ListSection>
         </Section>
       )}
 
@@ -333,8 +341,7 @@ export function Reminders() {
             <button
               type="button"
               onClick={() => setConfirmDelete(editingTask)}
-              className="text-sm py-2 rounded-xl transition-colors hover:bg-white/5"
-              style={{ color: '#c45a5a' }}
+              className="min-h-11 rounded-[10px] text-[17px] text-red bg-fill active:bg-fill-2 transition-colors"
             >
               Delete this reminder
             </button>

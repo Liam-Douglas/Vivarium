@@ -21,7 +21,7 @@ export function ConfirmDialog({
   return (
     <Modal open={open} onClose={onClose} title={title}>
       <div className="flex flex-col gap-5">
-        <p className="text-sm" style={{ color: '#a8a090' }}>{message}</p>
+        <p className="text-[15px] text-label-2">{message}</p>
         <div className="flex gap-2">
           <Button variant="secondary" fullWidth onClick={onClose}>Cancel</Button>
           <Button variant="danger" fullWidth onClick={onConfirm}>{confirmLabel}</Button>

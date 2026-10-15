@@ -1,67 +1,45 @@
-import { useState } from 'react'
 import { Modal } from '@/components/ui/Modal'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { FREE_ANIMAL_LIMIT } from '@/lib/tiers'
 
 interface UpgradeModalProps {
   open: boolean
   onClose: () => void
 }
 
+// This used to collect an email and reply "You're on the list! We'll email
+// you when Pro launches" — but the address only ever lived in component state,
+// so the promise could not be kept. It also listed data export as a Pro
+// feature while export is free in Settings. It says only what is true: where
+// the limit is, that nothing is lost, and the two ways forward. The first is
+// one a keeper can take today: the limit counts active animals only, so
+// removing one that has left frees its place.
 export function UpgradeModal({ open, onClose }: UpgradeModalProps) {
-  const [email, setEmail] = useState('')
-  const [submitted, setSubmitted] = useState(false)
-
-  function handleSubmit() {
-    if (email) setSubmitted(true)
-  }
-
   return (
-    <Modal open={open} onClose={onClose} title="Upgrade to Pro">
-      <div className="text-center">
-        <div className="text-4xl mb-4">🚀</div>
-        {!submitted ? (
-          <>
-            <p className="text-sm mb-2" style={{ color: '#f0ece0' }}>
-              You've reached the <strong>5 animal limit</strong> on the free plan.
-            </p>
-            <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
-              Upgrade to Pro for unlimited animals and more features.
-            </p>
-            <div className="rounded-xl p-4 mb-6 text-left" style={{ backgroundColor: 'rgba(143,190,90,0.08)', border: '1px solid rgba(143,190,90,0.2)' }}>
-              <p className="text-sm font-semibold mb-1" style={{ color: '#8fbe5a' }}>Pro plan — coming soon</p>
-              <ul className="text-sm space-y-1" style={{ color: '#a8a090' }}>
-                <li>• Unlimited animals</li>
-                <li>• Advanced health tracking</li>
-                <li>• Export your data</li>
-                <li>• Priority support</li>
-              </ul>
-            </div>
-            <div className="flex flex-col gap-3">
-              <Input
-                placeholder="your@email.com"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                hint="Get notified when Pro launches"
-              />
-              <Button fullWidth onClick={handleSubmit}>
-                Notify me when Pro launches
-              </Button>
-              <Button variant="ghost" fullWidth onClick={onClose}>
-                Maybe later
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-sm mb-4" style={{ color: '#f0ece0' }}>
-              You're on the list! We'll email <strong>{email}</strong> when Pro launches.
-            </p>
-            <Button fullWidth onClick={onClose}>Close</Button>
-          </>
-        )}
+    <Modal open={open} onClose={onClose} title={`All ${FREE_ANIMAL_LIMIT} places are taken`}>
+      <div className="flex flex-col gap-4">
+        <p className="text-sm" style={{ color: 'var(--color-label-2)' }}>
+          The free plan holds up to {FREE_ANIMAL_LIMIT} animals per household. Nothing you have recorded is affected.
+        </p>
+        <Option
+          title="Make room"
+          body="If an animal has left your care, removing it from the collection on its profile frees its place."
+        />
+        <Option
+          title="Pro, on the way"
+          body="Unlimited animals, advanced health tracking and priority support. We'll announce it here in the app."
+        />
+        <Button fullWidth className="mt-1" onClick={onClose}>Got it</Button>
       </div>
     </Modal>
+  )
+}
+
+function Option({ title, body }: { title: string; body: string }) {
+  return (
+    <div className="rounded-xl px-4 py-3 bg-fill">
+      <p className="text-[17px] font-semibold text-label">{title}</p>
+      <p className="text-[15px] mt-0.5 text-label-2">{body}</p>
+    </div>
   )
 }

@@ -1,9 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth } from '@/context/AuthContext'
 import { useHousehold } from '@/context/HouseholdContext'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: DashboardIcon, exact: true },
+  { to: '/', label: 'Today', icon: DashboardIcon, exact: true },
   { to: '/animals', label: 'Animals', icon: AnimalsIcon },
   { to: '/feeding', label: 'Feeding', icon: FeedingIcon },
   { to: '/reminders', label: 'Reminders', icon: RemindersIcon },
@@ -31,8 +32,8 @@ function DashboardIcon({ active }: { active: boolean }) {
 }
 function AnimalsIcon({ active }: { active: boolean }) {
   return (
-    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.5 : 1.75}>
-      <path strokeLinecap="round" strokeLinejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+    <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={active ? 2.2 : 1.75}>
+      <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-2.25-2.25v-2.25z" />
     </svg>
   )
 }
@@ -74,18 +75,17 @@ export function Sidebar() {
 
   return (
     <aside
-      className="hidden md:flex flex-col w-56 h-screen sticky top-0 flex-shrink-0"
-      style={{ backgroundColor: '#1a1a18', borderRight: '1px solid rgba(255,255,255,0.06)' }}
+      // An iPadOS sidebar: its own surface beside the content, the selected
+      // row filled with the tint.
+      className="hidden md:flex flex-col w-60 h-dvh sticky top-0 flex-shrink-0 bg-surface border-r-[0.5px] border-separator"
     >
       {/* Logo */}
       <div className="px-6 pt-8 pb-6">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center text-[#1a1a18] font-bold text-sm" style={{ backgroundColor: '#8fbe5a' }}>
-            V
-          </div>
+          <BrandMark size="sm" />
           <div>
-            <div className="font-semibold text-sm" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Vivarium</div>
-            {householdName && <div className="text-xs" style={{ color: '#9f9684' }}>{householdName}</div>}
+            <div className="font-semibold text-sm" style={{ color: 'var(--color-label)' }}>Vivarium</div>
+            {householdName && <div className="text-xs" style={{ color: 'var(--color-label-2)' }}>{householdName}</div>}
           </div>
         </div>
       </div>
@@ -98,17 +98,14 @@ export function Sidebar() {
             to={item.to}
             end={item.exact}
             className={({ isActive }) =>
-              `flex items-center gap-3 px-3 py-2.5 rounded-xl mb-1 transition-colors text-sm font-medium ${
-                isActive
-                  ? 'text-[#f0ece0]'
-                  : 'text-[#9f9684] hover:text-[#a8a090] hover:bg-white/5'
+              `flex items-center gap-3 px-3 py-2 rounded-[10px] mb-0.5 transition-colors text-[15px] ${
+                isActive ? 'bg-tint text-on-tint font-semibold' : 'text-label hover:bg-fill'
               }`
             }
-            style={({ isActive }) => isActive ? { backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a' } : {}}
           >
             {({ isActive }) => (
               <>
-                <item.icon active={isActive} />
+                <span className={isActive ? '' : 'text-tint'}><item.icon active={isActive} /></span>
                 {item.label}
               </>
             )}
@@ -117,19 +114,19 @@ export function Sidebar() {
       </nav>
 
       {/* User */}
-      <div className="px-4 py-5 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
+      <div className="px-4 py-5 border-t" style={{ borderColor: 'var(--color-separator)' }}>
         <div className="flex items-center gap-3">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0"
-            style={{ backgroundColor: 'rgba(143,190,90,0.2)', color: '#8fbe5a' }}
+            style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 20%, transparent)', color: 'var(--color-tint)' }}
           >
             {profile?.full_name?.[0]?.toUpperCase() ?? user?.email?.[0]?.toUpperCase() ?? '?'}
           </div>
           <div className="min-w-0">
-            <div className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>
+            <div className="text-sm font-medium truncate" style={{ color: 'var(--color-label)' }}>
               {profile?.full_name ?? 'User'}
             </div>
-            <div className="text-xs truncate" style={{ color: '#9f9684' }}>
+            <div className="text-xs truncate" style={{ color: 'var(--color-label-2)' }}>
               {user?.email}
             </div>
           </div>

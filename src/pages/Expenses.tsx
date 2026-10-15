@@ -20,15 +20,12 @@ import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { format } from 'date-fns'
-
-const CATEGORY_ICONS: Record<string, string> = {
-  feeder_stock: '🐛',
-  veterinary: '🏥',
-  enclosure: '🏠',
-  acquisition: '🦎',
-  supplies: '🛍️',
-  misc: '📦',
-}
+import { SegmentedControl } from '@/components/ui/SegmentedControl'
+import { ListSection, ListRow, Chevron } from '@/components/ui/List'
+import { Icon, IconTile } from '@/components/ui/icons'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { RecordActions } from '@/components/ui/RecordActions'
+import { formatAUD, formatDate } from '@/lib/format'
 
 const FEEDER_PRESETS = [
   { label: 'Dubia Roaches – Small',    name: 'Dubia Roaches (Small)',    type: 'insect', unit: 'roaches' },
@@ -393,219 +390,217 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
+  const addButton = (label: string, onClick: () => void) => (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      className="tap-target inline-flex items-center justify-center gap-1.5 w-9 h-9 sm:w-auto sm:px-3.5 rounded-full bg-tint text-on-tint text-[15px] font-semibold active:opacity-70 transition-opacity"
+    >
+      <Icon name="plus" size={18} strokeWidth={2.4} />
+      <span className="hidden sm:inline">{label}</span>
+    </button>
+  )
+  const barButton = 'tap-target w-9 h-9 rounded-full flex items-center justify-center text-tint active:bg-fill disabled:opacity-40 transition-colors'
   const tabAction = activeTab === 'expenses'
-    ? <Button size="sm" onClick={() => setAddOpen(true)}>Add expense</Button>
+    ? addButton('Add expense', () => setAddOpen(true))
     : (
-      <div className="flex gap-2">
+      <>
         {lowStockFeeders.length > 0 && (
-          <Button size="sm" variant="secondary" onClick={() => setShoppingOpen(true)}>🛒 List</Button>
+          <button type="button" onClick={() => setShoppingOpen(true)} aria-label="Shopping list" className={barButton}>
+            <Icon name="cart" size={22} strokeWidth={1.8} />
+          </button>
         )}
-        <Button size="sm" variant="secondary" loading={scanning} onClick={() => fileInputRef.current?.click()}>
-          {scanning ? 'Scanning…' : '📷 Scan'}
-        </Button>
-        <Button size="sm" onClick={() => setAddFeederOpen(true)}>Add feeder</Button>
-      </div>
+        <button type="button" onClick={() => fileInputRef.current?.click()} disabled={scanning} aria-label={scanning ? 'Scanning…' : 'Scan receipt'} className={barButton}>
+          {scanning
+            ? <span className="w-5 h-5 rounded-full border-2 border-tint border-t-transparent animate-spin" />
+            : <Icon name="camera" size={22} strokeWidth={1.8} />}
+        </button>
+        {addButton('Add feeder', () => setAddFeederOpen(true))}
+      </>
     )
 
+  /** Stock level: red when out, amber below the threshold, green above it. */
+  const stockColor = (f: { currentStock: number; low_stock_threshold: number }) =>
+    f.currentStock <= 0 ? 'var(--color-red)' : f.currentStock < f.low_stock_threshold ? 'var(--color-orange)' : 'var(--color-green)'
+
   return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-3xl mx-auto w-full">
+    <div className="flex-1 px-4 lg:px-8 pt-2 md:pt-6 pb-nav md:pb-8 max-w-3xl mx-auto w-full">
       <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleReceiptFile} />
       <Header title="Expenses" action={tabAction} />
 
-      {/* Tab switcher */}
-      <div className="flex gap-1 p-1 rounded-xl mb-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-        {(['expenses', 'feeders'] as const).map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
-            style={{
-              backgroundColor: activeTab === tab ? 'rgba(143,190,90,0.15)' : 'transparent',
-              color: activeTab === tab ? '#8fbe5a' : '#9f9684',
-              border: activeTab === tab ? '1px solid rgba(143,190,90,0.25)' : '1px solid transparent',
-            }}
-          >
-            {tab === 'expenses' ? 'Expenses' : 'Feeder Stock'}
-          </button>
-        ))}
-      </div>
+      <SegmentedControl
+        label="Show"
+        className="mb-5 sm:max-w-xs"
+        value={activeTab}
+        onChange={setActiveTab}
+        options={[{ value: 'expenses', label: 'Expenses' }, { value: 'feeders', label: 'Feeder Stock' }]}
+      />
 
       {/* ── EXPENSES TAB ── */}
       {activeTab === 'expenses' && (
         <>
           {/* Month nav */}
-          <div className="flex items-center justify-between mb-5">
-            <button onClick={() => changeMonth(-1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: '#a8a090' }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
-            </button>
-            <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{monthName} {year}</span>
-            <button onClick={() => changeMonth(1)} className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/5" style={{ color: '#a8a090' }}>
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-            </button>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[20px] font-bold text-label px-1">{monthName} {year}</span>
+            <div className="flex items-center">
+              <button type="button" onClick={() => changeMonth(-1)} aria-label="Previous month" className="tap-target w-9 h-9 rounded-full flex items-center justify-center text-tint active:bg-fill">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" /></svg>
+              </button>
+              <button type="button" onClick={() => changeMonth(1)} aria-label="Next month" className="tap-target w-9 h-9 rounded-full flex items-center justify-center text-tint active:bg-fill">
+                <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.4}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+              </button>
+            </div>
           </div>
 
           {/* Total */}
-          <div className="rounded-xl p-5 mb-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs mb-1" style={{ color: '#9f9684' }}>Total this month</p>
-                <p className="text-3xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
-                  ${(totalCents / 100).toFixed(2)}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>AUD</p>
-              </div>
-              {/* Category breakdown pills */}
-              {byCategory.length > 0 && (
-                <div className="flex flex-col items-end gap-1">
-                  {byCategory.slice(0, 3).map(({ cat, total }) => (
-                    <div key={cat} className="flex items-center gap-1.5">
-                      <span className="text-xs" style={{ color: '#9f9684' }}>{CATEGORY_ICONS[cat] ?? '📦'}</span>
-                      <span className="text-xs" style={{ color: '#a8a090' }}>${(total / 100).toFixed(0)}</span>
-                    </div>
-                  ))}
-                  {byCategory.length > 3 && (
-                    <span className="text-xs" style={{ color: '#9f9684' }}>+{byCategory.length - 3} more</span>
-                  )}
-                </div>
-              )}
+          <div className="rounded-xl bg-surface px-4 py-3.5 mb-6 flex items-end justify-between gap-4">
+            <div>
+              <p className="text-[13px] font-semibold text-label-2">Total this month</p>
+              <p className="text-[34px] leading-[41px] font-bold text-label tabular-nums">{formatAUD(totalCents)}</p>
+              <p className="text-[13px] text-label-2">AUD</p>
             </div>
+            {/* Category breakdown */}
+            {byCategory.length > 0 && (
+              <div className="flex flex-col items-end gap-0.5 pb-0.5">
+                {byCategory.slice(0, 3).map(({ cat, total }) => (
+                  <p key={cat} className="text-[13px] text-label-2 tabular-nums">
+                    {EXPENSE_CATEGORY_LABELS[cat] ?? cat} <span className="text-label">${(total / 100).toFixed(0)}</span>
+                  </p>
+                ))}
+                {byCategory.length > 3 && (
+                  <span className="text-[13px] text-label-2">+{byCategory.length - 3} more</span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Low feeder stock alert */}
           {lowStockFeeders.length > 0 && (
-            <button
-              onClick={() => setActiveTab('feeders')}
-              className="w-full text-left rounded-xl px-4 py-3 mb-4 flex items-center gap-3"
-              style={{ backgroundColor: 'rgba(212,146,74,0.08)', border: '1px solid rgba(212,146,74,0.2)' }}
-            >
-              <span className="text-base">📦</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium" style={{ color: '#d4924a' }}>
+            <ListSection className="mb-6">
+              <ListRow onClick={() => setActiveTab('feeders')} leading={<IconTile name="box" color="var(--color-orange)" />} trailing={<Chevron />}>
+                <p className="text-[17px] text-label">
                   {lowStockFeeders.length} feeder{lowStockFeeders.length > 1 ? 's' : ''} running low
                 </p>
-                <p className="text-xs truncate" style={{ color: '#a8a090' }}>
+                <p className="text-[13px] text-label-2 truncate">
                   {lowStockFeeders.map((f) => f.name).join(', ')}
                 </p>
-              </div>
-              <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} style={{ color: '#d4924a', flexShrink: 0 }}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
+              </ListRow>
+            </ListSection>
           )}
 
           {expLoading ? (
             <div className="flex justify-center py-12">
-              <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: '#8fbe5a', borderTopColor: 'transparent' }} />
+              <div className="w-6 h-6 rounded-full border-2 animate-spin" style={{ borderColor: 'var(--color-tint)', borderTopColor: 'transparent' }} />
             </div>
           ) : byCategory.length === 0 ? (
             <>
-              <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
-                <div className="text-5xl mb-4 opacity-60">💸</div>
-                <h3 className="text-lg font-semibold mb-2" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>No expenses this month</h3>
-                <p className="text-sm max-w-xs mb-5" style={{ color: '#a8a090' }}>Tap 'Add expense' to record a purchase or cost.</p>
-                <Button size="sm" onClick={() => setAddOpen(true)}>Add expense</Button>
-              </div>
+              <EmptyState
+                icon="expense"
+                title="No expenses this month"
+                description="Tap 'Add expense' to record a purchase or cost."
+                action={<Button onClick={() => setAddOpen(true)}>Add expense</Button>}
+              />
 
               {/* Feeder stock overview when expenses tab is empty */}
               {feeders.length > 0 && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-xs font-medium tracking-wide" style={{ color: '#a8a090' }}>FEEDER STOCK</p>
-                    <button onClick={() => setActiveTab('feeders')} className="text-xs" style={{ color: '#8fbe5a' }}>Manage →</button>
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    {feeders.slice(0, 5).map((f) => {
-                      const pct = Math.min(f.currentStock / (f.low_stock_threshold * 2), 1)
-                      const color = f.currentStock <= 0 ? '#c45a5a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
-                      return (
-                        <div key={f.id} className="rounded-xl px-4 py-2.5 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                          <p className="text-lg font-bold w-10 shrink-0 text-center" style={{ color, fontFamily: 'Playfair Display, serif' }}>{f.currentStock}</p>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm truncate" style={{ color: '#f0ece0' }}>{f.name}</p>
-                            <div className="h-1 rounded-full mt-1 overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                              <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
-                            </div>
-                          </div>
-                          <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{f.unit_label}</p>
+                <ListSection
+                  header="Feeder stock"
+                  action={<button onClick={() => setActiveTab('feeders')} className="tap-target text-[15px] text-tint active:opacity-60">Manage</button>}
+                >
+                  {feeders.slice(0, 5).map((f) => {
+                    const pct = Math.min(f.currentStock / (f.low_stock_threshold * 2), 1)
+                    const color = stockColor(f)
+                    return (
+                      <ListRow
+                        key={f.id}
+                        separatorInset={68}
+                        leading={<span className="block w-10 text-center text-[20px] font-bold tabular-nums" style={{ color }}>{f.currentStock}</span>}
+                        trailing={<span className="text-[13px] text-label-2">{f.unit_label}</span>}
+                      >
+                        <p className="text-[17px] text-label truncate">{f.name}</p>
+                        <div className="h-1.5 rounded-full mt-1.5 overflow-hidden bg-fill">
+                          <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
                         </div>
-                      )
-                    })}
-                    {feeders.length > 5 && (
-                      <button onClick={() => setActiveTab('feeders')} className="text-center py-2 text-xs" style={{ color: '#9f9684' }}>
-                        +{feeders.length - 5} more feeders
-                      </button>
-                    )}
-                  </div>
-                </div>
+                      </ListRow>
+                    )
+                  })}
+                  {feeders.length > 5 && (
+                    <ListRow onClick={() => setActiveTab('feeders')}>
+                      <span className="text-[17px] text-tint">+{feeders.length - 5} more feeders</span>
+                    </ListRow>
+                  )}
+                </ListSection>
               )}
             </>
           ) : (
-            <div className="flex flex-col gap-4">
-              {byCategory.map(({ cat, total, items }) => (
-                <div key={cat} className="rounded-xl overflow-hidden" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-                  <div className="px-4 py-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span>{CATEGORY_ICONS[cat] ?? '📦'}</span>
-                      <span className="text-sm font-medium" style={{ color: '#f0ece0' }}>{EXPENSE_CATEGORY_LABELS[cat] ?? cat}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {budgets[cat] && (
-                        <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#c45a5a' : '#9f9684' }}>/ ${budgets[cat].toFixed(2)}</span>
-                      )}
-                      <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>${(total / 100).toFixed(2)}</span>
-                      <button
-                        onClick={() => { setEditingBudget(editingBudget === cat ? null : cat); setBudgetInput(budgets[cat] ? String(budgets[cat]) : '') }}
-                        className="w-6 h-6 rounded flex items-center justify-center text-xs"
-                        style={{ color: '#9f9684' }} title="Set budget"
-                      >🎯</button>
-                    </div>
-                  </div>
-                  {editingBudget === cat && (
-                    <div className="mx-4 mb-2 flex gap-2">
-                      <input
-                        type="number" min={0} step={0.01} value={budgetInput}
-                        onChange={(e) => setBudgetInput(e.target.value)}
-                        placeholder="Monthly budget (AUD)" autoFocus
-                        className="flex-1 rounded-lg px-3 py-1.5 text-sm focus:outline-none"
-                        style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
-                      />
-                      <button onClick={() => saveBudget(cat)} className="px-3 py-1.5 rounded-lg text-xs font-medium" style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}>Set</button>
-                      {budgets[cat] && <button onClick={() => { setBudgetInput(''); saveBudget(cat) }} className="px-3 py-1.5 rounded-lg text-xs" style={{ color: '#9f9684' }}>Clear</button>}
-                    </div>
-                  )}
-                  <div className="mx-4 mb-3">
-                    {budgets[cat] ? (
-                      <div>
-                        <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                          <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (total / 100 / budgets[cat]) * 100)}%`, backgroundColor: total / 100 > budgets[cat] ? '#c45a5a' : total / 100 > budgets[cat] * 0.8 ? '#d4924a' : '#8fbe5a' }} />
-                        </div>
-                        <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
-                          {total / 100 > budgets[cat] ? `$${((total / 100) - budgets[cat]).toFixed(2)} over budget` : `$${(budgets[cat] - total / 100).toFixed(2)} remaining`}
-                        </p>
+            <div className="flex flex-col gap-6">
+              {byCategory.map(({ cat, total, items }) => {
+                const budget = budgets[cat]
+                const over = budget ? total / 100 > budget : false
+                return (
+                  <ListSection
+                    key={cat}
+                    prominent
+                    header={EXPENSE_CATEGORY_LABELS[cat] ?? cat}
+                    action={
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[17px] font-semibold text-label tabular-nums">{formatAUD(total)}</span>
+                        {budget && (
+                          <span className={`text-[15px] tabular-nums ${over ? 'text-red' : 'text-label-2'}`}>/ {formatAUD(Math.round(budget * 100))}</span>
+                        )}
+                        <button
+                          onClick={() => { setEditingBudget(editingBudget === cat ? null : cat); setBudgetInput(budget ? String(budget) : '') }}
+                          aria-label="Set budget"
+                          aria-expanded={editingBudget === cat}
+                          className="tap-target w-8 h-8 rounded-full flex items-center justify-center text-tint active:bg-fill"
+                        >
+                          <Icon name="target" size={20} strokeWidth={1.8} />
+                        </button>
                       </div>
-                    ) : (
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                        <div className="h-full rounded-full" style={{ width: `${totalCents > 0 ? (total / totalCents) * 100 : 0}%`, backgroundColor: '#8fbe5a' }} />
+                    }
+                  >
+                    {editingBudget === cat && (
+                      <div className="list-row flex items-center gap-2 px-4 py-2.5">
+                        <input
+                          type="number" inputMode="decimal" min={0} step={0.01} value={budgetInput}
+                          onChange={(e) => setBudgetInput(e.target.value)}
+                          placeholder="Monthly budget (AUD)" autoFocus
+                          className="flex-1 min-w-0 h-9 rounded-[10px] px-3 text-[17px] bg-fill text-label placeholder:text-label-2 outline-none focus-visible:ring-2 focus-visible:ring-tint"
+                        />
+                        <button onClick={() => saveBudget(cat)} className="tap-target px-2 text-[17px] text-tint active:opacity-60">Set</button>
+                        {budget && <button onClick={() => { setBudgetInput(''); saveBudget(cat) }} className="tap-target px-2 text-[17px] text-label-2 active:opacity-60">Clear</button>}
                       </div>
                     )}
-                  </div>
-                  {items.map((expense) => (
-                    <div key={expense.id} className="px-4 py-2 flex items-center justify-between gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-sm truncate" style={{ color: '#a8a090' }}>{expense.description}</p>
-                        <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(expense.expense_date), 'MMM d')}</p>
-                      </div>
-                      <p className="text-sm shrink-0" style={{ color: '#f0ece0' }}>${(expense.amount_cents / 100).toFixed(2)}</p>
-                      <button onClick={() => openEdit(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                      </button>
-                      <button onClick={() => handleDelete(expense)} className="shrink-0 w-7 h-7 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
+                    <div className="list-row px-4 py-3">
+                      {budget ? (
+                        <>
+                          <div className="h-2 rounded-full overflow-hidden bg-fill">
+                            <div className="h-full rounded-full" style={{ width: `${Math.min(100, (total / 100 / budget) * 100)}%`, backgroundColor: over ? 'var(--color-red)' : total / 100 > budget * 0.8 ? 'var(--color-orange)' : 'var(--color-tint)' }} />
+                          </div>
+                          <p className={`text-[13px] mt-1 ${over ? 'text-red' : 'text-label-2'}`}>
+                            {over ? `${formatAUD(total - Math.round(budget * 100))} over budget` : `${formatAUD(Math.round(budget * 100) - total)} remaining`}
+                          </p>
+                        </>
+                      ) : (
+                        <div className="h-2 rounded-full overflow-hidden bg-fill">
+                          <div className="h-full rounded-full bg-tint" style={{ width: `${totalCents > 0 ? (total / totalCents) * 100 : 0}%` }} />
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              ))}
+                    {items.map((expense) => (
+                      <div key={expense.id} className="list-row flex items-center gap-2 pl-4 pr-2 py-1.5 min-h-11">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[17px] text-label truncate">{expense.description}</p>
+                          <p className="text-[13px] text-label-2">{format(new Date(expense.expense_date), 'd MMM')}</p>
+                        </div>
+                        <p className="text-[17px] text-label tabular-nums shrink-0 mr-1">{formatAUD(expense.amount_cents)}</p>
+                        <RecordActions what="expense" onEdit={() => openEdit(expense)} onDelete={() => handleDelete(expense)} />
+                      </div>
+                    ))}
+                  </ListSection>
+                )
+              })}
             </div>
           )}
         </>
@@ -615,73 +610,76 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
       {activeTab === 'feeders' && (
         <>
           {feedersError && (
-            <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>{feedersError}</div>
+            <div className="mb-4 px-4 py-3 rounded-xl text-[15px] text-red" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)' }}>{feedersError}</div>
           )}
           {feedersLoading ? (
-            <div className="flex flex-col gap-3">
+            <div className="rounded-xl bg-surface overflow-hidden">
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="skeleton rounded-xl h-16" />
+                <div key={i} className="list-row px-4 py-3"><div className="skeleton rounded-lg h-10" /></div>
               ))}
             </div>
           ) : feeders.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
-              <div className="text-5xl mb-4 opacity-60">📦</div>
-              <h3 className="text-lg font-semibold mb-2" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>No feeder inventory</h3>
-              <p className="text-sm max-w-xs mb-5" style={{ color: '#a8a090' }}>Set up your feeder inventory to track stock levels.</p>
-              <Button onClick={() => setAddFeederOpen(true)}>Add first feeder</Button>
-            </div>
+            <EmptyState
+              icon="box"
+              title="No feeder inventory"
+              description="Set up your feeder inventory to track stock levels."
+              action={<Button size="lg" onClick={() => setAddFeederOpen(true)}>Add first feeder</Button>}
+            />
           ) : (
-            <div className="flex flex-col gap-3">
+            <div className="rounded-xl bg-surface overflow-hidden">
               {feeders.map((f) => {
                 const pct = Math.min(f.currentStock / (f.low_stock_threshold * 2), 1)
-                const color = f.currentStock <= 0 ? '#c45a5a' : f.currentStock < f.low_stock_threshold ? '#d4924a' : '#5a9e6a'
+                const color = stockColor(f)
                 return (
-                  <div key={f.id} className="rounded-xl px-4 py-3 flex items-center gap-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  <div key={f.id} className="list-row list-row-leading flex items-center gap-3 pl-3 pr-2 py-2.5" style={{ '--sep-inset': '80px' } as React.CSSProperties}>
                     {/* Stock count — tap to edit inline */}
                     <div className="text-center shrink-0 w-14">
                       {inlineEditId === f.id ? (
                         <input
-                          type="number" min={0} value={inlineEditValue} autoFocus
+                          type="number" inputMode="numeric" min={0} value={inlineEditValue} autoFocus
                           onChange={(e) => setInlineEditValue(e.target.value)}
                           onBlur={() => handleInlineStockSave(f)}
                           onKeyDown={(e) => { if (e.key === 'Enter') handleInlineStockSave(f); if (e.key === 'Escape') setInlineEditId(null) }}
-                          className="w-full text-center text-xl font-bold rounded-lg px-1 py-0.5 focus:outline-none"
-                          style={{ backgroundColor: 'rgba(255,255,255,0.08)', color, fontFamily: 'Playfair Display, serif', border: `1px solid ${color}` }}
+                          aria-label={`Stock of ${f.name}`}
+                          className="w-full h-9 text-center text-[20px] font-bold tabular-nums rounded-[8px] bg-fill outline-none ring-2"
+                          style={{ color, ['--tw-ring-color' as string]: color }}
                         />
                       ) : (
                         <button type="button" title="Tap to set stock amount"
                           onClick={() => { setInlineEditId(f.id); setInlineEditValue(String(f.currentStock)) }}
-                          className="w-full rounded-lg py-0.5 hover:bg-white/5 active:bg-white/10"
+                          aria-label={`Set stock of ${f.name}, currently ${f.currentStock}`}
+                          className="w-full rounded-[8px] py-0.5 active:bg-fill hover:bg-fill"
                         >
-                          <p className="text-2xl font-bold leading-tight" style={{ color, fontFamily: 'Playfair Display, serif' }}>{f.currentStock}</p>
+                          <p className="text-[24px] leading-7 font-bold tabular-nums" style={{ color }}>{f.currentStock}</p>
                         </button>
                       )}
-                      <p className="text-xs truncate mt-0.5" style={{ color: '#9f9684' }}>{f.unit_label}</p>
+                      <p className="text-[12px] text-label-2 truncate">{f.unit_label}</p>
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-baseline justify-between gap-2 mb-1.5">
-                        <h3 className="font-semibold text-sm truncate" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>{f.name}</h3>
-                        <span className="text-xs shrink-0" style={{ color: '#9f9684' }}>/{f.low_stock_threshold}</span>
+                        <h3 className="text-[17px] text-label truncate">{f.name}</h3>
+                        <span className="text-[13px] text-label-2 shrink-0 tabular-nums">/{f.low_stock_threshold}</span>
                       </div>
-                      <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
-                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
+                      <div className="h-1.5 rounded-full overflow-hidden bg-fill">
+                        <div className="h-full rounded-full" style={{ width: `${pct * 100}%`, backgroundColor: color }} />
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes(''); setStockMode('add'); setStockFeederCurrentStock(f.currentStock) }}
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold"
-                        style={{ backgroundColor: 'rgba(143,190,90,0.15)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.2)' }}
-                      >+ Stock</button>
-                      <button onClick={() => openHistory(f.id)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      </button>
-                      <button onClick={() => openEditFeeder(f)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
-                      </button>
-                      <button onClick={() => handleDeleteFeeder(f)} className="p-1.5 rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
-                        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                      </button>
+                      <div className="flex items-center gap-1 mt-1.5 -ml-1.5">
+                        <button
+                          onClick={() => { setAddStockOpen(f.id); setStockQty(''); setStockCost(''); setStockNotes(''); setStockMode('add'); setStockFeederCurrentStock(f.currentStock) }}
+                          className="h-[30px] px-3 rounded-full text-[15px] font-semibold text-tint active:opacity-60"
+                          style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)' }}
+                        >+ Stock</button>
+                        <span className="flex-1" />
+                        <button onClick={() => openHistory(f.id)} aria-label={`Stock history: ${f.name}`} className="tap-target w-8 h-8 rounded-full flex items-center justify-center text-label-2 active:bg-fill hover:bg-fill">
+                          <Icon name="clock" size={18} />
+                        </button>
+                        <button onClick={() => openEditFeeder(f)} aria-label={`Edit ${f.name}`} className="tap-target w-8 h-8 rounded-full flex items-center justify-center text-tint active:bg-fill hover:bg-fill">
+                          <Icon name="pencil" size={18} />
+                        </button>
+                        <button onClick={() => handleDeleteFeeder(f)} aria-label={`Delete ${f.name}`} className="tap-target w-8 h-8 rounded-full flex items-center justify-center text-red active:bg-fill hover:bg-fill">
+                          <Icon name="trash" size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )
@@ -765,16 +763,12 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
 
       <Modal open={!!addStockOpen} onClose={() => setAddStockOpen(null)} title="Stock">
         <div className="flex flex-col gap-4">
-          <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.08)' }}>
-            <button type="button" onClick={() => setStockMode('add')} className="flex-1 py-2 text-sm font-medium transition-colors"
-              style={{ backgroundColor: stockMode === 'add' ? 'rgba(143,190,90,0.2)' : 'transparent', color: stockMode === 'add' ? '#8fbe5a' : '#9f9684' }}>
-              Add quantity
-            </button>
-            <button type="button" onClick={() => setStockMode('set')} className="flex-1 py-2 text-sm font-medium transition-colors"
-              style={{ backgroundColor: stockMode === 'set' ? 'rgba(212,146,74,0.2)' : 'transparent', color: stockMode === 'set' ? '#d4924a' : '#9f9684', borderLeft: '1px solid rgba(255,255,255,0.08)' }}>
-              Set exact amount
-            </button>
-          </div>
+          <SegmentedControl
+            label="Stock change"
+            value={stockMode}
+            onChange={setStockMode}
+            options={[{ value: 'add', label: 'Add quantity' }, { value: 'set', label: 'Set exact amount' }]}
+          />
           {stockMode === 'add' ? (
             <>
               <Input label="Quantity to add" type="number" min={1} value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder="How many?" />
@@ -783,7 +777,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
           ) : (
             <div>
               <Input label="Set stock to" type="number" min={0} value={stockQty} onChange={(e) => setStockQty(e.target.value)} placeholder={`Currently ${stockFeederCurrentStock}`} />
-              <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Current: {stockFeederCurrentStock} — saves a correction event to history</p>
+              <p className="text-[13px] mt-1.5 px-1 text-label-2">Current: {stockFeederCurrentStock} — saves a correction event to history</p>
             </div>
           )}
           <Textarea label="Notes" value={stockNotes} onChange={(e) => setStockNotes(e.target.value)} rows={2} placeholder={stockMode === 'set' ? 'Reason for correction (optional)' : 'Where purchased, etc.'} />
@@ -797,18 +791,22 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
       </Modal>
 
       <Modal open={!!historyOpen} onClose={() => setHistoryOpen(null)} title="Stock history">
-        <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
+        <div className="max-h-80 overflow-y-auto">
           {history.length === 0 ? (
-            <p className="text-sm text-center py-6" style={{ color: '#9f9684' }}>No history</p>
-          ) : history.map((ev) => (
-            <div key={ev.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
-              <div>
-                <p className="text-sm" style={{ color: '#f0ece0' }}>{ev.event_type === 'purchase' ? '+' : ''}{ev.quantity_delta}</p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>{ev.notes ?? ev.event_type}</p>
-              </div>
-              <p className="text-xs" style={{ color: '#9f9684' }}>{new Date(ev.created_at).toLocaleDateString()}</p>
+            <p className="text-[15px] text-center py-6 text-label-2">No history</p>
+          ) : (
+            <div className="rounded-xl bg-fill overflow-hidden">
+              {history.map((ev) => (
+                <div key={ev.id} className="list-row flex items-center justify-between gap-3 px-4 py-2.5">
+                  <div className="min-w-0">
+                    <p className="text-[17px] text-label tabular-nums">{ev.event_type === 'purchase' ? '+' : ''}{ev.quantity_delta}</p>
+                    <p className="text-[13px] text-label-2">{ev.notes ?? ev.event_type}</p>
+                  </div>
+                  <p className="text-[13px] text-label-2 shrink-0">{formatDate(ev.created_at)}</p>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
         </div>
       </Modal>
 
@@ -818,7 +816,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
           <Input label="Unit label" value={editUnitLabel} onChange={(e) => setEditUnitLabel(e.target.value)} placeholder="e.g. insects, mice" />
           <div>
             <Input label="Current stock" type="number" min={0} value={editCurrentStock} onChange={(e) => setEditCurrentStock(e.target.value)} />
-            <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Set the actual count — saves an adjustment to history</p>
+            <p className="text-[13px] mt-1.5 px-1 text-label-2">Set the actual count — saves an adjustment to history</p>
           </div>
           <Input label="Low stock threshold" type="number" min={0} value={editThreshold} onChange={(e) => setEditThreshold(e.target.value)} />
           <div className="flex gap-2">
@@ -829,14 +827,14 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
       </Modal>
 
       <Modal open={shoppingOpen} onClose={() => setShoppingOpen(false)} title="Shopping list">
-        <div className="flex flex-col gap-3">
+        <div className="rounded-xl bg-fill overflow-hidden">
           {lowStockFeeders.map((f) => (
-            <div key={f.id} className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <div>
-                <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{f.name}</p>
-                <p className="text-xs" style={{ color: '#9f9684' }}>Stock: {f.currentStock} / threshold: {f.low_stock_threshold}</p>
+            <div key={f.id} className="list-row flex items-center justify-between gap-3 px-4 py-2.5">
+              <div className="min-w-0">
+                <p className="text-[17px] text-label">{f.name}</p>
+                <p className="text-[13px] text-label-2">Stock: {f.currentStock} / threshold: {f.low_stock_threshold}</p>
               </div>
-              <p className="text-sm font-semibold" style={{ color: '#d4924a' }}>
+              <p className="text-[17px] font-semibold text-orange shrink-0">
                 Buy ~{Math.max(f.low_stock_threshold * 2 - f.currentStock, 0)}
               </p>
             </div>
@@ -846,18 +844,17 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
 
       <Modal open={receiptOpen} onClose={() => { setReceiptOpen(false); setReceiptItems([]) }} title="Review scanned receipt">
         <div className="flex flex-col gap-3">
-          <p className="text-xs" style={{ color: '#a8a090' }}>Select which items to add to inventory and adjust quantities as needed.</p>
+          <p className="text-[15px] text-label-2">Select which items to add to inventory and adjust quantities as needed.</p>
           <div className="flex flex-col gap-2 max-h-80 overflow-y-auto">
             {receiptItems.map((item) => (
-              <div key={item._id} className="flex items-start gap-3 p-3 rounded-xl"
-                style={{ backgroundColor: item.selected ? 'rgba(143,190,90,0.07)' : 'rgba(255,255,255,0.03)', border: `1px solid ${item.selected ? 'rgba(143,190,90,0.2)' : 'rgba(255,255,255,0.05)'}` }}>
-                <input type="checkbox" checked={item.selected} onChange={(e) => updateReceiptItem(item._id, { selected: e.target.checked })} className="mt-1 accent-[#8fbe5a]" />
+              <div key={item._id} className={`flex items-start gap-3 p-3 rounded-xl bg-fill transition-opacity ${item.selected ? '' : 'opacity-60'}`}>
+                <input type="checkbox" checked={item.selected} onChange={(e) => updateReceiptItem(item._id, { selected: e.target.checked })} aria-label={`Include ${item.editedName || 'item'}`} className="mt-2.5 w-5 h-5 accent-tint shrink-0" />
                 <div className="flex-1 flex flex-col gap-2 min-w-0">
                   <Input value={item.editedName} onChange={(e) => updateReceiptItem(item._id, { editedName: e.target.value })} disabled={!item.selected} />
                   <div className="flex items-center gap-2">
                     <Input label="Qty" type="number" min={1} value={item.editedQty} onChange={(e) => updateReceiptItem(item._id, { editedQty: e.target.value })} disabled={!item.selected} />
                     {item.unit_price_cents > 0 && (
-                      <p className="text-xs whitespace-nowrap" style={{ color: '#9f9684' }}>${(item.unit_price_cents / 100).toFixed(2)} ea</p>
+                      <p className="text-[13px] whitespace-nowrap text-label-2">{formatAUD(item.unit_price_cents)} ea</p>
                     )}
                   </div>
                 </div>

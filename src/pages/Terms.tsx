@@ -1,12 +1,12 @@
 export function Terms() {
-  const headingStyle = { color: '#f0ece0' }
-  const bodyStyle = { color: '#a8a090' }
-  const mutedStyle = { color: '#9f9684' }
+  const headingStyle = { color: 'var(--color-label)' }
+  const bodyStyle = { color: 'var(--color-label-2)' }
+  const mutedStyle = { color: 'var(--color-label-2)' }
 
   return (
-    <div className="flex-1 px-4 py-6 pb-24 md:pb-8 max-w-2xl mx-auto w-full">
-      <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Terms of Service</h1>
-      <p className="text-xs mb-6" style={mutedStyle}>Last updated: April 2025</p>
+    <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-2xl mx-auto w-full">
+      <h1 className="text-2xl font-bold mb-2 text-label">Terms of Service</h1>
+      <p className="text-[13px] mb-6" style={mutedStyle}>Last updated: April 2025</p>
 
       <div className="flex flex-col gap-4">
         <Section title="Acceptance of terms" headingStyle={headingStyle} bodyStyle={bodyStyle}>
@@ -62,7 +62,7 @@ export function Terms() {
 
         <Section title="Contact" headingStyle={headingStyle} bodyStyle={bodyStyle}>
           Questions about these terms? Contact us at{' '}
-          <a href="mailto:support@vivarium.app" style={{ color: '#8fbe5a' }}>support@vivarium.app</a>.
+          <a href="mailto:support@vivarium.app" style={{ color: 'var(--color-tint)' }}>support@vivarium.app</a>.
         </Section>
       </div>
     </div>
@@ -81,9 +81,9 @@ function Section({
   bodyStyle: React.CSSProperties
 }) {
   return (
-    <div className="rounded-xl p-5" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-      <h2 className="text-sm font-semibold mb-3" style={headingStyle}>{title}</h2>
-      <div className="text-sm leading-relaxed" style={bodyStyle}>{children}</div>
+    <div className="rounded-xl p-5 bg-surface">
+      <h2 className="text-[15px] font-semibold mb-3" style={headingStyle}>{title}</h2>
+      <div className="text-[15px] leading-relaxed" style={bodyStyle}>{children}</div>
     </div>
   )
 }

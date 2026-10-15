@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 export function AuthCallback() {
   const navigate = useNavigate()
@@ -32,12 +33,10 @@ export function AuthCallback() {
   }, [navigate])
 
   return (
-    <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="min-h-dvh flex items-center justify-center" style={{ backgroundColor: 'var(--color-bg)' }}>
       <div className="flex flex-col items-center gap-4">
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg animate-pulse" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
-          V
-        </div>
-        <p className="text-sm" style={{ color: '#9f9684' }}>Signing you in…</p>
+        <BrandMark pulse />
+        <p className="text-[15px] text-label-2">Signing you in…</p>
       </div>
     </div>
   )

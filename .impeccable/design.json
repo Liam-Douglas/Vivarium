@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-15T00:00:00Z",
+  "title": "Design System: Vivarium",
+  "extensions": {
+    "colorMeta": {
+      "night-soil": { "role": "neutral", "displayName": "Night Soil", "canonical": "#1a1a18", "tonalRamp": ["#0d0d0c", "#1a1a18", "#242420", "#2e2e2a", "#505048", "#9f9684", "#cfc9bb", "#f0ece0"] },
+      "bark": { "role": "neutral", "displayName": "Bark", "canonical": "#242420" },
+      "moss-stone": { "role": "neutral", "displayName": "Moss Stone", "canonical": "#2e2e2a" },
+      "leaf": { "role": "primary", "displayName": "Leaf", "canonical": "#8fbe5a", "tonalRamp": ["#26331a", "#3b5228", "#557a39", "#6f9e48", "#8fbe5a", "#a8cf7e", "#c4e0a6", "#e2f0d3"] },
+      "lamp-amber": { "role": "secondary", "displayName": "Lamp Amber", "canonical": "#d4924a" },
+      "clay-red": { "role": "secondary", "displayName": "Clay Red", "canonical": "#c45a5a" },
+      "fern-green": { "role": "tertiary", "displayName": "Fern Green", "canonical": "#5a9e6a" },
+      "pond-blue": { "role": "tertiary", "displayName": "Pond Blue", "canonical": "#5a8fbe" },
+      "parchment": { "role": "neutral", "displayName": "Parchment", "canonical": "#f0ece0" },
+      "dry-grass": { "role": "neutral", "displayName": "Dry Grass", "canonical": "#a8a090" },
+      "sand": { "role": "neutral", "displayName": "Sand", "canonical": "#9f9684" },
+      "ink-shadow": { "role": "neutral", "displayName": "Ink Shadow", "canonical": "#505048" }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display", "purpose": "An animal's name on its profile." },
+      "headline": { "displayName": "Headline", "purpose": "Page titles and the dashboard greeting." },
+      "title": { "displayName": "Title", "purpose": "Section headings, card names, modal titles." },
+      "body": { "displayName": "Body", "purpose": "Rows, forms, descriptions." },
+      "label": { "displayName": "Label", "purpose": "Uppercase section labels and metadata." }
+    },
+    "shadows": [
+      { "name": "float", "value": "0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)", "purpose": "FAB, speed dial, toasts." },
+      { "name": "dialog", "value": "0 25px 50px -12px rgb(0 0 0 / 0.25)", "purpose": "Modals over a 70% black scrim." }
+    ],
+    "motion": [
+      { "name": "control", "value": "150ms cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Tailwind default transitions on buttons and cards (transition-all today)." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" }
+    ]
+  },
+  "components": [
+    { "name": "Primary Button", "kind": "button", "refersTo": "button-primary", "description": "The one filled action per view.", "html": "<button class=\"ds-btn-primary\">Save feeding</button>", "css": ".ds-btn-primary{background:#8fbe5a;color:#1a1a18;border:0;border-radius:12px;padding:8px 16px;font:500 14px 'DM Sans',system-ui,sans-serif;transition:opacity 150ms}.ds-btn-primary:active{opacity:.85}.ds-btn-primary:focus-visible{outline:2px solid #8fbe5a;outline-offset:2px}" },
+    { "name": "Secondary Button", "kind": "button", "refersTo": "button-secondary", "description": "Cancel and alternate actions.", "html": "<button class=\"ds-btn-secondary\">Cancel</button>", "css": ".ds-btn-secondary{background:transparent;color:#f0ece0;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 16px;font:500 14px 'DM Sans',system-ui,sans-serif}.ds-btn-secondary:hover{background:rgba(255,255,255,.05)}.ds-btn-secondary:focus-visible{outline:2px solid #8fbe5a;outline-offset:2px}" },
+    { "name": "Feed Row Action", "kind": "custom", "refersTo": "button-primary", "description": "The tinted in-list action on the Today queue.", "html": "<button class=\"ds-feed\">Feed</button>", "css": ".ds-feed{background:rgba(143,190,90,.12);color:#8fbe5a;border:1px solid rgba(143,190,90,.3);border-radius:12px;padding:10px 14px;font:500 15px 'DM Sans',system-ui,sans-serif}.ds-feed:focus-visible{outline:2px solid #8fbe5a;outline-offset:2px}" },
+    { "name": "Text Input", "kind": "input", "refersTo": "input", "description": "Night Soil well with a Leaf focus border.", "html": "<input class=\"ds-input\" placeholder=\"Search animals…\">", "css": ".ds-input{background:#1a1a18;color:#f0ece0;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:10px 16px;font:400 16px 'DM Sans',system-ui,sans-serif;outline:none}.ds-input:focus{border-color:#8fbe5a}" },
+    { "name": "Status Chip", "kind": "chip", "refersTo": "chip", "description": "Filter chip carrying a status tone.", "html": "<button class=\"ds-chip\">Overdue 2</button>", "css": ".ds-chip{background:transparent;color:#c45a5a;border:1px solid rgba(196,90,90,.35);border-radius:9999px;padding:6px 12px;font:500 14px 'DM Sans',system-ui,sans-serif}" },
+    { "name": "Card", "kind": "card", "refersTo": "card", "description": "Default Bark surface with a hairline.", "html": "<div class=\"ds-card\"><strong>Nagini</strong><br><span>Ball python · Pastel Clown</span></div>", "css": ".ds-card{background:#242420;border:1px solid rgba(255,255,255,.06);border-radius:12px;padding:16px;color:#f0ece0;font:400 14px 'DM Sans',system-ui,sans-serif}.ds-card span{color:#a8a090;font-size:12px}" }
+  ],
+  "narrative": {
+    "northStar": "The Keeper's Field Journal",
+    "overview": "Vivarium looks like a well-kept notebook used in the evening beside the enclosures: warm near-black paper, serif headings set like journal entries, and a single leaf-green ink reserved for what the keeper can act on. It is dark-only on purpose.",
+    "keyCharacteristics": ["Dark-only, warm-tinted neutrals (never pure black or blue-grey).", "Playfair Display for headings and names; DM Sans for everything a keeper reads quickly.", "One accent (leaf green) for actions and \"on schedule\"; amber and red only for urgency.", "Flat tonal layering: surfaces step up in lightness instead of casting shadows.", "Rounded, soft-cornered containers (12px) and pill chips."],
+    "rules": [
+      { "name": "The Earned Colour Rule", "body": "Amber and red appear only when an animal or task needs something.", "section": "colors" },
+      { "name": "The One Ink Rule", "body": "Leaf green marks what can be tapped or what is going well. If an element is neither, it is grey.", "section": "colors" },
+      { "name": "The Serif-For-Names Rule", "body": "Playfair is for names and headings only. Data, counts, buttons and labels are DM Sans.", "section": "typography" },
+      { "name": "The Lamp-Off Rule", "body": "Surfaces are flat at rest. Nothing glows.", "section": "elevation" }
+    ],
+    "dos": ["Do keep every surface warm: Night Soil, Bark and Moss Stone, never #000 or a blue-grey.", "Do use status colour only for status, and pair it with words.", "Do set animal names and headings in Playfair Display and everything else in DM Sans.", "Do keep form controls at 16px on phones; pinch-zoom stays enabled.", "Do show loading, failed and empty as three different states."],
+    "donts": ["Don't add a light theme or bright surfaces.", "Don't use gradients, glows or decorative shadows on cards.", "Don't introduce a second accent hue for actions.", "Don't gamify (streaks, badges, celebratory motion)."]
+  }
+}

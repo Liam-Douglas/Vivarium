@@ -1,5 +1,7 @@
 import { useEffect } from 'react'
+import { PageTransition } from '@/components/layout/PageTransition'
 import { BrowserRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom'
+import { MotionConfig } from 'motion/react'
 import { AuthProvider, useAuth } from '@/context/AuthContext'
 import { HouseholdProvider, useHousehold } from '@/context/HouseholdContext'
 import { ToastProvider } from '@/components/ui/Toast'
@@ -28,6 +30,7 @@ import { Stats } from '@/pages/Stats'
 import { Reminders } from '@/pages/Reminders'
 import { Terms } from '@/pages/Terms'
 import { Privacy } from '@/pages/Privacy'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 // Require auth — redirect to sign-in if not logged in
 function RequireAuth() {
@@ -35,10 +38,8 @@ function RequireAuth() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: '#1a1a18' }}>
-        <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg animate-pulse" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
-          V
-        </div>
+      <div className="min-h-dvh flex items-center justify-center" >
+        <BrandMark pulse />
       </div>
     )
   }
@@ -72,7 +73,7 @@ function AppShell() {
   const showNav = !!householdId
 
   return (
-    <div className="flex min-h-screen" style={{ backgroundColor: '#1a1a18' }}>
+    <div className="flex min-h-dvh" >
       {showNav && <Sidebar />}
       {/* index.html sets viewport-fit=cover, which extends the page under the
           status bar and the notch. BottomNav has always compensated at the
@@ -85,6 +86,7 @@ function AppShell() {
         className="flex-1 flex flex-col min-w-0"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
+        <PageTransition>
         <Routes>
           <Route element={<RequireHousehold />}>
             <Route path="/" element={<><OverdueWatcher /><ErrorBoundary><Dashboard /></ErrorBoundary></>} />
@@ -103,6 +105,7 @@ function AppShell() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/onboarding" element={<OnboardingHousehold />} />
         </Routes>
+        </PageTransition>
       </main>
       {showNav && <BottomNav />}
     </div>
@@ -127,6 +130,9 @@ function useSWUpdateReload() {
 export default function App() {
   useSWUpdateReload()
   return (
+    // Reduce Motion is honoured everywhere: springs and travel give way to
+    // fades for anyone who has asked their phone for less movement.
+    <MotionConfig reducedMotion="user">
     <BrowserRouter>
       <AuthProvider>
         <HouseholdProvider>
@@ -146,5 +152,6 @@ export default function App() {
         </HouseholdProvider>
       </AuthProvider>
     </BrowserRouter>
+    </MotionConfig>
   )
 }

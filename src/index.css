@@ -1,19 +1,69 @@
 @import "tailwindcss";
 
+/* iOS system colours as semantic tokens. Each is a CSS variable
+   (var(--color-label)) and a utility (text-label, bg-surface,
+   border-separator). Light values here; dark values below, chosen by the
+   phone's appearance setting. Where Apple's standard colour falls short of
+   WCAG AA as text, its increased-contrast variant is used instead. */
+@theme {
+  --color-bg: #F2F2F7;            /* systemGroupedBackground */
+  --color-surface: #FFFFFF;       /* secondarySystemGroupedBackground: cells, cards */
+  --color-surface-2: #FFFFFF;     /* elevated: sheets, menus */
+  --color-fill: rgba(118, 118, 128, 0.12);   /* inputs, segmented tracks */
+  --color-fill-2: rgba(118, 118, 128, 0.2);  /* pressed */
+  --color-label: #000000;
+  --color-label-2: #6C6C70;       /* secondaryLabel, darkened to 4.7:1 */
+  --color-label-3: #8E8E93;       /* tertiary: icons and non-essential text only */
+  --color-separator: rgba(60, 60, 67, 0.29);
+  --color-tint: #1E7A35;          /* system green, darkened to 5.4:1 as text */
+  --color-on-tint: #FFFFFF;
+  --color-red: #D70015;
+  --color-orange: #C93400;
+  --color-green: #1E7A35;
+  --color-blue: #0040DD;
+  --color-purple: #8944AB;
+  --color-destructive: #D70015;   /* filled destructive button, white label */
+  --color-scrim: rgba(0, 0, 0, 0.4);
+  --color-segment: #FFFFFF;       /* the raised segment of a segmented control */
+  --color-bar: rgba(249, 249, 249, 0.8);  /* tab and navigation bar material */
+
+  /* Motion. ease-out replaces Tailwind's default, which is too weak to read
+     as deliberate; drawer is the iOS sheet curve. */
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #000000;
+    --color-surface: #1C1C1E;
+    --color-surface-2: #2C2C2E;
+    --color-fill: rgba(118, 118, 128, 0.24);
+    --color-fill-2: rgba(118, 118, 128, 0.36);
+    --color-label: #FFFFFF;
+    --color-label-2: #98989F;
+    --color-label-3: #6E6E73;
+    --color-separator: rgba(84, 84, 88, 0.65);
+    --color-tint: #30D158;
+    --color-on-tint: #000000;
+    --color-red: #FF453A;
+    --color-orange: #FF9F0A;
+    --color-green: #30D158;
+    --color-blue: #409CFF;
+    --color-purple: #BF5AF2;
+    --color-scrim: rgba(0, 0, 0, 0.6);
+    --color-segment: #636366;
+    --color-bar: rgba(22, 22, 23, 0.8);
+  }
+}
+
 :root {
-  --bg-primary: #1a1a18;
-  --bg-surface: #242420;
-  --bg-elevated: #2e2e2a;
-  --accent-primary: #8fbe5a;
-  --accent-warm: #d4924a;
-  --accent-cool: #5a8fbe;
-  --text-primary: #f0ece0;
-  --text-secondary: #a8a090;
-  --text-muted: #9f9684;
-  --status-green: #5a9e6a;
-  --status-amber: #d4924a;
-  --status-red: #c45a5a;
-  --border-subtle: rgba(255, 255, 255, 0.06);
+  /* Native controls (date pickers, selects, scrollbars, the caret) follow
+     the phone's appearance along with everything else. */
+  color-scheme: light dark;
+  /* No grey flash over everything tapped; press states below replace it. */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-text-size-adjust: 100%;
 }
 
 * {
@@ -27,9 +77,10 @@ html, body, #root {
 }
 
 body {
-  font-family: 'DM Sans', system-ui, sans-serif;
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
+  /* SF Pro on Apple devices, the platform face elsewhere. */
+  font-family: -apple-system, BlinkMacSystemFont, system-ui, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-label);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -41,7 +92,23 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: inherit;
+  letter-spacing: -0.01em;
+}
+
+/* The phone tab bar is about 57px plus the home-indicator inset, which is
+   34px on a notched iPhone running as an installed app. Anything that has to
+   clear the bar says so with these, rather than a bare 80px or 96px that only
+   held while the inset was zero. */
+@utility pb-nav {
+  padding-bottom: calc(6rem + env(safe-area-inset-bottom, 0px));
+}
+/* The dashboard also has the floating action button over its last rows. */
+@utility pb-nav-fab {
+  padding-bottom: calc(10rem + env(safe-area-inset-bottom, 0px));
+}
+@utility bottom-above-nav {
+  bottom: calc(5rem + env(safe-area-inset-bottom, 0px));
 }
 
 /* Scrollbar styling */
@@ -50,10 +117,10 @@ h1, h2, h3, h4, h5, h6 {
   height: 4px;
 }
 ::-webkit-scrollbar-track {
-  background: var(--bg-primary);
+  background: var(--color-bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--bg-elevated);
+  background: var(--color-fill-2);
   border-radius: 2px;
 }
 
@@ -64,7 +131,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 .skeleton {
   animation: skeleton-pulse 1.5s ease-in-out infinite;
-  background: var(--bg-elevated);
+  background: var(--color-fill-2);
   border-radius: 6px;
 }
 
@@ -79,4 +146,213 @@ h1, h2, h3, h4, h5, h6 {
   textarea {
     font-size: 16px;
   }
+}
+
+/* Controls behave like controls on a phone: no double-tap-zoom wait before a
+   tap registers, and a long press does not select the label or open the link
+   callout. Body text is untouched, so names and notes can still be copied. */
+button,
+a,
+label,
+select,
+summary,
+[role='button'],
+[role='tab'] {
+  touch-action: manipulation;
+}
+button,
+[role='button'],
+[role='tab'],
+nav a {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* The focus ring for anything that does not draw its own: keyboard focus
+   only, in leaf, so a tap never leaves a ring behind. */
+:focus-visible {
+  outline: 2px solid var(--color-tint);
+  outline-offset: 2px;
+}
+
+/* Text selection in the palette rather than the browser's blue. */
+::selection {
+  background: color-mix(in srgb, var(--color-tint) 30%, transparent);
+}
+
+/* A 44px touch area around a control that is drawn smaller, such as a chip
+   or a text link, without changing how it looks. */
+@utility tap-target {
+  position: relative;
+  &::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 44px);
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* Text fields show focus on every focus, tap included, which is right for a
+   field; a tighter offset keeps the ring hugging the rounded box. */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline-offset: 1px;
+}
+
+/* ── Sheets and dialogs ─────────────────────────────────────────────────
+   Every logging action opens one, so this is the most-felt motion in the
+   app. On a phone the panel is a bottom sheet that rises from the edge and
+   leaves the same way; from 640px it is a centred dialog that settles in
+   from 96%. Transitions rather than keyframes, so closing halfway through
+   opening reverses from where it is instead of jumping. */
+.sheet-backdrop {
+  opacity: 0;
+  transition: opacity 300ms var(--ease-drawer);
+}
+.sheet-backdrop[data-open] {
+  opacity: 1;
+}
+.sheet-panel {
+  transform: translateY(100%);
+  transition: transform 300ms var(--ease-drawer);
+}
+.sheet-panel[data-open] {
+  transform: translateY(0);
+}
+/* Leaving is quicker than arriving: the keeper is done with it. */
+.sheet-backdrop:not([data-open]),
+.sheet-panel:not([data-open]) {
+  transition-duration: 220ms;
+}
+@media (min-width: 640px) {
+  .sheet-panel {
+    opacity: 0;
+    transform: scale(0.96);
+    transition:
+      transform 200ms var(--ease-out),
+      opacity 200ms var(--ease-out);
+  }
+  .sheet-panel[data-open] {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Something that is mounted all the time but only sometimes shown (the More
+   sheet, the speed-dial items): hidden from taps and from screen readers
+   once its exit has finished, not before. */
+.fade-away:not([data-open]) {
+  visibility: hidden;
+  pointer-events: none;
+  transition-property: opacity, transform, visibility;
+  transition-delay: 0s, 0s, 220ms;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* The iOS switch, drawn on a real checkbox so forms keep their semantics:
+   the thumb slides on the drawer curve and the track fills with colour. */
+.switch {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 51px;
+  height: 31px;
+  margin: 0;
+  border-radius: 999px;
+  background: var(--color-fill-2);
+  cursor: pointer;
+  transition: background-color 250ms var(--ease-out);
+}
+.switch::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15), 0 3px 1px rgba(0, 0, 0, 0.06);
+  transition: transform 300ms var(--ease-drawer);
+}
+.switch:checked { background: var(--color-tint); }
+.switch-red:checked { background: var(--color-red); }
+.switch-orange:checked { background: var(--color-orange); }
+.switch:checked::before { transform: translateX(20px); }
+.switch:disabled { opacity: 0.4; cursor: default; }
+
+/* The Things-style check-off: the tick lands with a small overshoot. */
+@keyframes check-pop {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.12); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.check-pop {
+  animation: check-pop 320ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Fewer and gentler, not none: things still fade, nothing travels. */
+  .check-pop {
+    animation: fade-in 200ms ease both;
+  }
+  .switch::before {
+    transition-duration: 0ms;
+  }
+  .sheet-panel,
+  .sheet-panel[data-open] {
+    transform: none;
+    opacity: 0;
+    transition: opacity 200ms ease;
+  }
+  .sheet-panel[data-open] {
+    opacity: 1;
+  }
+  .skeleton,
+  .animate-pulse {
+    animation: none;
+  }
+}
+
+/* The bar material: tab bar, collapsed navigation bar. Content scrolls under
+   it and shows through, blurred, as on iOS. Solid where blur is unavailable
+   or the reader asked for less transparency. */
+.bar-material {
+  background: var(--color-bar);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+  backdrop-filter: saturate(180%) blur(20px);
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .bar-material { background: var(--color-surface); }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .bar-material { background: var(--color-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+/* Inset separators between list rows, starting where the text starts. */
+.list-row {
+  position: relative;
+}
+.list-row + .list-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 16px;
+  height: 0.5px;
+  background: var(--color-separator);
+}
+.list-row-leading + .list-row::before,
+.list-row + .list-row-leading::before {
+  left: var(--sep-inset, 60px);
 }

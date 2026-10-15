@@ -24,11 +24,11 @@ export interface CareSchedule {
 }
 
 export const CARE_STATUS_META: Record<CareStatus, { color: string; label: string }> = {
-  overdue: { color: '#c45a5a', label: 'Overdue' },
-  'due-soon': { color: '#d4924a', label: 'Due soon' },
-  'on-schedule': { color: '#5a9e6a', label: 'Done recently' },
-  'never-done': { color: '#9f9684', label: 'Never done' },
-  paused: { color: '#9f9684', label: 'Paused' },
+  overdue: { color: 'var(--color-red)', label: 'Overdue' },
+  'due-soon': { color: 'var(--color-orange)', label: 'Due soon' },
+  'on-schedule': { color: 'var(--color-green)', label: 'Done recently' },
+  'never-done': { color: 'var(--color-label-2)', label: 'Never done' },
+  paused: { color: 'var(--color-label-2)', label: 'Paused' },
 }
 
 export function getCareStatus(task: CareSchedule, now: Date = new Date()): CareStatus {

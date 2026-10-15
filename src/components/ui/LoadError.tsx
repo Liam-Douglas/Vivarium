@@ -1,3 +1,4 @@
+import { Icon } from './icons'
 import { Button } from './Button'
 
 interface LoadErrorProps {
@@ -25,21 +26,20 @@ export function LoadError({ subject, message, onRetry, inline = false }: LoadErr
       <div
         className="rounded-xl px-4 py-3 mb-4 flex items-center gap-3"
         role="status"
-        style={{ backgroundColor: 'rgba(212,146,74,0.1)', border: '1px solid rgba(212,146,74,0.3)' }}
+        style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 12%, transparent)' }}
       >
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium" style={{ color: '#d4924a' }}>
+          <p className="text-[15px] font-medium text-orange">
             Showing what loaded earlier
           </p>
-          <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>
+          <p className="text-[13px] mt-0.5 text-label-2">
             {message ?? `Could not refresh ${subject}.`}
           </p>
         </div>
         <button
           type="button"
           onClick={onRetry}
-          className="text-xs font-medium underline shrink-0"
-          style={{ color: '#d4924a' }}
+          className="tap-target text-[15px] font-semibold text-tint shrink-0 active:opacity-60"
         >
           Retry
         </button>
@@ -49,13 +49,13 @@ export function LoadError({ subject, message, onRetry, inline = false }: LoadErr
 
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4 text-center" role="alert">
-      <div className="text-5xl mb-4 opacity-60">⚠️</div>
-      <h3 className="text-lg font-semibold mb-2" style={{ color: '#f0ece0', fontFamily: 'Playfair Display, serif' }}>
+      <Icon name="alert" size={48} strokeWidth={1.4} className="text-label-3 mb-3" />
+      <h3 className="text-[20px] leading-[25px] font-bold mb-1 text-label">
         Couldn't load {subject}
       </h3>
       {/* The message is shown rather than summarised: "failed to fetch" and
           "JWT expired" need different things from the keeper. */}
-      <p className="text-sm mb-6 max-w-xs" style={{ color: '#a8a090' }}>
+      <p className="text-[15px] mb-5 max-w-xs text-label-2">
         {message ?? 'Something went wrong. Your records are safe — this is a problem reading them.'}
       </p>
       <Button variant="secondary" onClick={onRetry}>Try again</Button>

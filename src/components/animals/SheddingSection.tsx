@@ -28,7 +28,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
   if (logs.length === 0) {
     return (
       <EmptyState
-        icon="🐍"
+        icon="shed"
         title="No sheds logged"
         description="Tap 'Log shed' to record a shedding event."
       />
@@ -38,7 +38,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
   const summary = summariseSheds(logs)
   const intervals = shedIntervals(logs)
   const chart = intervals.map((interval) => ({
-    date: format(interval.at, 'MMM d yy'),
+    date: format(interval.at, 'd MMM yy'),
     days: interval.days,
     complete: interval.complete,
   }))
@@ -48,37 +48,37 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
       <div className="grid grid-cols-3 gap-3">
         {[
           { label: 'Total sheds', value: summary.total },
-          { label: 'Complete', value: summary.complete, color: '#8fbe5a' },
+          { label: 'Complete', value: summary.complete, color: 'var(--color-tint)' },
           {
             label: 'Avg interval',
             value: summary.averageIntervalDays != null ? `${summary.averageIntervalDays}d` : '—',
           },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-            <p className="text-xs" style={{ color: '#9f9684' }}>{stat.label}</p>
-            <p className="text-base font-semibold mt-0.5" style={{ color: stat.color ?? '#f0ece0' }}>{stat.value}</p>
+          <div key={stat.label} className="rounded-xl px-3 py-2.5 bg-surface">
+            <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{stat.label}</p>
+            <p className="text-base font-semibold mt-0.5" style={{ color: stat.color ?? 'var(--color-label)' }}>{stat.value}</p>
           </div>
         ))}
       </div>
 
       {chart.length > 1 && (
-        <div className="rounded-xl p-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <p className="text-xs font-medium mb-1" style={{ color: '#a8a090' }}>SHED INTERVALS (days)</p>
-          <p className="text-xs mb-3" style={{ color: '#9f9684' }}>
+        <div className="rounded-xl p-4 bg-surface">
+          <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-label-2)' }}>SHED INTERVALS (days)</p>
+          <p className="text-xs mb-3" style={{ color: 'var(--color-label-2)' }}>
             Days between consecutive sheds — green = complete, amber = incomplete
           </p>
           <ResponsiveContainer width="100%" height={130}>
             <BarChart data={chart} barCategoryGap="25%">
-              <XAxis dataKey="date" tick={{ fontSize: 10, fill: '#9f9684' }} axisLine={false} tickLine={false} />
+              <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
               <YAxis hide />
               <Tooltip
-                contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
-                labelStyle={{ color: '#a8a090', fontSize: 12 }}
+                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
+                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
                 formatter={(v) => [`${v} days`, 'Interval']}
               />
-              <Bar dataKey="days" radius={[4, 4, 0, 0]}>
+              <Bar isAnimationActive={false} dataKey="days" radius={[4, 4, 0, 0]}>
                 {chart.map((entry, i) => (
-                  <Cell key={i} fill={entry.complete ? '#5a9e6a' : '#d4924a'} />
+                  <Cell key={i} fill={entry.complete ? 'var(--color-green)' : 'var(--color-orange)'} />
                 ))}
               </Bar>
             </BarChart>
@@ -86,19 +86,19 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
         </div>
       )}
 
-      <div className="flex flex-col gap-2">
+      <div className="rounded-xl bg-surface overflow-hidden">
         {logs.map((log) => (
-          <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div key={log.id} className="list-row px-4 py-3 flex items-center gap-3">
             <Badge status={log.complete ? 'green' : 'amber'}>
               {log.complete ? 'Complete' : 'Incomplete'}
             </Badge>
             <div className="flex-1">
-              {log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}
+              {log.notes && <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{log.notes}</p>}
             </div>
-            <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>
-              {format(new Date(log.shed_at), 'MMM d, yyyy')}
+            <p className="text-xs shrink-0 mr-1" style={{ color: 'var(--color-label-2)' }}>
+              {format(new Date(log.shed_at), 'd MMM yyyy')}
             </p>
-            <RecordActions onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
+            <RecordActions what="shed" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
           </div>
         ))}
       </div>

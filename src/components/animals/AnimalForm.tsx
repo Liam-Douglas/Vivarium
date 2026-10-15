@@ -178,19 +178,18 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
     <form onSubmit={handleSubmit(onSubmit as SubmitHandler<FormValues>)} className="flex flex-col gap-4">
       {/* Photo */}
       <div
-        className="w-full h-36 rounded-xl flex flex-col items-center justify-center cursor-pointer overflow-hidden relative"
-        style={{ backgroundColor: '#1a1a18', border: '1px dashed rgba(255,255,255,0.12)' }}
+        className="w-full h-36 rounded-xl flex flex-col items-center justify-center cursor-pointer overflow-hidden relative bg-fill active:opacity-70 transition-opacity"
         onClick={() => fileRef.current?.click()}
       >
         {photoPreview ?? existingPhotoUrl ? (
           <img src={photoPreview ?? existingPhotoUrl ?? undefined} alt="Preview" className="w-full h-full object-cover" />
         ) : (
           <>
-            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5} style={{ color: '#9f9684' }}>
+            <svg width="28" height="28" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} className="text-tint">
               <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <p className="text-xs mt-2" style={{ color: '#9f9684' }}>Tap to add photo</p>
+            <p className="text-[15px] mt-2 text-tint">Tap to add photo</p>
           </>
         )}
         <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={handlePhotoChange} />
@@ -224,12 +223,12 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
 
       {/* Tags */}
       <div>
-        <p className="text-xs font-medium mb-2" style={{ color: '#a8a090' }}>Tags</p>
+        <p className="text-[13px] font-medium mb-1.5 px-1 text-label-2">Tags</p>
         <div className="flex flex-wrap gap-1.5 mb-2">
           {tags.map((t) => (
-            <span key={t} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs" style={{ backgroundColor: 'rgba(143,190,90,0.12)', color: '#8fbe5a', border: '1px solid rgba(143,190,90,0.25)' }}>
+            <span key={t} className="inline-flex items-center gap-1 px-3 h-7 rounded-full text-[15px] text-tint" style={{ backgroundColor: 'color-mix(in srgb, var(--color-tint) 14%, transparent)' }}>
               #{t}
-              <button type="button" onClick={() => removeTag(t)} style={{ color: '#8fbe5a', lineHeight: 1 }}>×</button>
+              <button type="button" onClick={() => removeTag(t)} style={{ color: 'var(--color-tint)', lineHeight: 1 }}>×</button>
             </span>
           ))}
         </div>
@@ -240,33 +239,32 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
             onKeyDown={handleTagKey}
             onBlur={addTag}
             placeholder="Add tag (Enter to confirm)"
-            className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
-            style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
+            className="flex-1 rounded-[10px] px-3.5 py-2.5 min-h-11 text-[17px] bg-fill text-label placeholder:text-label-3 border-0 outline-none focus:ring-2 focus:ring-tint"
           />
         </div>
       </div>
 
       {/* Quarantine */}
-      <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: `1px solid ${inQuarantine ? 'rgba(212,146,74,0.3)' : 'rgba(255,255,255,0.06)'}` }}>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" checked={inQuarantine} onChange={(e) => setInQuarantine(e.target.checked)} className="w-4 h-4 accent-[#d4924a]" />
-          <span className="text-sm font-medium" style={{ color: inQuarantine ? '#d4924a' : '#a8a090' }}>🔬 In quarantine</span>
+      <div className="rounded-[10px] bg-fill px-4 py-1.5">
+        <label className="flex items-center justify-between gap-3 min-h-11 cursor-pointer">
+          <span className="text-[17px] text-label">In quarantine</span>
+          <input type="checkbox" checked={inQuarantine} onChange={(e) => setInQuarantine(e.target.checked)} className="switch switch-orange" />
         </label>
         {inQuarantine && (
-          <div className="mt-3">
+          <div className="mt-1.5 mb-2.5">
             <Input label="Quarantine started" type="date" value={quarantineDate} onChange={(e) => setQuarantineDate(e.target.value)} />
           </div>
         )}
       </div>
 
       {/* Sale listing */}
-      <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: `1px solid ${isForSale ? 'rgba(143,190,90,0.3)' : 'rgba(255,255,255,0.06)'}` }}>
-        <label className="flex items-center gap-3 cursor-pointer">
-          <input type="checkbox" checked={isForSale} onChange={(e) => setIsForSale(e.target.checked)} className="w-4 h-4 accent-[#8fbe5a]" />
-          <span className="text-sm font-medium" style={{ color: isForSale ? '#8fbe5a' : '#a8a090' }}>🏷️ Listed for sale</span>
+      <div className="rounded-[10px] bg-fill px-4 py-1.5">
+        <label className="flex items-center justify-between gap-3 min-h-11 cursor-pointer">
+          <span className="text-[17px] text-label">Listed for sale</span>
+          <input type="checkbox" checked={isForSale} onChange={(e) => setIsForSale(e.target.checked)} className="switch" />
         </label>
         {isForSale && (
-          <div className="mt-3">
+          <div className="mt-1.5 mb-2.5">
             <Input label="Asking price (AUD)" type="number" min={0} step={0.01} value={askingPrice} onChange={(e) => setAskingPrice(e.target.value)} placeholder="0.00" />
           </div>
         )}
@@ -275,8 +273,8 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
       {/* Custom fields */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <p className="text-xs font-medium" style={{ color: '#a8a090' }}>Custom fields</p>
-          <button type="button" onClick={addCustomField} className="text-xs" style={{ color: '#8fbe5a' }}>+ Add field</button>
+          <p className="text-[13px] font-medium text-label-2 px-1">Custom fields</p>
+          <button type="button" onClick={addCustomField} className="tap-target text-[15px] text-tint active:opacity-60">+ Add field</button>
         </div>
         {customFields.map((cf, i) => (
           <div key={i} className="flex gap-2 mb-2">
@@ -284,21 +282,19 @@ export function AnimalForm({ animal, onSuccess, onCancel }: AnimalFormProps) {
               value={cf.key}
               onChange={(e) => updateCustomField(i, 'key', e.target.value)}
               placeholder="Field name"
-              className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
-              style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
+              className="flex-1 rounded-[10px] px-3.5 py-2.5 min-h-11 text-[17px] bg-fill text-label placeholder:text-label-3 border-0 outline-none focus:ring-2 focus:ring-tint"
             />
             <input
               value={cf.value}
               onChange={(e) => updateCustomField(i, 'value', e.target.value)}
               placeholder="Value"
-              className="flex-1 rounded-lg px-3 py-2 text-sm focus:outline-none"
-              style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.08)', color: '#f0ece0' }}
+              className="flex-1 rounded-[10px] px-3.5 py-2.5 min-h-11 text-[17px] bg-fill text-label placeholder:text-label-3 border-0 outline-none focus:ring-2 focus:ring-tint"
             />
-            <button type="button" onClick={() => removeCustomField(i)} className="w-8 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a' }}>×</button>
+            <button type="button" onClick={() => removeCustomField(i)} className="w-8 h-9 rounded-lg flex items-center justify-center shrink-0" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)' }}>×</button>
           </div>
         ))}
         {customFields.length === 0 && (
-          <p className="text-xs" style={{ color: '#9f9684' }}>No custom fields. Tap "+ Add field" to track extra info like permit numbers, temperatures, etc.</p>
+          <p className="text-[13px] px-1 text-label-2">No custom fields. Tap "+ Add field" to track extra info like permit numbers, temperatures, etc.</p>
         )}
       </div>
 

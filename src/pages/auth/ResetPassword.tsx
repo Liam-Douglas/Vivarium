@@ -1,3 +1,4 @@
+import { Icon } from '@/components/ui/icons'
 import { useState, useEffect, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase'
@@ -5,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { useToast } from '@/components/ui/Toast'
 import { AuthShell } from './AuthShell'
+import { BrandMark } from '@/components/ui/BrandMark'
 
 const MIN_PASSWORD_LENGTH = 6
 
@@ -99,11 +101,9 @@ export function ResetPassword() {
   if (phase === 'verifying') {
     return (
       <AuthShell>
-        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg mx-auto mb-4 animate-pulse" style={{ backgroundColor: '#8fbe5a', color: '#1a1a18' }}>
-            V
-          </div>
-          <p className="text-sm" style={{ color: '#a8a090' }}>Checking your reset link…</p>
+        <div className="rounded-2xl p-8 text-center bg-surface">
+          <BrandMark pulse className="mx-auto mb-4" />
+          <p className="text-[15px] text-label-2">Checking your reset link…</p>
         </div>
       </AuthShell>
     )
@@ -112,15 +112,15 @@ export function ResetPassword() {
   if (phase === 'invalid') {
     return (
       <AuthShell>
-        <div className="rounded-2xl p-8 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="text-4xl mb-4">🔗</div>
-          <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+        <div className="rounded-2xl p-8 text-center bg-surface">
+          <span className="mx-auto mb-4 w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, var(--color-orange) 14%, transparent)', color: 'var(--color-orange)' }}><Icon name="link" size={28} strokeWidth={1.8} /></span>
+          <h2 className="text-xl font-semibold mb-2 text-label">
             This link didn't work
           </h2>
-          <p className="text-sm mb-2" style={{ color: '#a8a090' }}>
+          <p className="text-[15px] mb-2 text-label-2">
             {linkError ?? 'The link has expired, has already been used, or was opened in a different browser from the one that requested it.'}
           </p>
-          <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+          <p className="text-[15px] mb-6 text-label-2">
             Request a new one and open it in this browser.
           </p>
           <Link to="/auth/forgot-password">
@@ -133,16 +133,16 @@ export function ResetPassword() {
 
   return (
     <AuthShell>
-      <div className="rounded-2xl p-6" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-        <h2 className="text-xl font-semibold mb-2" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
+      <div className="rounded-2xl p-6 bg-surface">
+        <h2 className="text-xl font-semibold mb-2 text-label">
           Choose a new password
         </h2>
-        <p className="text-sm mb-6" style={{ color: '#a8a090' }}>
+        <p className="text-[15px] mb-6 text-label-2">
           You'll be signed in on this device once it's saved.
         </p>
 
         {error && (
-          <div className="mb-4 px-4 py-3 rounded-xl text-sm" style={{ backgroundColor: 'rgba(196,90,90,0.1)', color: '#c45a5a', border: '1px solid rgba(196,90,90,0.2)' }}>
+          <div className="mb-4 px-4 py-3 rounded-xl text-[15px]" style={{ backgroundColor: 'color-mix(in srgb, var(--color-red) 10%, transparent)', color: 'var(--color-red)' }}>
             {error}
           </div>
         )}
