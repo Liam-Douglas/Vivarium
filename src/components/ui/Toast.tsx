@@ -82,7 +82,7 @@ function ToastItem({ toast, onRemove }: { toast: ToastItem; onRemove: () => void
   return (
     <div
       role={toast.type === 'error' ? 'alert' : 'status'}
-      className={`bg-surface-2/95 backdrop-blur-xl flex items-center gap-3 pl-3 pr-2 py-2.5 rounded-2xl shadow-[0_10px_30px_rgba(0,0,0,0.18)] transition-[opacity,transform] duration-300 ease-drawer ${shown ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-full scale-95 motion-reduce:translate-y-0 motion-reduce:scale-100'}`}
+      className={`bg-surface-2/95 backdrop-blur-xl flex items-center gap-3 pl-3 pr-2 py-2.5 rounded-2xl shadow-[var(--shadow-popover)] transition-[opacity,transform] duration-300 ease-drawer ${shown ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-full scale-95 motion-reduce:translate-y-0 motion-reduce:scale-100'}`}
     >
       <span aria-hidden="true" className="w-7 h-7 rounded-full flex items-center justify-center text-white shrink-0" style={{ backgroundColor: tone.color }}>
         <Icon name={tone.icon} size={16} strokeWidth={2.4} />

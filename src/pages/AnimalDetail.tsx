@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { format, differenceInMonths, differenceInDays, addDays } from 'date-fns'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { CHART_TOOLTIP, CHART_TOOLTIP_LABEL } from '@/lib/chartStyle'
 import {
   getAnimal, deactivateAnimal,
   createWeightLog, updateWeightLog, deleteWeightLog,
@@ -74,8 +75,6 @@ import {
 type Tab = 'overview' | 'timeline' | 'feeding' | 'vitals' | 'health' | 'records'
 
 /** A round bar button in glass, for use over a photo. */
-const TOOLTIP_STYLE = { backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }
-
 const GLASS_BUTTON = 'tap-target w-9 h-9 pointer-coarse:w-11 pointer-coarse:h-11 rounded-full flex items-center justify-center text-white bg-black/30 backdrop-blur-md active:bg-black/50 transition-colors'
 
 export function AnimalDetail() {
@@ -996,7 +995,7 @@ export function AnimalDetail() {
                     <LineChart data={chartData}>
                       <XAxis dataKey="date" tick={{ fontSize: 11, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
                       <YAxis hide domain={['auto', 'auto']} />
-                      <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
+                      <Tooltip contentStyle={CHART_TOOLTIP} labelStyle={CHART_TOOLTIP_LABEL} />
                       <Line isAnimationActive={false} type="monotone" dataKey="weight" stroke="var(--color-tint)" strokeWidth={2.5} dot={false} />
                     </LineChart>
                   </ResponsiveContainer>
@@ -1109,9 +1108,11 @@ export function AnimalDetail() {
               const heatStart = addDays(thisWeekMon, -52 * 7)
 
               const TYPE_PRIORITY = ['health', 'feeding', 'shed', 'weight', 'acquisition', 'exit', 'breeding']
-              const TYPE_RGB: Record<string, string> = {
-                feeding: '143,190,90', shed: '212,146,74', weight: '90,158,220',
-                health: '196,90,90', acquisition: '143,190,90', exit: '196,90,90', breeding: '168,122,196',
+              // The same colours as the timeline's nodes below, from the tokens,
+              // so the grid follows the appearance.
+              const TYPE_COLOR: Record<string, string> = {
+                feeding: 'var(--color-tint)', shed: 'var(--color-orange)', weight: 'var(--color-blue)',
+                health: 'var(--color-red)', acquisition: 'var(--color-tint)', exit: 'var(--color-red)', breeding: 'var(--color-purple)',
               }
 
               const activityMap = new Map<string, { count: number; dominant: string }>()
@@ -1135,10 +1136,10 @@ export function AnimalDetail() {
               function cellBg(date: Date) {
                 if (date > now) return 'transparent'
                 const entry = activityMap.get(format(date, 'yyyy-MM-dd'))
-                if (!entry) return 'var(--color-separator)'
+                if (!entry) return 'var(--color-fill)'
                 const t = Math.min(entry.count / Math.max(maxCount * 0.5, 3), 1)
-                const rgb = TYPE_RGB[entry.dominant] ?? '143,190,90'
-                return `rgba(${rgb},${(0.25 + t * 0.75).toFixed(2)})`
+                const color = TYPE_COLOR[entry.dominant] ?? 'var(--color-tint)'
+                return `color-mix(in srgb, ${color} ${Math.round(30 + t * 70)}%, transparent)`
               }
 
               const yearTotal = [...activityMap.values()].reduce((s, v) => s + v.count, 0)
@@ -1164,7 +1165,9 @@ export function AnimalDetail() {
                       ))}
                     </div>
                     {/* Scrollable heatmap */}
-                    <div style={{ overflowX: 'auto', scrollbarWidth: 'none', flex: 1 }}>
+                    {/* Opens on the latest weeks, at the right-hand end, where the
+                        animal's recent history is; earlier months scroll in from the left. */}
+                    <div ref={(el) => { if (el && !el.dataset.placed) { el.scrollLeft = el.scrollWidth; el.dataset.placed = '1' } }} style={{ overflowX: 'auto', scrollbarWidth: 'none', flex: 1 }}>
                       <div style={{ display: 'inline-block', minWidth: 'max-content' }}>
                         {/* Month labels */}
                         <div style={{ display: 'flex', gap: 2, marginBottom: 4, height: 14 }}>
@@ -1191,7 +1194,7 @@ export function AnimalDetail() {
                                 return (
                                   <div
                                     key={date.toISOString()}
-                                    style={{ width: 11, height: 11, borderRadius: 2, backgroundColor: cellBg(date), flexShrink: 0 }}
+                                    style={{ width: 11, height: 11, borderRadius: 3, backgroundColor: cellBg(date), flexShrink: 0 }}
                                     title={`${format(date, 'd MMM yyyy')}: ${count} event${count !== 1 ? 's' : ''}`}
                                   />
                                 )
@@ -1207,12 +1210,12 @@ export function AnimalDetail() {
                     {[
                       { label: 'Feeding', color: 'color-mix(in srgb, var(--color-tint) 85%, transparent)' },
                       { label: 'Shedding', color: 'color-mix(in srgb, var(--color-orange) 85%, transparent)' },
-                      { label: 'Weight', color: 'rgba(90,158,220,0.85)' },
+                      { label: 'Weight', color: 'color-mix(in srgb, var(--color-blue) 85%, transparent)' },
                       { label: 'Health', color: 'color-mix(in srgb, var(--color-red) 85%, transparent)' },
                     ].map(({ label, color }) => (
                       <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: 2, backgroundColor: color }} />
-                        <span style={{ fontSize: 10, color: 'var(--color-label-2)' }}>{label}</span>
+                        <div style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: color }} />
+                        <span style={{ fontSize: 12, color: 'var(--color-label-2)' }}>{label}</span>
                       </div>
                     ))}
                   </div>
@@ -1335,7 +1338,7 @@ export function AnimalDetail() {
                       <BarChart data={feedingMonthlyData} barCategoryGap="30%">
                         <XAxis dataKey="month" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} />
                         <YAxis hide allowDecimals={false} />
-                        <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }} />
+                        <Tooltip contentStyle={CHART_TOOLTIP} labelStyle={CHART_TOOLTIP_LABEL} />
                         <Bar isAnimationActive={false} dataKey="fed" name="Fed" stackId="a" fill="var(--color-green)" radius={[0, 0, 0, 0]} />
                         <Bar isAnimationActive={false} dataKey="refused" name="Refused" stackId="a" fill="var(--color-red)" radius={[4, 4, 0, 0]} />
                       </BarChart>
@@ -1458,8 +1461,9 @@ export function AnimalDetail() {
 
                         {/* Health events */}
             <div>
-              <div className="flex justify-end mb-3">
-                <Button size="sm" onClick={openAddHealth}>Add event</Button>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-[20px] leading-[25px] font-bold text-label">Health events</h2>
+                <button type="button" onClick={openAddHealth} className="tap-target text-[17px] text-tint active:opacity-60">Add event</button>
               </div>
             <HealthEventsSection
               events={healthEvents}

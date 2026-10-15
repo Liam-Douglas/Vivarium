@@ -3,6 +3,7 @@ import { format } from 'date-fns'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, ReferenceLine,
 } from 'recharts'
+import { CHART_TOOLTIP, CHART_TOOLTIP_LABEL } from '@/lib/chartStyle'
 import { growthSummary, weightSeries } from '@/lib/weightStats'
 import { readPositiveNumber, writeJson, remove as removeStored } from '@/lib/localStore'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -75,8 +76,8 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'var(--color-label-2)' }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
               <YAxis hide domain={['auto', 'auto']} />
               <Tooltip
-                contentStyle={{ backgroundColor: 'var(--color-surface-2)', border: 'none', borderRadius: 10, color: 'var(--color-label)', boxShadow: '0 8px 24px rgba(0,0,0,0.16)' }}
-                labelStyle={{ color: 'var(--color-label-2)', fontSize: 12 }}
+                contentStyle={CHART_TOOLTIP}
+                labelStyle={CHART_TOOLTIP_LABEL}
                 formatter={(v) => [formatWeight(Number(v)), 'Weight']}
               />
               <Area isAnimationActive={false} type="monotone" dataKey="weight" stroke="var(--color-tint)" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
@@ -109,18 +110,18 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
           {summary && (
             <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid var(--color-separator)' }}>
               <div className="text-center">
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Start</p>
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>{formatWeight(summary.start)}</p>
+                <p className="text-[13px] font-semibold text-label-2">Start</p>
+                <p className="text-[15px] font-semibold text-label">{formatWeight(summary.start)}</p>
               </div>
               <div className="text-center">
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Total gain</p>
-                <p className="text-sm font-semibold" style={{ color: summary.gain >= 0 ? 'var(--color-tint)' : 'var(--color-red)' }}>
+                <p className="text-[13px] font-semibold text-label-2">Total gain</p>
+                <p className="text-[15px] font-semibold" style={{ color: summary.gain >= 0 ? 'var(--color-tint)' : 'var(--color-red)' }}>
                   {formatWeight(summary.gain, { signed: true })}
                 </p>
               </div>
               <div className="text-center">
-                <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>Latest</p>
-                <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>{formatWeight(summary.latest)}</p>
+                <p className="text-[13px] font-semibold text-label-2">Latest</p>
+                <p className="text-[15px] font-semibold text-label">{formatWeight(summary.latest)}</p>
               </div>
             </div>
           )}
@@ -131,10 +132,10 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
         {logs.map((log) => (
           <div key={log.id} className="list-row px-4 py-3 flex items-center gap-3">
             <div className="flex-1">
-              <p className="text-sm font-semibold" style={{ color: 'var(--color-label)' }}>{formatWeight(log.weight_grams)}</p>
-              {log.notes && <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>{log.notes}</p>}
+              <p className="text-[15px] font-semibold text-label">{formatWeight(log.weight_grams)}</p>
+              {log.notes && <p className="text-[13px] font-semibold text-label-2">{log.notes}</p>}
             </div>
-            <p className="text-xs shrink-0 mr-1" style={{ color: 'var(--color-label-2)' }}>
+            <p className="text-[13px] shrink-0 mr-1 text-label-2">
               {format(new Date(log.logged_at), 'd MMM yyyy')}
             </p>
             <RecordActions what="weight" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />

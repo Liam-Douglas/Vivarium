@@ -45,7 +45,7 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
       </div>
 
       {incubations.length === 0 ? (
-        <p className="text-sm py-1" style={{ color: 'var(--color-label-2)' }}>No incubations yet.</p>
+        <p className="text-[15px] py-1 text-label-2">No incubations yet.</p>
       ) : (
         <div className="rounded-xl bg-surface overflow-hidden">
           {incubations.map((row) => {
@@ -63,17 +63,17 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge status={badge.status}>{badge.label}</Badge>
                       {row.clutch_size != null && (
-                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.clutch_size} eggs</span>
+                        <span className="text-[13px] font-semibold text-label-2">{row.clutch_size} eggs</span>
                       )}
                       {row.eggs_fertile != null && (
-                        <span className="text-xs" style={{ color: 'var(--color-tint)' }}>{row.eggs_fertile} fertile</span>
+                        <span className="text-[13px] text-tint">{row.eggs_fertile} fertile</span>
                       )}
                       {row.hatchlings != null && (
-                        <span className="text-xs" style={{ color: 'var(--color-tint)' }}>{row.hatchlings} hatched</span>
+                        <span className="text-[13px] text-tint">{row.hatchlings} hatched</span>
                       )}
                     </div>
 
-                    <p className="text-xs mt-1.5" style={{ color: 'var(--color-label-2)' }}>
+                    <p className="text-[13px] mt-1.5 text-label-2">
                       {/* Day N while it runs, total once it is over: the same
                           column reads as progress or as a result, never both. */}
                       {duration != null
@@ -87,7 +87,7 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
                     </p>
 
                     {rate && (
-                      <p className="text-xs mt-1" style={{ color: 'var(--color-tint)' }}>
+                      <p className="text-[13px] mt-1 text-tint">
                         {Math.round(rate.rate * 100)}% hatch rate
                         <span style={{ color: 'var(--color-label-2)' }}>
                           {rate.basis === 'fertile' ? ' of fertile eggs' : ' of the clutch'}
@@ -97,13 +97,13 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
 
                     <div className="flex flex-wrap gap-2 mt-1">
                       {row.temperature_c != null && (
-                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.temperature_c}°C</span>
+                        <span className="text-[13px] font-semibold text-label-2">{row.temperature_c}°C</span>
                       )}
                       {row.humidity_percent != null && (
-                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.humidity_percent}% RH</span>
+                        <span className="text-[13px] font-semibold text-label-2">{row.humidity_percent}% RH</span>
                       )}
                       {row.incubation_medium && (
-                        <span className="text-xs" style={{ color: 'var(--color-label-2)' }}>{row.incubation_medium}</span>
+                        <span className="text-[13px] font-semibold text-label-2">{row.incubation_medium}</span>
                       )}
                     </div>
 
@@ -112,19 +112,19 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
                         the state from the dates and leaves this to the keeper
                         who wrote it. */}
                     {row.outcome && (
-                      <p className="text-xs mt-1" style={{ color: 'var(--color-label-2)' }}>{row.outcome}</p>
+                      <p className="text-[13px] mt-1 text-label-2">{row.outcome}</p>
                     )}
                     {row.notes && (
-                      <p className="text-xs mt-1 truncate" style={{ color: 'var(--color-label-2)' }}>{row.notes}</p>
+                      <p className="text-[13px] mt-1 truncate text-label-2">{row.notes}</p>
                     )}
                   </div>
 
                   <div className="text-right shrink-0 mr-1">
-                    <p className="text-xs" style={{ color: 'var(--color-label-2)' }}>
+                    <p className="text-[13px] font-semibold text-label-2">
                       {format(new Date(row.start_date), 'd MMM yyyy')}
                     </p>
                     {row.actual_hatch_date && (
-                      <p className="text-xs mt-0.5" style={{ color: 'var(--color-tint)' }}>
+                      <p className="text-[13px] mt-0.5 text-tint">
                         {format(new Date(row.actual_hatch_date), 'd MMM')}
                       </p>
                     )}
