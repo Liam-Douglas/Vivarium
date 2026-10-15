@@ -4,6 +4,7 @@ import { totalCostCents, costByType } from '@/lib/healthStats'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { RecordActions } from '@/components/ui/RecordActions'
 import type { HealthEvent } from '@/hooks/useHealthEvents'
+import { formatAUD } from '@/lib/format'
 
 interface HealthEventsSectionProps {
   events: HealthEvent[]
@@ -42,7 +43,7 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
         <div className="rounded-xl p-3 text-center" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
           <p className="text-xs" style={{ color: '#9f9684' }}>Total cost</p>
           <p className="text-base font-semibold mt-0.5" style={{ color: total > 0 ? '#d4924a' : '#f0ece0' }}>
-            {total > 0 ? `$${(total / 100).toFixed(2)}` : '—'}
+            {total > 0 ? `${formatAUD(total)}` : '—'}
           </p>
         </div>
       </div>
@@ -57,7 +58,7 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
               <Tooltip
                 contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
                 labelStyle={{ color: '#a8a090', fontSize: 12 }}
-                formatter={(v) => [`$${Number(v).toFixed(2)}`, 'Cost']}
+                formatter={(v) => [formatAUD(Math.round(Number(v) * 100)), 'Cost']}
               />
               <Bar dataKey="cost" fill="#d4924a" radius={[0, 4, 4, 0]} />
             </BarChart>
@@ -75,9 +76,9 @@ export function HealthEventsSection({ events, onEdit, onDelete }: HealthEventsSe
                 {event.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{event.notes}</p>}
               </div>
               <div className="text-right shrink-0 mr-1">
-                <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(event.event_date), 'MMM d, yyyy')}</p>
+                <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(event.event_date), 'd MMM yyyy')}</p>
                 {event.cost_cents != null && (
-                  <p className="text-xs mt-0.5" style={{ color: '#d4924a' }}>${(event.cost_cents / 100).toFixed(2)}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#d4924a' }}>{formatAUD(event.cost_cents)}</p>
                 )}
               </div>
               <RecordActions what="health event" onEdit={() => onEdit(event)} onDelete={() => onDelete(event)} />

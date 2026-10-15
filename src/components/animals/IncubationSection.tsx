@@ -124,11 +124,11 @@ export function IncubationSection({ incubations, onAdd, onEdit, onDelete }: Incu
 
                   <div className="text-right shrink-0 mr-1">
                     <p className="text-xs" style={{ color: '#9f9684' }}>
-                      {format(new Date(row.start_date), 'MMM d, yyyy')}
+                      {format(new Date(row.start_date), 'd MMM yyyy')}
                     </p>
                     {row.actual_hatch_date && (
                       <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>
-                        {format(new Date(row.actual_hatch_date), 'MMM d')}
+                        {format(new Date(row.actual_hatch_date), 'd MMM')}
                       </p>
                     )}
                   </div>

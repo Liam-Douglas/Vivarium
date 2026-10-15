@@ -16,6 +16,7 @@ import { getFeedingStatus, describeNextFeeding, FEEDING_URGENCY } from '@/lib/fe
 import { ALL_PREY_NAMES } from '@/lib/preyTypes'
 import { currentWeight } from '@/lib/weightStats'
 import { recommendedPreyWeight } from '@/lib/preyGuidance'
+import { formatWeight, formatWeightRange } from '@/lib/format'
 
 interface FeedingLogFormProps {
   preselectedAnimalId?: string
@@ -234,9 +235,9 @@ export function FeedingLogForm({ preselectedAnimalId, prefill, onSuccess, onCanc
           {/* The two ends round together below about 12g, and "1–1g" reads as
               a mistake rather than as advice. */}
           Recommended prey: {preyWeight.minGrams === preyWeight.maxGrams
-            ? `${preyWeight.minGrams}g`
-            : `${preyWeight.minGrams}–${preyWeight.maxGrams}g`}
-          {' '}(10–15% of {selectedWeight}g body weight)
+            ? formatWeight(preyWeight.minGrams)
+            : formatWeightRange(preyWeight.minGrams, preyWeight.maxGrams)}
+          {' '}(10–15% of {selectedWeight != null ? formatWeight(selectedWeight) : '—'} body weight)
         </p>
       )}
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { format, differenceInDays } from 'date-fns'
 import { useAnimals, type Animal } from '@/hooks/useAnimals'
 import type { MedicationSchedule } from '@/hooks/useMedicationSchedules'
@@ -34,6 +34,7 @@ import { useCareTasks } from '@/hooks/useCareTasks'
 import { getCareStatus, describeNextCare, CARE_URGENCY } from '@/lib/careStatus'
 import { LoadError } from '@/components/ui/LoadError'
 import { UpgradeModal } from '@/components/upgrade/UpgradeModal'
+import { FirstRun } from '@/components/dashboard/FirstRun'
 import { useToast } from '@/components/ui/Toast'
 import { EXPENSE_CATEGORIES, EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
 
@@ -286,6 +287,11 @@ export function Dashboard() {
   // basis for. One error region rather than six, because six hooks failing at
   // once is one failure — the network.
   const animalsState = loadState({ loading: animalsLoading, error: animalsError, count: animals.length })
+  // A loaded, empty collection: first run. Every logging control needs an
+  // animal to log against, so they wait until there is one.
+  const firstRun = animalsState === 'empty'
+  const [searchParams] = useSearchParams()
+  const firstRunVariant = searchParams.get('firstrun') === 'b' ? 'b' : 'a'
   // Shedding and weight feed the "Worth a look" section below. A failure there
   // shows up as an empty section, which reads as nothing to look at — the same
   // false all-clear the queue's error region exists to prevent — so it is
@@ -469,7 +475,8 @@ export function Dashboard() {
             )}
             {feedingSummary.overdue > 0 && feedingSummary.dueSoon > 0 && ' · '}
             {feedingSummary.dueSoon > 0 && `${feedingSummary.dueSoon} due soon`}
-            {feedingSummary.overdue === 0 && feedingSummary.dueSoon === 0 && 'Nothing due today'}
+            {firstRun && 'No animals yet'}
+            {!firstRun && feedingSummary.overdue === 0 && feedingSummary.dueSoon === 0 && 'Nothing due today'}
             {/* Never imply all-clear while animals are untracked. */}
             {feedingSummary.untracked > 0 && ` · ${feedingSummary.untracked} not tracked`}
           </p>
@@ -477,7 +484,7 @@ export function Dashboard() {
         {/* Desktop counterpart of the FAB. It used to offer only "Log feeding",
             so logging a shed, weight or expense meant opening an animal first —
             four of the five actions vanished above 768px. */}
-        <div className="hidden md:block relative" ref={logMenuRef}>
+        {!firstRun && <div className="hidden md:block relative" ref={logMenuRef}>
           <div className="flex items-stretch">
             <button
               onClick={() => openModal('feeding')}
@@ -520,7 +527,7 @@ export function Dashboard() {
               ))}
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       {/* Pending join requests (owner only) */}
@@ -585,6 +592,14 @@ export function Dashboard() {
       {/* Above 1024 the queue keeps the primary column and the two blocks you
           read but rarely act on move into a rail. Below it they simply stack,
           stock directly under the queue it affects. */}
+      {/* Above the two-column grid, so on desktop it leads the page rather
+          than sitting in the rail. */}
+      {firstRun && (
+        <div className="mb-6">
+          <FirstRun variant={firstRunVariant} onAddAnimal={() => openModal('animal')} />
+        </div>
+      )}
+
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-6 lg:items-start">
         <div className="min-w-0">
       {/* Today — feedings and doses, ordered by when they fall due */}
@@ -670,9 +685,11 @@ export function Dashboard() {
                   )}
                   <div className="flex-1 min-w-0 lg:flex lg:items-center lg:gap-4">
                     <div className="min-w-0 lg:w-52 lg:shrink-0">
-                      <p className="text-sm font-medium truncate" style={{ color: '#f0ece0' }}>
-                        {animal.name}
-                        <span className="font-normal lg:hidden" style={{ color: tone }}> · {when}</span>
+                      {/* The name gives way, never the lateness: a long name used
+                          to truncate "386 days overdue" off the row entirely. */}
+                      <p className="text-sm font-medium flex min-w-0" style={{ color: '#f0ece0' }}>
+                        <span className="truncate">{animal.name}</span>
+                        <span className="font-normal lg:hidden shrink-0 whitespace-nowrap" style={{ color: tone }}>&nbsp;· {when}</span>
                       </p>
                       <p className="hidden lg:block text-xs mt-0.5 truncate" style={{ color: '#9f9684' }}>
                         {animal.species}{animal.morph ? ` · ${animal.morph}` : ''}
@@ -811,7 +828,7 @@ export function Dashboard() {
         </Link>
       )}
       {/* Recent activity */}
-      <div>
+      {!firstRun && <div>
         <h2 className="text-base font-semibold mb-3" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>Recent activity</h2>
         {activityLoading ? (
           <div className="flex justify-center py-8">
@@ -836,19 +853,19 @@ export function Dashboard() {
                     <strong>{item.animalName}</strong> — {item.detail}
                   </p>
                   <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
-                    by {item.loggedBy} · {format(new Date(item.timestamp), 'MMM d, h:mm a')}
+                    by {item.loggedBy} · {format(new Date(item.timestamp), 'd MMM, h:mm a')}
                   </p>
                 </div>
               </div>
             ))}
           </div>
         )}
-      </div>
+      </div>}
         </div>
       </div>
 
       {/* FAB speed dial (mobile only) */}
-      <div className="md:hidden fixed bottom-above-nav right-4 z-30 flex flex-col items-end gap-3">
+      {!firstRun && <div className="md:hidden fixed bottom-above-nav right-4 z-30 flex flex-col items-end gap-3">
         {/* Backdrop */}
         {fabOpen && (
           <div
@@ -896,7 +913,7 @@ export function Dashboard() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
           </svg>
         </button>
-      </div>
+      </div>}
 
       {/* Modals */}
       <Modal open={activeModal === 'feeding'} onClose={closeModal} title="Log feeding">

@@ -58,6 +58,7 @@ import type { Incubation } from '@/hooks/useIncubations'
 import { useAnimalPhotos } from '@/hooks/useAnimalPhotos'
 import { useMedicationSchedules } from '@/hooks/useMedicationSchedules'
 import type { MedicationSchedule } from '@/hooks/useMedicationSchedules'
+import { formatAUD, formatWeight } from '@/lib/format'
 import {
   createAcquisitionRecord, updateAcquisitionRecord, deleteAcquisitionRecord,
   createExitRecord, updateExitRecord, deleteExitRecord,
@@ -624,7 +625,7 @@ export function AnimalDetail() {
     : null
 
   const chartData = [...weightLogs].reverse().slice(-12).map((w) => ({
-    date: format(new Date(w.logged_at), 'MMM d'),
+    date: format(new Date(w.logged_at), 'd MMM'),
     weight: w.weight_grams,
   }))
 
@@ -657,8 +658,8 @@ export function AnimalDetail() {
     const events: TEvent[] = []
     feedingLogs.forEach((l) => events.push({ id: `f-${l.id}`, date: new Date(l.fed_at), type: 'feeding', icon: l.refused ? '🚫' : '🍖', label: l.refused ? 'Refused food' : `Fed ${l.prey_type}${l.prey_size ? ` (${l.prey_size})` : ''} ×${l.quantity}`, detail: l.notes ?? '', color: l.refused ? '#c45a5a' : '#5a9e6a' }))
     sheddingLogs.forEach((l) => events.push({ id: `s-${l.id}`, date: new Date(l.shed_at), type: 'shed', icon: '🐍', label: `Shed — ${l.complete ? 'complete' : 'incomplete'}`, detail: l.notes ?? '', color: l.complete ? '#8fbe5a' : '#d4924a' }))
-    weightLogs.forEach((l) => events.push({ id: `w-${l.id}`, date: new Date(l.logged_at), type: 'weight', icon: '⚖️', label: `Weighed: ${l.weight_grams}g`, detail: l.notes ?? '', color: '#5a8ebe' }))
-    healthEvents.forEach((l) => events.push({ id: `h-${l.id}`, date: new Date(l.event_date), type: 'health', icon: '🏥', label: l.title, detail: `${l.event_type.replace(/_/g, ' ')}${l.cost_cents ? ` · $${(l.cost_cents / 100).toFixed(2)}` : ''}`, color: '#d4924a' }))
+    weightLogs.forEach((l) => events.push({ id: `w-${l.id}`, date: new Date(l.logged_at), type: 'weight', icon: '⚖️', label: `Weighed: ${formatWeight(l.weight_grams)}`, detail: l.notes ?? '', color: '#5a8ebe' }))
+    healthEvents.forEach((l) => events.push({ id: `h-${l.id}`, date: new Date(l.event_date), type: 'health', icon: '🏥', label: l.title, detail: `${l.event_type.replace(/_/g, ' ')}${l.cost_cents ? ` · ${formatAUD(l.cost_cents)}` : ''}`, color: '#d4924a' }))
     acquisitionRecords.forEach((l) => events.push({ id: `a-${l.id}`, date: new Date(l.acquired_at), type: 'acquisition', icon: '🏷️', label: 'Acquired', detail: l.source_name ?? l.source ?? '', color: '#8fbe5a' }))
     exitRecords.forEach((l) => events.push({ id: `e-${l.id}`, date: new Date(l.exited_at), type: 'exit', icon: '🚪', label: `Exit: ${l.reason}`, detail: l.notes ?? '', color: '#dc7a7a' }))
     breedingRecords.forEach((l) => events.push({ id: `b-${l.id}`, date: new Date(l.pairing_date), type: 'breeding', icon: '🥚', label: l.paired_with_name ? `Paired with ${l.paired_with_name}` : 'Pairing', detail: l.outcome ?? '', color: '#a87ac4' }))
@@ -757,7 +758,7 @@ export function AnimalDetail() {
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-xs" style={{ color: '#9f9684' }}>Last fed</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: feedingStatusColor }}>
-                {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'MMM d') : '—'}
+                {animal.last_fed_at ? format(new Date(animal.last_fed_at), 'd MMM') : '—'}
               </p>
               {daysSinceFed !== null && (
                 <p className="text-xs mt-0.5" style={{ color: feedingStatusColor }}>
@@ -768,7 +769,7 @@ export function AnimalDetail() {
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-xs" style={{ color: '#9f9684' }}>Next feeding</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: nextFeedColor }}>
-                {nextFeedingDue ? format(nextFeedingDue, 'MMM d') : '—'}
+                {nextFeedingDue ? format(nextFeedingDue, 'd MMM') : '—'}
               </p>
               {daysUntilFeed !== null && (
                 <p className="text-xs mt-0.5" style={{ color: nextFeedColor }}>
@@ -785,10 +786,10 @@ export function AnimalDetail() {
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-xs" style={{ color: '#9f9684' }}>Current weight</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
-                {shownWeight !== null ? `${shownWeight}g` : '—'}
+                {shownWeight !== null ? formatWeight(shownWeight) : '—'}
                 {weightTrend !== null && (
                   <span className="text-xs font-medium ml-1.5" style={{ color: weightTrend >= 0 ? '#8fbe5a' : '#dc7a7a' }}>
-                    {weightTrend >= 0 ? `+${weightTrend}` : weightTrend}
+                    {formatWeight(weightTrend, { signed: true })}
                   </span>
                 )}
               </p>
@@ -809,11 +810,11 @@ export function AnimalDetail() {
             <div className="rounded-xl p-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
               <p className="text-xs" style={{ color: '#9f9684' }}>Last shed</p>
               <p className="text-base font-semibold mt-0.5" style={{ color: '#f0ece0' }}>
-                {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'MMM d') : '—'}
+                {sheddingLogs[0] ? format(new Date(sheddingLogs[0].shed_at), 'd MMM') : '—'}
               </p>
               {shedPrediction && (
                 <p className="text-xs mt-0.5" style={{ color: isShedOverdue(shedPrediction) ? '#d4924a' : '#9f9684' }}>
-                  Next ~{format(shedPrediction.due, 'MMM d')}
+                  Next ~{format(shedPrediction.due, 'd MMM')}
                 </p>
               )}
             </div>
@@ -825,7 +826,7 @@ export function AnimalDetail() {
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
                   {feedResponse.lastRefusedAt
-                    ? `Last refused ${format(feedResponse.lastRefusedAt, 'MMM d, yyyy')}`
+                    ? `Last refused ${format(feedResponse.lastRefusedAt, 'd MMM yyyy')}`
                     : 'No refusals on record'}
                 </p>
               </div>
@@ -910,7 +911,7 @@ export function AnimalDetail() {
                 <span className="text-lg">🔬</span>
                 <div>
                   <p className="text-sm font-medium" style={{ color: '#d4924a' }}>In quarantine</p>
-                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Since {format(new Date(animal.quarantine_started_at), 'MMM d, yyyy')}</p>
+                  <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Since {format(new Date(animal.quarantine_started_at), 'd MMM yyyy')}</p>
                 </div>
                 <button onClick={() => setEditOpen(true)} className="ml-auto text-xs px-2 py-1 rounded-lg" style={{ backgroundColor: 'rgba(212,146,74,0.15)', color: '#d4924a' }}>End</button>
               </div>
@@ -923,7 +924,7 @@ export function AnimalDetail() {
                 <div>
                   <p className="text-sm font-medium" style={{ color: '#8fbe5a' }}>Listed for sale</p>
                   {animal.asking_price_cents != null && (
-                    <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Asking ${(animal.asking_price_cents / 100).toFixed(2)} AUD</p>
+                    <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>Asking {formatAUD(animal.asking_price_cents)} AUD</p>
                   )}
                 </div>
               </div>
@@ -946,7 +947,7 @@ export function AnimalDetail() {
                     <p className="flex-1 text-sm" style={{ color: log.refused ? '#a8a090' : '#f0ece0' }}>
                       {log.refused ? 'Refused' : `${log.prey_type}${log.prey_size ? ` (${log.prey_size})` : ''} ×${log.quantity}`}
                     </p>
-                    <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+                    <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'd MMM')}</p>
                   </div>
                 ))}
               </div>
@@ -978,25 +979,27 @@ export function AnimalDetail() {
                   {financials.acqCost > 0 && (
                     <div className="flex justify-between text-sm">
                       <span style={{ color: '#a8a090' }}>Acquisition</span>
-                      <span style={{ color: '#f0ece0' }}>−${(financials.acqCost / 100).toFixed(2)}</span>
+                      <span style={{ color: '#f0ece0' }}>−{formatAUD(financials.acqCost)}</span>
                     </div>
                   )}
                   {financials.vetCost > 0 && (
                     <div className="flex justify-between text-sm">
                       <span style={{ color: '#a8a090' }}>Vet / health</span>
-                      <span style={{ color: '#f0ece0' }}>−${(financials.vetCost / 100).toFixed(2)}</span>
+                      <span style={{ color: '#f0ece0' }}>−{formatAUD(financials.vetCost)}</span>
                     </div>
                   )}
                   {financials.salePrice > 0 && (
                     <div className="flex justify-between text-sm">
                       <span style={{ color: '#a8a090' }}>Sale price</span>
-                      <span style={{ color: '#8fbe5a' }}>+${(financials.salePrice / 100).toFixed(2)}</span>
+                      <span style={{ color: '#8fbe5a' }}>+{formatAUD(financials.salePrice)}</span>
                     </div>
                   )}
                   <div className="flex justify-between text-sm pt-1.5 mt-0.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
-                    <span className="font-medium" style={{ color: '#f0ece0' }}>Net cost</span>
-                    <span className="font-semibold" style={{ color: financials.net > 0 ? '#8fbe5a' : '#dc7a7a' }}>
-                      {financials.net >= 0 ? '+' : ''}${(financials.net / 100).toFixed(2)}
+                    {/* "Net", signed: it is a gain when a sale outweighs the costs.
+                        A cost is not a warning, so it is not red. */}
+                    <span className="font-medium" style={{ color: '#f0ece0' }}>Net</span>
+                    <span className="font-semibold tabular-nums" style={{ color: financials.net > 0 ? '#8fbe5a' : '#f0ece0' }}>
+                      {formatAUD(financials.net, { signed: true })}
                     </span>
                   </div>
                 </div>
@@ -1160,7 +1163,7 @@ export function AnimalDetail() {
                                   <div
                                     key={date.toISOString()}
                                     style={{ width: 11, height: 11, borderRadius: 2, backgroundColor: cellBg(date), flexShrink: 0 }}
-                                    title={`${format(date, 'MMM d, yyyy')}: ${count} event${count !== 1 ? 's' : ''}`}
+                                    title={`${format(date, 'd MMM yyyy')}: ${count} event${count !== 1 ? 's' : ''}`}
                                   />
                                 )
                               })}
@@ -1248,7 +1251,7 @@ export function AnimalDetail() {
                             <div className="flex-1 min-w-0 -mt-0.5">
                               <div className="flex items-start justify-between gap-2">
                                 <p className="text-sm font-medium" style={{ color: '#f0ece0' }}>{ev.label}</p>
-                                <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(ev.date, 'MMM d')}</p>
+                                <p className="text-xs shrink-0" style={{ color: '#9f9684' }}>{format(ev.date, 'd MMM')}</p>
                               </div>
                               {ev.detail && <p className="text-xs mt-0.5 truncate capitalize" style={{ color: '#9f9684' }}>{ev.detail}</p>}
                             </div>
@@ -1338,7 +1341,7 @@ export function AnimalDetail() {
                           ? <p className="text-xs truncate lg:text-sm lg:flex-1 lg:min-w-0" style={{ color: '#9f9684' }}>{log.notes}</p>
                           : <p className="hidden lg:block lg:flex-1 lg:min-w-0 text-sm" style={{ color: '#9f9684' }}>—</p>}
                       </div>
-                      <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'MMM d')}</p>
+                      <p className="text-xs shrink-0 mr-1 lg:text-sm lg:w-20" style={{ color: '#9f9684' }}>{format(new Date(log.fed_at), 'd MMM')}</p>
                       <RecordActions what="feeding" onEdit={() => setEditingFeed(log)} onDelete={() => handleDeleteFeed(log)} />
                     </div>
                   ))}
@@ -1410,9 +1413,9 @@ export function AnimalDetail() {
                             </div>
                             {med.dosage && <p className="text-xs mt-0.5" style={{ color: '#a8a090' }}>{med.dosage}</p>}
                             <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
-                              {lastDose ? `Last: ${format(new Date(lastDose), 'MMM d')}` : 'No doses logged'}
+                              {lastDose ? `Last: ${format(new Date(lastDose), 'd MMM')}` : 'No doses logged'}
                               {med.frequency_days ? ` · every ${med.frequency_days}d` : ''}
-                              {med.end_date ? ` · ends ${format(new Date(med.end_date), 'MMM d')}` : ''}
+                              {med.end_date ? ` · ends ${format(new Date(med.end_date), 'd MMM')}` : ''}
                             </p>
                           </div>
                           <div className="flex items-center gap-1.5 shrink-0">
@@ -1469,8 +1472,8 @@ export function AnimalDetail() {
                           {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.acquired_at), 'MMM d, yyyy')}</p>
-                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.acquired_at), 'd MMM yyyy')}</p>
+                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>{formatAUD(r.price_cents)}</p>}
                         </div>
                         <RecordActions what="acquisition record" onEdit={() => openEditAcquisition(r)} onDelete={() => handleDeleteAcquisition(r)} />
                       </div>
@@ -1500,8 +1503,8 @@ export function AnimalDetail() {
                           {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.exited_at), 'MMM d, yyyy')}</p>
-                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>${(r.price_cents / 100).toFixed(2)}</p>}
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.exited_at), 'd MMM yyyy')}</p>
+                          {r.price_cents != null && <p className="text-xs mt-0.5" style={{ color: '#8fbe5a' }}>{formatAUD(r.price_cents)}</p>}
                         </div>
                         <RecordActions what="exit record" onEdit={() => openEditExit(r)} onDelete={() => handleDeleteExit(r)} />
                       </div>
@@ -1535,11 +1538,11 @@ export function AnimalDetail() {
                             {r.clutch_size != null && <span className="text-xs" style={{ color: '#a8a090' }}>{r.clutch_size} eggs</span>}
                             {r.eggs_fertile != null && <span className="text-xs" style={{ color: '#8fbe5a' }}>{r.eggs_fertile} fertile</span>}
                           </div>
-                          {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Hatch: {format(new Date(r.hatch_date), 'MMM d, yyyy')}</p>}
+                          {r.hatch_date && <p className="text-xs mt-1" style={{ color: '#9f9684' }}>Hatch: {format(new Date(r.hatch_date), 'd MMM yyyy')}</p>}
                           {r.notes && <p className="text-xs mt-1 truncate" style={{ color: '#9f9684' }}>{r.notes}</p>}
                         </div>
                         <div className="text-right shrink-0 mr-1">
-                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.pairing_date), 'MMM d, yyyy')}</p>
+                          <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(r.pairing_date), 'd MMM yyyy')}</p>
                         </div>
                         <RecordActions what="breeding record" onEdit={() => openEditBreeding(r)} onDelete={() => handleDeleteBreeding(r)} />
                       </div>

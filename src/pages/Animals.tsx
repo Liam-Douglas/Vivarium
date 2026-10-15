@@ -225,7 +225,9 @@ export function Animals() {
 
   return (
     <div className="flex-1 px-4 py-6 pb-nav md:pb-8 max-w-5xl mx-auto w-full">
-      <Header title="Animals" subtitle={headerSubtitle} action={headerAction} />
+      {/* With no animals the empty state below carries the add button, and a
+          second identical one in the header only competed with it. */}
+      <Header title="Animals" subtitle={headerSubtitle} action={pageTab === 'animals' && !loading && !error && animals.length === 0 ? undefined : headerAction} />
 
       {/* Tab toggle */}
       <div className="flex gap-1 mb-4 p-1 rounded-xl" style={{ backgroundColor: '#1a1a18', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -344,8 +346,18 @@ export function Animals() {
             <EmptyState
               icon="🦎"
               title={hasActiveFilter ? 'No animals match' : 'No animals yet'}
-              description={hasActiveFilter ? 'Try adjusting your search or filter' : 'Add your first animal to get started'}
-              action={!hasActiveFilter ? <Button onClick={handleAddClick}>Add your first animal</Button> : undefined}
+              description={hasActiveFilter ? 'Try adjusting your search or filter' : 'Add them one at a time, or bring an existing collection across from a spreadsheet.'}
+              action={!hasActiveFilter ? (
+                <div className="flex flex-col gap-2 w-full max-w-xs">
+                  <Button fullWidth onClick={handleAddClick}>Add your first animal</Button>
+                  <Link
+                    to="/import"
+                    className="inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium border border-white/10 text-parchment hover:bg-white/5 active:bg-white/5 active:scale-[0.97] motion-reduce:active:scale-100 transition-[transform,background-color] duration-150 ease-out pointer-coarse:min-h-11"
+                  >
+                    Import a spreadsheet
+                  </Link>
+                </div>
+              ) : undefined}
             />
           ) : density === 'grid' ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">

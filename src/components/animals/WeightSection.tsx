@@ -8,6 +8,7 @@ import { readPositiveNumber, writeJson, remove as removeStored } from '@/lib/loc
 import { EmptyState } from '@/components/ui/EmptyState'
 import { RecordActions } from '@/components/ui/RecordActions'
 import type { WeightLog } from '@/hooks/useWeightLogs'
+import { formatWeight } from '@/lib/format'
 
 /** Per-animal, per-browser: a goal the keeper sets, not a field on the record. */
 const targetWeightKey = (animalId: string) => `vivarium-target-weight-${animalId}`
@@ -53,7 +54,7 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
   }
 
   const series = weightSeries(logs).map((point) => ({
-    date: format(point.at, 'MMM d'),
+    date: format(point.at, 'd MMM'),
     weight: point.weight,
   }))
   const summary = growthSummary(logs)
@@ -76,11 +77,11 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
               <Tooltip
                 contentStyle={{ backgroundColor: '#2e2e2a', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, color: '#f0ece0' }}
                 labelStyle={{ color: '#a8a090', fontSize: 12 }}
-                formatter={(v) => [`${v}g`, 'Weight']}
+                formatter={(v) => [formatWeight(Number(v)), 'Weight']}
               />
               <Area type="monotone" dataKey="weight" stroke="#8fbe5a" strokeWidth={2} fill="url(#weightGrad)" dot={false} />
               {target && (
-                <ReferenceLine y={target} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${target}g`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
+                <ReferenceLine y={target} stroke="#d4924a" strokeDasharray="4 3" label={{ value: `Target ${formatWeight(target)}`, position: 'insideTopRight', fontSize: 10, fill: '#d4924a' }} />
               )}
             </AreaChart>
           </ResponsiveContainer>
@@ -110,17 +111,17 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
             <div className="grid grid-cols-3 gap-2 mt-3 pt-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="text-center">
                 <p className="text-xs" style={{ color: '#9f9684' }}>Start</p>
-                <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{summary.start}g</p>
+                <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{formatWeight(summary.start)}</p>
               </div>
               <div className="text-center">
                 <p className="text-xs" style={{ color: '#9f9684' }}>Total gain</p>
                 <p className="text-sm font-semibold" style={{ color: summary.gain >= 0 ? '#8fbe5a' : '#dc7a7a' }}>
-                  {summary.gain >= 0 ? '+' : ''}{summary.gain}g
+                  {formatWeight(summary.gain, { signed: true })}
                 </p>
               </div>
               <div className="text-center">
                 <p className="text-xs" style={{ color: '#9f9684' }}>Latest</p>
-                <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{summary.latest}g</p>
+                <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{formatWeight(summary.latest)}</p>
               </div>
             </div>
           )}
@@ -131,11 +132,11 @@ export function WeightSection({ animalId, logs, onEdit, onDelete }: WeightSectio
         {logs.map((log) => (
           <div key={log.id} className="rounded-xl p-3 flex items-center gap-3" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex-1">
-              <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{log.weight_grams}g</p>
+              <p className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{formatWeight(log.weight_grams)}</p>
               {log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}
             </div>
             <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>
-              {format(new Date(log.logged_at), 'MMM d, yyyy')}
+              {format(new Date(log.logged_at), 'd MMM yyyy')}
             </p>
             <RecordActions what="weight" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
           </div>

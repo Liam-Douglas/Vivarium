@@ -11,6 +11,7 @@ import type { Expense } from '@/hooks/useExpenses'
 import { EXPENSE_CATEGORY_LABELS } from '@/hooks/useExpenses'
 import { loadState } from '@/lib/loadState'
 import { LoadError } from '@/components/ui/LoadError'
+import { formatAUD } from '@/lib/format'
 
 const CATEGORY_COLORS: Record<string, string> = {
   feeder_stock: '#8fbe5a',
@@ -162,13 +163,13 @@ export function Stats() {
 
       {/* YTD spend */}
       {ytdTotalCents > 0 && (
-        <Section title={`YTD spend — $${(ytdTotalCents / 100).toFixed(2)} AUD`}>
+        <Section title={`YTD spend — ${formatAUD(ytdTotalCents)} AUD`}>
           <div className="flex flex-col gap-2">
             {expenseByCategory.map(({ cat, label, amount }, i) => (
               <div key={cat}>
                 <div className="flex justify-between text-xs mb-1">
                   <span style={{ color: '#a8a090' }}>{label}</span>
-                  <span style={{ color: '#f0ece0' }}>${amount.toFixed(2)}</span>
+                  <span style={{ color: '#f0ece0' }}>{formatAUD(Math.round(amount * 100))}</span>
                 </div>
                 <div className="h-1.5 rounded-full overflow-hidden" style={{ backgroundColor: 'rgba(255,255,255,0.06)' }}>
                   <div

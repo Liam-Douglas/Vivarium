@@ -20,6 +20,7 @@ import { Modal } from '@/components/ui/Modal'
 import { Input, Textarea, Select } from '@/components/ui/Input'
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog'
 import { format } from 'date-fns'
+import { formatAUD, formatDate } from '@/lib/format'
 
 const CATEGORY_ICONS: Record<string, string> = {
   feeder_stock: '🐛',
@@ -451,7 +452,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
               <div>
                 <p className="text-xs mb-1" style={{ color: '#9f9684' }}>Total this month</p>
                 <p className="text-3xl font-bold" style={{ fontFamily: 'Playfair Display, serif', color: '#f0ece0' }}>
-                  ${(totalCents / 100).toFixed(2)}
+                  {formatAUD(totalCents)}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>AUD</p>
               </div>
@@ -551,9 +552,9 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                     </div>
                     <div className="flex items-center gap-2">
                       {budgets[cat] && (
-                        <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#dc7a7a' : '#9f9684' }}>/ ${budgets[cat].toFixed(2)}</span>
+                        <span className="text-xs" style={{ color: total / 100 > budgets[cat] ? '#dc7a7a' : '#9f9684' }}>/ {formatAUD(Math.round(budgets[cat] * 100))}</span>
                       )}
-                      <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>${(total / 100).toFixed(2)}</span>
+                      <span className="text-sm font-semibold" style={{ color: '#f0ece0' }}>{formatAUD(total)}</span>
                       <button
                         onClick={() => { setEditingBudget(editingBudget === cat ? null : cat); setBudgetInput(budgets[cat] ? String(budgets[cat]) : '') }}
                         className="w-6 h-6 rounded flex items-center justify-center text-xs"
@@ -581,7 +582,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                           <div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (total / 100 / budgets[cat]) * 100)}%`, backgroundColor: total / 100 > budgets[cat] ? '#c45a5a' : total / 100 > budgets[cat] * 0.8 ? '#d4924a' : '#8fbe5a' }} />
                         </div>
                         <p className="text-xs mt-0.5" style={{ color: '#9f9684' }}>
-                          {total / 100 > budgets[cat] ? `$${((total / 100) - budgets[cat]).toFixed(2)} over budget` : `$${(budgets[cat] - total / 100).toFixed(2)} remaining`}
+                          {total / 100 > budgets[cat] ? `${formatAUD(total - Math.round(budgets[cat] * 100))} over budget` : `${formatAUD(Math.round(budgets[cat] * 100) - total)} remaining`}
                         </p>
                       </div>
                     ) : (
@@ -594,9 +595,9 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                     <div key={expense.id} className="px-4 py-2 flex items-center justify-between gap-2" style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
                       <div className="min-w-0 flex-1">
                         <p className="text-sm truncate" style={{ color: '#a8a090' }}>{expense.description}</p>
-                        <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(expense.expense_date), 'MMM d')}</p>
+                        <p className="text-xs" style={{ color: '#9f9684' }}>{format(new Date(expense.expense_date), 'd MMM')}</p>
                       </div>
-                      <p className="text-sm shrink-0" style={{ color: '#f0ece0' }}>${(expense.amount_cents / 100).toFixed(2)}</p>
+                      <p className="text-sm shrink-0" style={{ color: '#f0ece0' }}>{formatAUD(expense.amount_cents)}</p>
                       <button type="button" onClick={() => openEdit(expense)} aria-label="Edit expense" className="shrink-0 w-8 h-8 pointer-coarse:w-11 pointer-coarse:h-11 flex items-center justify-center rounded-lg hover:bg-white/5" style={{ color: '#9f9684' }}>
                         <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
                       </button>
@@ -807,7 +808,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                 <p className="text-sm" style={{ color: '#f0ece0' }}>{ev.event_type === 'purchase' ? '+' : ''}{ev.quantity_delta}</p>
                 <p className="text-xs" style={{ color: '#9f9684' }}>{ev.notes ?? ev.event_type}</p>
               </div>
-              <p className="text-xs" style={{ color: '#9f9684' }}>{new Date(ev.created_at).toLocaleDateString()}</p>
+              <p className="text-xs" style={{ color: '#9f9684' }}>{formatDate(ev.created_at)}</p>
             </div>
           ))}
         </div>
@@ -858,7 +859,7 @@ export function Expenses({ initialTab = 'expenses' }: ExpensesProps = {}) {
                   <div className="flex items-center gap-2">
                     <Input label="Qty" type="number" min={1} value={item.editedQty} onChange={(e) => updateReceiptItem(item._id, { editedQty: e.target.value })} disabled={!item.selected} />
                     {item.unit_price_cents > 0 && (
-                      <p className="text-xs whitespace-nowrap" style={{ color: '#9f9684' }}>${(item.unit_price_cents / 100).toFixed(2)} ea</p>
+                      <p className="text-xs whitespace-nowrap" style={{ color: '#9f9684' }}>{formatAUD(item.unit_price_cents)} ea</p>
                     )}
                   </div>
                 </div>

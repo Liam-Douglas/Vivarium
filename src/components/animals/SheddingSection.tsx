@@ -38,7 +38,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
   const summary = summariseSheds(logs)
   const intervals = shedIntervals(logs)
   const chart = intervals.map((interval) => ({
-    date: format(interval.at, 'MMM d yy'),
+    date: format(interval.at, 'd MMM yy'),
     days: interval.days,
     complete: interval.complete,
   }))
@@ -96,7 +96,7 @@ export function SheddingSection({ logs, onEdit, onDelete }: SheddingSectionProps
               {log.notes && <p className="text-xs" style={{ color: '#9f9684' }}>{log.notes}</p>}
             </div>
             <p className="text-xs shrink-0 mr-1" style={{ color: '#9f9684' }}>
-              {format(new Date(log.shed_at), 'MMM d, yyyy')}
+              {format(new Date(log.shed_at), 'd MMM yyyy')}
             </p>
             <RecordActions what="shed" onEdit={() => onEdit(log)} onDelete={() => onDelete(log)} />
           </div>

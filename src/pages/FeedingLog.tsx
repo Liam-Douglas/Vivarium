@@ -516,7 +516,7 @@ export function FeedingLog() {
           {/* Selected day detail */}
           {selectedDay && (
             <div className="rounded-xl p-4 mb-4" style={{ backgroundColor: '#242420', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <p className="text-sm font-medium mb-3" style={{ color: '#f0ece0' }}>{format(selectedDay, 'EEEE, MMMM d')}</p>
+              <p className="text-sm font-medium mb-3" style={{ color: '#f0ece0' }}>{format(selectedDay, 'EEEE d MMMM')}</p>
               {selectedDayLogs.length === 0 ? (
                 <p className="text-sm" style={{ color: '#9f9684' }}>No feedings on this day</p>
               ) : (
